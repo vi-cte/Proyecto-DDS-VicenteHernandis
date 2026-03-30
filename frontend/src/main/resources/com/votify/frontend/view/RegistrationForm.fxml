@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<VBox spacing="12.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.votify.frontend.controller.RegistrationFormController">
+   <children>
+      <Label text="Registrar participante">
+         <font>
+            <Font name="Arial Bold" size="20.0" />
+         </font>
+      </Label>
+      <Label text="* Campos obligatorios" />
+      <VBox spacing="8.0">
+         <children>
+            <Label text="Equipo *" />
+            <TextField fx:id="teamField" promptText="Nombre del equipo (obligatorio)" />
+            <Label fx:id="teamErrorLabel" style="-fx-text-fill: #c62828;" text="" />
+            <Label text="Email *" />
+            <TextField fx:id="emailField" promptText="team@email.com (obligatorio)" />
+            <Label fx:id="emailErrorLabel" style="-fx-text-fill: #c62828;" text="" />
+            <Label text="Direccion" />
+            <TextField fx:id="addressField" promptText="Direccion" />
+            <Label text="Telefono" />
+            <TextField fx:id="phoneField" promptText="Numero de telefono" />
+            <Label text="Integrantes" />
+            <TextArea fx:id="membersArea" prefRowCount="4" promptText="Uno por linea o separados por comas" />
+         </children>
+      </VBox>
+      <HBox spacing="10.0">
+         <children>
+            <Button defaultButton="true" onAction="#registerParticipant" text="Registrar" />
+            <Button cancelButton="true" onAction="#cancelRegistration" text="Cancelar" />
+         </children>
+      </HBox>
+   </children>
+   <padding>
+      <Insets bottom="16.0" left="16.0" right="16.0" top="16.0" />
+   </padding>
+</VBox>

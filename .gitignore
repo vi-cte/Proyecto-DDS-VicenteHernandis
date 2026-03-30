@@ -1,0 +1,6 @@
+.vscode/
+target/
+backend/target/
+frontend/target/
+backend/data/
+*.log
