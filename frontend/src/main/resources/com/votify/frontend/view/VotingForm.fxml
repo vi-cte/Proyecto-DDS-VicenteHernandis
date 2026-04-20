@@ -2,9 +2,10 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
-<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Priority?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
@@ -15,15 +16,12 @@
             <Font name="Arial Bold" size="20.0" />
          </font>
       </Label>
-      <Label fx:id="hintLabel" text="Elige hasta 3 participantes diferentes. Puedes dejar opciones en blanco." />
-      <VBox spacing="8.0">
+      <Label fx:id="hintLabel" text="Selecciona los equipos que quieres votar en la lista." wrapText="true" />
+      <VBox spacing="8.0" VBox.vgrow="ALWAYS">
          <children>
-            <Label text="Opcion 1 (opcional)" />
-            <ComboBox fx:id="firstChoice" prefWidth="280.0" />
-            <Label text="Opcion 2 (opcional)" />
-            <ComboBox fx:id="secondChoice" prefWidth="280.0" />
-            <Label text="Opcion 3 (opcional)" />
-            <ComboBox fx:id="thirdChoice" prefWidth="280.0" />
+            <Label text="Equipos participantes" />
+            <ListView fx:id="participantList" prefHeight="260.0" prefWidth="320.0" VBox.vgrow="ALWAYS" />
+            <Label fx:id="selectionCountLabel" text="0 seleccionados" />
          </children>
       </VBox>
       <HBox spacing="10.0">

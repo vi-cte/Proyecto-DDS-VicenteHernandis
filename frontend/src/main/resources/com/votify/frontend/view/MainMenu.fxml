@@ -1,28 +1,185 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import java.lang.String?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
-<?import javafx.scene.text.Font?>
+<?import javafx.scene.shape.SVGPath?>
 
-<VBox spacing="12.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.votify.frontend.controller.MainMenuController">
-   <children>
-      <Label alignment="CENTER" prefHeight="10.0" prefWidth="279.0" text="Votify" textAlignment="CENTER">
-         <font>
-            <Font name="Arial Bold" size="20.0" />
-         </font></Label>
-      <HBox spacing="15.0">
+<BorderPane prefHeight="768.0" prefWidth="1365.0" stylesheets="@MainMenu.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.votify.frontend.controller.MainMenuController">
+   <top>
+      <HBox alignment="CENTER_LEFT" prefHeight="100.0" spacing="18.0" styleClass="top-bar">
          <children>
-            <Button onAction="#vote" text="Votar" />
-            <Button onAction="#register" text="Participar" />
-            <Button onAction="#viewResults" text="Resultados" />
-            <Button onAction="#exit" text="Salir" />
+            <VBox spacing="1.0" styleClass="brand-block">
+               <children>
+                  <HBox alignment="CENTER_LEFT" spacing="9.0">
+                     <children>
+                        <ImageView fitHeight="70.0" fitWidth="250.0" pickOnBounds="true" preserveRatio="true" styleClass="brand-logo">
+                           <image>
+                              <Image url="@Logo%20Votify.png" />
+                           </image>
+                        </ImageView>
+                        <VBox managed="false" spacing="-1.0" visible="false">
+                           <children>
+                              <Label styleClass="brand-title" text="Votify" />
+                              <Label styleClass="brand-subtitle" text="Empowering Participation" />
+                           </children>
+                        </VBox>
+                     </children>
+                  </HBox>
+               </children>
+            </VBox>
+            <Region HBox.hgrow="ALWAYS" />
+            <HBox alignment="CENTER_RIGHT" spacing="14.0">
+               <children>
+                  <HBox alignment="CENTER_LEFT" spacing="14.0" styleClass="user-pill">
+                     <children>
+                        <StackPane prefHeight="44.0" prefWidth="44.0" styleClass="user-avatar">
+                           <children>
+                              <SVGPath content="M12 12.1C13.7 12.1 15.05 10.72 15.05 9.03C15.05 7.34 13.7 5.96 12 5.96C10.3 5.96 8.95 7.34 8.95 9.03C8.95 10.72 10.3 12.1 12 12.1ZM12 13.63C9.23 13.63 6.95 15.91 6.95 18.68V19.45C6.95 19.87 7.28 20.2 7.7 20.2H8.47C8.89 20.2 9.22 19.87 9.22 19.45V18.68C9.22 17.16 10.48 15.9 12 15.9C13.52 15.9 14.78 17.16 14.78 18.68V19.45C14.78 19.87 15.11 20.2 15.53 20.2H16.3C16.72 20.2 17.05 19.87 17.05 19.45V18.68C17.05 15.91 14.77 13.63 12 13.63Z" styleClass="user-avatar-icon" />
+                           </children>
+                        </StackPane>
+                        <VBox spacing="2.0">
+                           <children>
+                              <Label styleClass="user-greeting" text="Bienvenido" />
+                              <Label styleClass="user-name" text="Juan Pérez" />
+                           </children>
+                        </VBox>
+                     </children>
+                  </HBox>
+                  <Button mnemonicParsing="false" onAction="#exit" styleClass="logout-button" text="Salir">
+                     <graphic>
+                        <SVGPath content="M7.3 5.5H11.3V7.1H8.9V16.9H11.3V18.5H7.3V5.5ZM12.8 8.0L17.8 12.0L12.8 16.0V13.5H9.9V10.5H12.8V8.0Z" styleClass="logout-icon" />
+                     </graphic>
+                  </Button>
+               </children>
+            </HBox>
          </children>
+         <padding>
+            <Insets bottom="16.0" left="30.0" right="38.0" top="16.0" />
+         </padding>
       </HBox>
-   </children>
-   <padding>
-      <Insets bottom="16.0" left="16.0" right="16.0" top="16.0" />
-   </padding>
-</VBox>
+   </top>
+   <center>
+      <VBox spacing="38.0" styleClass="page">
+         <children>
+            <VBox spacing="13.0">
+               <children>
+                  <Label styleClass="page-title" text="Panel de Control" />
+                  <Label styleClass="page-subtitle" text="Evalúa proyectos, registra tu participación y consulta resultados en tiempo real" wrapText="true" />
+               </children>
+            </VBox>
+            <HBox spacing="30.0">
+               <children>
+                  <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#vote" prefHeight="228.0" prefWidth="392.0" text="" HBox.hgrow="ALWAYS">
+                     <styleClass>
+                        <String fx:value="action-card" />
+                        <String fx:value="action-card-blue" />
+                     </styleClass>
+                     <graphic>
+                        <VBox alignment="CENTER" fillWidth="false" spacing="20.0">
+                           <children>
+                              <StackPane prefHeight="82.0" prefWidth="82.0">
+                                 <styleClass>
+                                    <String fx:value="card-icon" />
+                                    <String fx:value="card-icon-blue" />
+                                 </styleClass>
+                                 <children>
+                                    <SVGPath content="M8 6.5H18C18.83 6.5 19.5 7.17 19.5 8V18C19.5 18.83 18.83 19.5 18 19.5H8C7.17 19.5 6.5 18.83 6.5 18V8C6.5 7.17 7.17 6.5 8 6.5ZM8 8V18H18V8H8ZM10.1 13.1L11.85 11.35L13.65 13.15L17.1 9.7L18.85 11.45L13.65 16.65L10.1 13.1ZM5 20.5H21V23H5V20.5Z" styleClass="card-vector-icon" />
+                                 </children>
+                              </StackPane>
+                              <VBox alignment="CENTER" spacing="10.0">
+                                 <children>
+                                    <Label styleClass="card-title" text="Votar" />
+                                    <Label styleClass="card-subtitle" text="Evalúa proyectos participantes" wrapText="true" />
+                                 </children>
+                              </VBox>
+                           </children>
+                        </VBox>
+                     </graphic>
+                  </Button>
+                  <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#register" prefHeight="228.0" prefWidth="392.0" text="" HBox.hgrow="ALWAYS">
+                     <styleClass>
+                        <String fx:value="action-card" />
+                        <String fx:value="action-card-green" />
+                     </styleClass>
+                     <graphic>
+                        <VBox alignment="CENTER" fillWidth="false" spacing="20.0">
+                           <children>
+                              <StackPane prefHeight="82.0" prefWidth="82.0">
+                                 <styleClass>
+                                    <String fx:value="card-icon" />
+                                    <String fx:value="card-icon-green" />
+                                 </styleClass>
+                                 <children>
+                                    <SVGPath content="M10.6 12.2C12.4 12.2 13.85 10.75 13.85 8.95C13.85 7.15 12.4 5.7 10.6 5.7C8.8 5.7 7.35 7.15 7.35 8.95C7.35 10.75 8.8 12.2 10.6 12.2ZM17.95 11.2C19.42 11.2 20.6 10.02 20.6 8.55C20.6 7.08 19.42 5.9 17.95 5.9C16.48 5.9 15.3 7.08 15.3 8.55C15.3 10.02 16.48 11.2 17.95 11.2ZM10.6 14.2C7.7 14.2 5.35 16.55 5.35 19.45V20.55C5.35 21.07 5.78 21.5 6.3 21.5H7.15C7.67 21.5 8.1 21.07 8.1 20.55V19.45C8.1 18.05 9.2 16.95 10.6 16.95C12 16.95 13.1 18.05 13.1 19.45V20.55C13.1 21.07 13.53 21.5 14.05 21.5H14.9C15.42 21.5 15.85 21.07 15.85 20.55V19.45C15.85 16.55 13.5 14.2 10.6 14.2ZM17.95 13.35C17.08 13.35 16.25 13.52 15.5 13.85C16.52 14.98 17.15 16.47 17.15 18.1V20.55C17.15 21.07 17.58 21.5 18.1 21.5H18.95C19.47 21.5 19.9 21.07 19.9 20.55V18.95C19.9 15.85 21.12 16.1 17.95 13.35Z" styleClass="card-vector-icon" />
+                                 </children>
+                              </StackPane>
+                              <VBox alignment="CENTER" spacing="10.0">
+                                 <children>
+                                    <Label styleClass="card-title" text="Participar" />
+                                    <Label styleClass="card-subtitle" text="Registra tu proyecto" wrapText="true" />
+                                 </children>
+                              </VBox>
+                           </children>
+                        </VBox>
+                     </graphic>
+                  </Button>
+                  <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#viewResults" prefHeight="228.0" prefWidth="392.0" text="" HBox.hgrow="ALWAYS">
+                     <styleClass>
+                        <String fx:value="action-card" />
+                        <String fx:value="action-card-purple" />
+                     </styleClass>
+                     <graphic>
+                        <VBox alignment="CENTER" fillWidth="false" spacing="20.0">
+                           <children>
+                              <StackPane prefHeight="82.0" prefWidth="82.0">
+                                 <styleClass>
+                                    <String fx:value="card-icon" />
+                                    <String fx:value="card-icon-purple" />
+                                 </styleClass>
+                                 <children>
+                                    <SVGPath content="M6 6.5H8.6V19.4H20V22H6V6.5ZM10.8 12.2H13.4V18.4H10.8V12.2ZM15.4 8.3H18V18.4H15.4V8.3ZM20 11.1H22.6V18.4H20V11.1Z" styleClass="card-vector-icon" />
+                                 </children>
+                              </StackPane>
+                              <VBox alignment="CENTER" spacing="10.0">
+                                 <children>
+                                    <Label styleClass="card-title" text="Resultados" />
+                                    <Label styleClass="card-subtitle" text="Visualiza el ranking" wrapText="true" />
+                                 </children>
+                              </VBox>
+                           </children>
+                        </VBox>
+                     </graphic>
+                  </Button>
+               </children>
+            </HBox>
+            <HBox alignment="TOP_LEFT" spacing="18.0" styleClass="about-card">
+               <children>
+                  <StackPane maxHeight="40.0" minHeight="16.0" minWidth="40.0" prefHeight="16.0" prefWidth="40.0" styleClass="about-icon">
+                     <children>
+                        <SVGPath content="M12 3.8C7.48 3.8 3.8 7.48 3.8 12C3.8 16.52 7.48 20.2 12 20.2C16.52 20.2 20.2 16.52 20.2 12C20.2 7.48 16.52 3.8 12 3.8ZM12 18.1C8.64 18.1 5.9 15.36 5.9 12C5.9 8.64 8.64 5.9 12 5.9C15.36 5.9 18.1 8.64 18.1 12C18.1 15.36 15.36 18.1 12 18.1ZM11 10.5H13V16H11V10.5ZM11 7.8H13V9.4H11V7.8Z" styleClass="about-vector-icon" />
+                     </children>
+                  </StackPane>
+                  <VBox spacing="12.0">
+                     <children>
+                        <Label styleClass="about-title" text="Sobre Votify" />
+                        <Label styleClass="about-text" text="Votify es una plataforma de votación diseñada para entornos competitivos y colaborativos. Permite a organizadores, jurado y participantes evaluar proyectos de forma transparente, justa y eficiente, facilitando la toma de decisiones colaborativas en tiempo real." wrapText="true" />
+                     </children>
+                  </VBox>
+               </children>
+            </HBox>
+         </children>
+         <padding>
+            <Insets bottom="26.0" left="22.0" right="22.0" top="54.0" />
+         </padding>
+      </VBox>
+   </center>
+</BorderPane>

@@ -1,0 +1,185 @@
+.root {
+    -fx-background-color: linear-gradient(to bottom, #ffffff 0%, #fbfdff 22%, #f7fbff 100%);
+    -fx-font-family: "Segoe UI";
+}
+
+.top-bar {
+    -fx-background-color: #ffffff;
+    -fx-border-color: transparent transparent #e2e8f2 transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-effect: dropshadow(gaussian, rgba(29, 54, 95, 0.07), 18, 0.12, 0, 2);
+}
+
+.brand-icon {
+    -fx-background-color: transparent;
+}
+
+.brand-mark {
+    -fx-fill: linear-gradient(to bottom, #6fb5f2 0%, #2c72d8 100%);
+}
+
+.brand-title {
+    -fx-text-fill: #1b67b6;
+    -fx-font-size: 23px;
+    -fx-font-weight: 800;
+}
+
+.brand-subtitle {
+    -fx-text-fill: #6d7c91;
+    -fx-font-size: 7.5px;
+    -fx-font-weight: 600;
+}
+
+.user-pill {
+    -fx-background-color: #fbfdff;
+    -fx-background-radius: 14;
+    -fx-border-color: #d7e0eb;
+    -fx-border-radius: 14;
+    -fx-padding: 11 16 11 16;
+}
+
+.user-avatar {
+    -fx-background-color: linear-gradient(to bottom right, #2e83ff 0%, #1e57dd 100%);
+    -fx-background-radius: 22;
+    -fx-effect: dropshadow(gaussian, rgba(46, 131, 255, 0.2), 10, 0.16, 0, 2);
+}
+
+.user-avatar-icon {
+    -fx-fill: white;
+}
+
+.user-greeting {
+    -fx-text-fill: #7a8aa3;
+    -fx-font-size: 14px;
+}
+
+.user-name {
+    -fx-text-fill: #11284d;
+    -fx-font-size: 17px;
+    -fx-font-weight: 700;
+}
+
+.logout-button {
+    -fx-background-color: #ffffff;
+    -fx-text-fill: #162642;
+    -fx-font-size: 15px;
+    -fx-font-weight: 700;
+    -fx-padding: 13 18 13 18;
+    -fx-background-radius: 12;
+    -fx-border-color: #d8e0ea;
+    -fx-border-radius: 12;
+    -fx-border-width: 1;
+    -fx-cursor: hand;
+    -fx-content-display: left;
+    -fx-graphic-text-gap: 7;
+}
+
+.logout-button:hover {
+    -fx-background-color: #f8fbff;
+}
+
+.logout-icon {
+    -fx-fill: #23324d;
+}
+
+.page-title {
+    -fx-text-fill: #11274b;
+    -fx-font-size: 58px;
+    -fx-font-weight: 800;
+}
+
+.page-subtitle {
+    -fx-text-fill: #506986;
+    -fx-font-size: 19px;
+}
+
+.action-card {
+    -fx-background-radius: 21;
+    -fx-border-radius: 21;
+    -fx-border-width: 2;
+    -fx-padding: 30 28 30 28;
+    -fx-content-display: graphic-only;
+    -fx-alignment: center;
+    -fx-cursor: hand;
+}
+
+.action-card:hover {
+    -fx-translate-y: -1;
+}
+
+.action-card-blue {
+    -fx-background-color: #eef5ff;
+    -fx-border-color: #acd1ff;
+}
+
+.action-card-green {
+    -fx-background-color: #effcf1;
+    -fx-border-color: #98efb4;
+}
+
+.action-card-purple {
+    -fx-background-color: #fbf0ff;
+    -fx-border-color: #e6c1ff;
+}
+
+.card-icon {
+    -fx-background-radius: 21;
+    -fx-effect: dropshadow(gaussian, rgba(30, 54, 101, 0.12), 18, 0.18, 0, 5);
+}
+
+.card-icon-blue {
+    -fx-background-color: linear-gradient(to bottom right, #3b88ff 0%, #245fe9 100%);
+}
+
+.card-icon-green {
+    -fx-background-color: linear-gradient(to bottom right, #09cb52 0%, #02b346 100%);
+}
+
+.card-icon-purple {
+    -fx-background-color: linear-gradient(to bottom right, #c145ff 0%, #9928ee 100%);
+}
+
+.card-vector-icon {
+    -fx-fill: white;
+}
+
+.card-title {
+    -fx-text-fill: #15284b;
+    -fx-font-size: 22px;
+    -fx-font-weight: 800;
+}
+
+.card-subtitle {
+    -fx-text-fill: #5e7595;
+    -fx-font-size: 15px;
+}
+
+.about-card {
+    -fx-background-color: #f5f9ff;
+    -fx-border-color: #b7d5ff;
+    -fx-border-radius: 28;
+    -fx-background-radius: 28;
+    -fx-border-width: 2;
+    -fx-padding: 30 28 26 28;
+}
+
+.about-icon {
+    -fx-background-color: linear-gradient(to bottom right, #3e91ff 0%, #2666e9 100%);
+    -fx-background-radius: 29;
+}
+
+.about-vector-icon {
+    -fx-fill: white;
+}
+
+.about-title {
+    -fx-text-fill: #12274b;
+    -fx-font-size: 21px;
+    -fx-font-weight: 800;
+}
+
+.about-text {
+    -fx-text-fill: #4d6588;
+    -fx-font-size: 15px;
+    -fx-line-spacing: 5px;
+}

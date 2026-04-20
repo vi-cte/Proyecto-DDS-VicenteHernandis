@@ -7,30 +7,26 @@ import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
+import javafx.scene.control.SelectionMode;
 import javafx.stage.Stage;
 
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 
 public class VotingFormController {
-    private static final String BLANK_OPTION = "";
+    private static final int MAX_TEAMS_TO_VOTE = 3;
 
     private final ApiClient apiClient = new ApiClient();
 
     @FXML
-    private ComboBox<String> firstChoice;
-
-    @FXML
-    private ComboBox<String> secondChoice;
-
-    @FXML
-    private ComboBox<String> thirdChoice;
+    private ListView<String> participantList;
 
     @FXML
     private Label hintLabel;
+
+    @FXML
+    private Label selectionCountLabel;
 
     @FXML
     private Button submitButton;
@@ -39,56 +35,43 @@ public class VotingFormController {
     private void initialize() {
         try {
             List<String> participants = apiClient.getParticipants();
-            List<String> votingOptions = new java.util.ArrayList<>();
-            votingOptions.add(BLANK_OPTION);
-            votingOptions.addAll(participants);
-
-            firstChoice.setItems(FXCollections.observableArrayList(votingOptions));
-            secondChoice.setItems(FXCollections.observableArrayList(votingOptions));
-            thirdChoice.setItems(FXCollections.observableArrayList(votingOptions));
-
-            firstChoice.setValue(BLANK_OPTION);
-            secondChoice.setValue(BLANK_OPTION);
-            thirdChoice.setValue(BLANK_OPTION);
+            participantList.setItems(FXCollections.observableArrayList(participants));
+            participantList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+            participantList.getSelectionModel().getSelectedItems().addListener(
+                    (javafx.collections.ListChangeListener<String>) change -> enforceSelectionLimit()
+            );
+            hintLabel.setText("Selecciona hasta " + MAX_TEAMS_TO_VOTE + " equipos diferentes de la lista.");
+            updateSelectionCountLabel();
 
             if (participants.isEmpty()) {
                 hintLabel.setText("Todavia no hay participantes registrados.");
                 submitButton.setDisable(true);
+                participantList.setDisable(true);
             }
         } catch (ApiClientException e) {
             hintLabel.setText("No se pudo cargar la lista de participantes.");
             submitButton.setDisable(true);
+            participantList.setDisable(true);
             showError(e.getMessage());
         }
     }
 
-    // Mantiene el orden de seleccion y detecta duplicados antes de enviar el voto.
     @FXML
     private void submitVote() {
-        Set<String> choiceSelections = new LinkedHashSet<>();
-        if (isValidChoice(firstChoice.getValue())) {
-            choiceSelections.add(firstChoice.getValue());
-        }
-        if (isValidChoice(secondChoice.getValue())) {
-            choiceSelections.add(secondChoice.getValue());
-        }
-        if (isValidChoice(thirdChoice.getValue())) {
-            choiceSelections.add(thirdChoice.getValue());
-        }
+        List<String> selectedTeams = List.copyOf(participantList.getSelectionModel().getSelectedItems());
 
-        if (choiceSelections.isEmpty()) {
-            showError("Selecciona al menos un participante.");
+        if (selectedTeams.isEmpty()) {
+            showError("Selecciona al menos un equipo.");
             return;
         }
 
-        int totalSelected = countSelectedValues();
-        if (choiceSelections.size() != totalSelected) {
-            showError("No se permiten opciones duplicadas.");
+        if (selectedTeams.size() > MAX_TEAMS_TO_VOTE) {
+            showError("Solo puedes votar a " + MAX_TEAMS_TO_VOTE + " equipos.");
             return;
         }
 
         try {
-            VoteResponse response = apiClient.createVotes(List.copyOf(choiceSelections));
+            VoteResponse response = apiClient.createVotes(selectedTeams);
             Alert success = new Alert(Alert.AlertType.INFORMATION);
             success.setContentText("Votos registrados: " + response.getRecordedVotes());
             success.showAndWait();
@@ -98,22 +81,18 @@ public class VotingFormController {
         }
     }
 
-    private int countSelectedValues() {
-        int count = 0;
-        if (isValidChoice(firstChoice.getValue())) {
-            count++;
+    private void enforceSelectionLimit() {
+        var selectionModel = participantList.getSelectionModel();
+        while (selectionModel.getSelectedItems().size() > MAX_TEAMS_TO_VOTE) {
+            int lastIndex = selectionModel.getSelectedIndices().get(selectionModel.getSelectedIndices().size() - 1);
+            selectionModel.clearSelection(lastIndex);
         }
-        if (isValidChoice(secondChoice.getValue())) {
-            count++;
-        }
-        if (isValidChoice(thirdChoice.getValue())) {
-            count++;
-        }
-        return count;
+        updateSelectionCountLabel();
     }
 
-    private boolean isValidChoice(String value) {
-        return value != null && !value.isBlank() && !BLANK_OPTION.equals(value);
+    private void updateSelectionCountLabel() {
+        int selectedCount = participantList.getSelectionModel().getSelectedItems().size();
+        selectionCountLabel.setText(selectedCount + " seleccionados de " + MAX_TEAMS_TO_VOTE);
     }
 
     @FXML
