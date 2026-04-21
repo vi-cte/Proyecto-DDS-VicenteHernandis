@@ -1,6 +1,8 @@
 package com.votify.frontend.controller;
 
 import javafx.fxml.FXML;
+import javafx.scene.control.Button;
+import javafx.stage.Stage;
 
 /**
  * Controlador para el menú principal de la aplicación de votación. Este controlador maneja las acciones de los botones
@@ -14,18 +16,24 @@ public class MainMenuController {
     private final ResultsController resultsController = new ResultsController();
 
     @FXML
+    private Button voteButton;
+
+    @FXML
     private void vote() {
-        votingController.performVoting();
+        Stage stage = (Stage) voteButton.getScene().getWindow();
+        votingController.performVoting(stage);
     }
 
     @FXML
     private void register() {
-        registrationController.performRegistration();
+        Stage stage = (Stage) voteButton.getScene().getWindow();
+        registrationController.performRegistration(stage);
     }
 
     @FXML
     private void viewResults() {
-        resultsController.viewResults();
+        Stage stage = (Stage) voteButton.getScene().getWindow();
+        resultsController.viewResults(stage);
     }
 
     @FXML

@@ -5,18 +5,20 @@ import java.util.List;
 public class ParticipantRequest {
     private String teamName;
     private String email;
-    private String address;
     private String phone;
+    private String description;
+    private String logo;
     private List<String> members;
 
     public ParticipantRequest() {
     }
 
-    public ParticipantRequest(String teamName, String email, String address, String phone, List<String> members) {
+    public ParticipantRequest(String teamName, String email, String phone, String description, String logo, List<String> members) {
         this.teamName = teamName;
         this.email = email;
-        this.address = address;
         this.phone = phone;
+        this.description = description;
+        this.logo = logo;
         this.members = members;
     }
 
@@ -36,20 +38,28 @@ public class ParticipantRequest {
         this.email = email;
     }
 
-    public String getAddress() {
-        return address;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
-    }
-
     public String getPhone() {
         return phone;
     }
 
     public void setPhone(String phone) {
         this.phone = phone;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getLogo() {
+        return logo;
+    }
+
+    public void setLogo(String logo) {
+        this.logo = logo;
     }
 
     public List<String> getMembers() {

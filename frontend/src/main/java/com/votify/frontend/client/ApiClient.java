@@ -33,8 +33,8 @@ public class ApiClient {
         this.baseUrl = System.getenv().getOrDefault("VOTIFY_API_BASE", "http://localhost:8080/api");
     }
 
-    public void createParticipant(String teamName, String email, String address, String phone, List<String> members) {
-        ParticipantRequest requestBody = new ParticipantRequest(teamName, email, address, phone, members);
+    public void createParticipant(String teamName, String email, String phone, String description, String logoBase64, List<String> members) {
+        ParticipantRequest requestBody = new ParticipantRequest(teamName, email, phone, description, logoBase64, members);
         String json;
         try {
             json = MAPPER.writeValueAsString(requestBody);
@@ -57,6 +57,17 @@ public class ApiClient {
     }
 
     public List<String> getParticipants() {
+        List<ParticipantResponse> participants = getParticipantResponses();
+        List<String> names = new ArrayList<>();
+        for (ParticipantResponse participant : participants) {
+            if (participant.getTeamName() != null && !participant.getTeamName().isBlank()) {
+                names.add(participant.getTeamName());
+            }
+        }
+        return names;
+    }
+
+    public List<ParticipantResponse> getParticipantResponses() {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(baseUrl + "/participants"))
                 .GET()
@@ -69,13 +80,7 @@ public class ApiClient {
 
         try {
             ParticipantResponse[] participants = MAPPER.readValue(response.body(), ParticipantResponse[].class);
-            List<String> names = new ArrayList<>();
-            for (ParticipantResponse participant : participants) {
-                if (participant.getTeamName() != null && !participant.getTeamName().isBlank()) {
-                    names.add(participant.getTeamName());
-                }
-            }
-            return names;
+            return List.of(participants);
         } catch (Exception e) {
             throw new ApiClientException("No se pudo procesar la respuesta de participantes");
         }

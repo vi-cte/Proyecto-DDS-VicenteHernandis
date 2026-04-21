@@ -6,8 +6,9 @@ public class ParticipantResponse {
     private Long id;
     private String teamName;
     private String email;
-    private String address;
     private String phone;
+    private String description;
+    private String logo;
     private List<String> members;
 
     public ParticipantResponse() {
@@ -37,20 +38,28 @@ public class ParticipantResponse {
         this.email = email;
     }
 
-    public String getAddress() {
-        return address;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
-    }
-
     public String getPhone() {
         return phone;
     }
 
     public void setPhone(String phone) {
         this.phone = phone;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getLogo() {
+        return logo;
+    }
+
+    public void setLogo(String logo) {
+        this.logo = logo;
     }
 
     public List<String> getMembers() {

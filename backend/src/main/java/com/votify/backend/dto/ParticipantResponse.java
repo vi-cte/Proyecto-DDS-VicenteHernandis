@@ -7,8 +7,9 @@ public record ParticipantResponse(
         Long id,
         String teamName,
         String email,
-        String address,
         String phone,
+        String description,
+        String logo,
         List<String> members
 ) {
 }

@@ -8,6 +8,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Lob;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
@@ -19,25 +20,27 @@ import java.util.List;
 y su lista de miembros en tabla participant_members como @ElementCollection.*/
 
 @Entity
-@Table(name = "participants", uniqueConstraints = {
-        @UniqueConstraint(name = "uk_participant_team_name", columnNames = "team_name")
-})
+@Table(name = "participants")
 public class ParticipantEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "team_name", nullable = false, length = 120)
+    @Column(name = "team_name", nullable = false, length = 120, unique = true)
     private String teamName;
 
     @Column(nullable = false, length = 180)
     private String email;
 
-    @Column(length = 240)
-    private String address;
-
     @Column(length = 40)
     private String phone;
+
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
+    @Lob
+    @Column(length = 10485760) // Soporta hasta ~10MB en Base64
+    private String logo;
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "participant_members", joinColumns = @JoinColumn(name = "participant_id"))
@@ -64,20 +67,28 @@ public class ParticipantEntity {
         this.email = email;
     }
 
-    public String getAddress() {
-        return address;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
-    }
-
     public String getPhone() {
         return phone;
     }
 
     public void setPhone(String phone) {
         this.phone = phone;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getLogo() {
+        return logo;
+    }
+
+    public void setLogo(String logo) {
+        this.logo = logo;
     }
 
     public List<String> getMembers() {

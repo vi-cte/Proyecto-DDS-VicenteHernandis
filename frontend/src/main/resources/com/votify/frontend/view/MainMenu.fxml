@@ -78,7 +78,7 @@
             </VBox>
             <HBox spacing="30.0">
                <children>
-                  <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#vote" prefHeight="228.0" prefWidth="392.0" text="" HBox.hgrow="ALWAYS">
+                  <Button fx:id="voteButton" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#vote" prefHeight="228.0" prefWidth="392.0" text="" HBox.hgrow="ALWAYS">
                      <styleClass>
                         <String fx:value="action-card" />
                         <String fx:value="action-card-blue" />

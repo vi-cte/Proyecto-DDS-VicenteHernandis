@@ -12,8 +12,9 @@ public record ParticipantRequest(
         @NotBlank(message = "El correo es obligatorio")
         @Email(message = "Formato de correo no valido")
         String email,
-        String address,
         String phone,
+        String description,
+        String logo,
         List<String> members
 ) {
 }

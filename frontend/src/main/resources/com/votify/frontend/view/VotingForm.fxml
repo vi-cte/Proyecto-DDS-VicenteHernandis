@@ -4,34 +4,115 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Priority?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
-<?import javafx.scene.text.Font?>
+<?import javafx.scene.shape.SVGPath?>
 
-<VBox spacing="12.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.votify.frontend.controller.VotingFormController">
-   <children>
-      <Label text="Emitir votos">
-         <font>
-            <Font name="Arial Bold" size="20.0" />
-         </font>
-      </Label>
-      <Label fx:id="hintLabel" text="Selecciona los equipos que quieres votar en la lista." wrapText="true" />
-      <VBox spacing="8.0" VBox.vgrow="ALWAYS">
+<BorderPane prefHeight="768.0" prefWidth="1365.0" stylesheets="@VotingForm.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.votify.frontend.controller.VotingFormController">
+   <top>
+      <VBox>
          <children>
-            <Label text="Equipos participantes" />
-            <ListView fx:id="participantList" prefHeight="260.0" prefWidth="320.0" VBox.vgrow="ALWAYS" />
-            <Label fx:id="selectionCountLabel" text="0 seleccionados" />
+            <HBox alignment="CENTER_LEFT" prefHeight="100.0" spacing="18.0" styleClass="top-bar">
+               <padding>
+                  <Insets bottom="16.0" left="30.0" right="38.0" top="16.0" />
+               </padding>
+               <children>
+                  <VBox spacing="1.0" styleClass="brand-block">
+                     <children>
+                        <HBox alignment="CENTER_LEFT" spacing="9.0">
+                           <children>
+                              <ImageView fitHeight="70.0" fitWidth="250.0" pickOnBounds="true" preserveRatio="true" styleClass="brand-logo">
+                                 <image>
+                                    <Image url="@Logo%20Votify.png" />
+                                 </image>
+                              </ImageView>
+                              <VBox managed="false" spacing="-1.0" visible="false">
+                                 <children>
+                                    <Label styleClass="brand-title" text="Votify" />
+                                    <Label styleClass="brand-subtitle" text="Empowering Participation" />
+                                 </children>
+                              </VBox>
+                           </children>
+                        </HBox>
+                     </children>
+                  </VBox>
+                  <Region HBox.hgrow="ALWAYS" />
+                  <HBox alignment="CENTER_RIGHT" spacing="14.0">
+                     <children>
+                        <HBox alignment="CENTER_LEFT" spacing="14.0" styleClass="user-pill">
+                           <children>
+                              <StackPane prefHeight="44.0" prefWidth="44.0" styleClass="user-avatar">
+                                 <children>
+                                    <SVGPath content="M12 12.1C13.7 12.1 15.05 10.72 15.05 9.03C15.05 7.34 13.7 5.96 12 5.96C10.3 5.96 8.95 7.34 8.95 9.03C8.95 10.72 10.3 12.1 12 12.1ZM12 13.63C9.23 13.63 6.95 15.91 6.95 18.68V19.45C6.95 19.87 7.28 20.2 7.7 20.2H8.47C8.89 20.2 9.22 19.87 9.22 19.45V18.68C9.22 17.16 10.48 15.9 12 15.9C13.52 15.9 14.78 17.16 14.78 18.68V19.45C14.78 19.87 15.11 20.2 15.53 20.2H16.3C16.72 20.2 17.05 19.87 17.05 19.45V18.68C17.05 15.91 14.77 13.63 12 13.63Z" styleClass="user-avatar-icon" />
+                                 </children>
+                              </StackPane>
+                              <VBox spacing="2.0">
+                                 <children>
+                                    <Label styleClass="user-greeting" text="Bienvenido" />
+                                    <Label styleClass="user-name" text="Juan Pérez" />
+                                 </children>
+                              </VBox>
+                           </children>
+                        </HBox>
+                        <Button mnemonicParsing="false" onAction="#exit" styleClass="logout-button" text="Salir">
+                           <graphic>
+                              <SVGPath content="M7.3 5.5H11.3V7.1H8.9V16.9H11.3V18.5H7.3V5.5ZM12.8 8.0L17.8 12.0L12.8 16.0V13.5H9.9V10.5H12.8V8.0Z" styleClass="logout-icon" />
+                           </graphic>
+                        </Button>
+                     </children>
+                  </HBox>
+               </children>
+            </HBox>
+            <VBox spacing="8.0" styleClass="vote-header">
+               <children>
+                  <HBox alignment="CENTER_LEFT">
+                     <children>
+                        <Button mnemonicParsing="false" onAction="#goBack" styleClass="back-button" text="Volver" />
+                        <Region HBox.hgrow="ALWAYS" />
+                     </children>
+                  </HBox>
+                  <Label alignment="CENTER" maxWidth="1.7976931348623157E308" styleClass="vote-title" text="Votación de Equipos" />
+                  <Label alignment="CENTER" fx:id="hintLabel" maxWidth="1.7976931348623157E308" styleClass="vote-subtitle" text="Selecciona hasta 3 equipos para votar" />
+               </children>
+               <padding>
+                  <Insets bottom="0.0" left="38.0" right="38.0" top="26.0" />
+               </padding>
+            </VBox>
          </children>
       </VBox>
-      <HBox spacing="10.0">
+   </top>
+   <center>
+      <VBox spacing="18.0" styleClass="vote-page">
          <children>
-            <Button fx:id="submitButton" defaultButton="true" onAction="#submitVote" text="Enviar voto" />
-            <Button cancelButton="true" onAction="#closeWindow" text="Cancelar" />
+            <StackPane styleClass="summary-card">
+               <children>
+                  <VBox alignment="CENTER_LEFT" spacing="6.0">
+                     <children>
+                        <Label styleClass="summary-caption" text="Votos seleccionados" />
+                        <Label fx:id="selectionCountLabel" styleClass="summary-value" text="0 / 3" />
+                     </children>
+                  </VBox>
+               </children>
+               <padding>
+                  <Insets bottom="18.0" left="18.0" right="18.0" top="18.0" />
+               </padding>
+            </StackPane>
+            <ListView fx:id="participantList" VBox.vgrow="ALWAYS" styleClass="vote-list" />
+            <HBox alignment="CENTER">
+               <children>
+                  <Button fx:id="submitButton" defaultButton="true" mnemonicParsing="false" onAction="#submitVote" styleClass="submit-votes-button" text="Enviar Votos (0)" />
+               </children>
+            </HBox>
          </children>
-      </HBox>
-   </children>
-   <padding>
-      <Insets bottom="16.0" left="16.0" right="16.0" top="16.0" />
-   </padding>
-</VBox>
+         <padding>
+            <Insets bottom="26.0" left="38.0" right="38.0" top="18.0" />
+         </padding>
+      </VBox>
+   </center>
+</BorderPane>

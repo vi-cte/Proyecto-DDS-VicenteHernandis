@@ -29,8 +29,9 @@ public class ParticipantService {
         ParticipantEntity entity = new ParticipantEntity();
         entity.setTeamName(normalizedTeamName);
         entity.setEmail(request.email().trim());
-        entity.setAddress(trimToNull(request.address()));
         entity.setPhone(trimToNull(request.phone()));
+        entity.setDescription(trimToNull(request.description()));
+        entity.setLogo(trimToNull(request.logo()));
         entity.setMembers(request.members());
 
         ParticipantEntity saved = participantRepository.save(entity);
@@ -60,8 +61,9 @@ public class ParticipantService {
                 entity.getId(),
                 entity.getTeamName(),
                 entity.getEmail(),
-                entity.getAddress(),
                 entity.getPhone(),
+                entity.getDescription(),
+                entity.getLogo(),
                 entity.getMembers()
         );
     }
