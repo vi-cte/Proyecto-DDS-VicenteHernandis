@@ -60,7 +60,8 @@ public class VotingFormController {
                     .filter(participant -> participant.getTeamName() != null && !participant.getTeamName().isBlank())
                     .map(participant -> new VoteCandidateItem(
                             participant.getTeamName(),
-                            buildSubtitle(participant)
+                            buildSubtitle(participant),
+                            participant
                     ))
                     .toList();
 
@@ -181,6 +182,13 @@ public class VotingFormController {
             checkBox.setMouseTransparent(true);
 
             titleLabel.getStyleClass().add("vote-team-name");
+            // Estilo extra para simular un enlace
+            titleLabel.setStyle("-fx-text-fill: #2962ff; -fx-cursor: hand;");
+            titleLabel.setOnMouseClicked(event -> {
+                event.consume(); // Previene que el CheckBox reaccione
+                com.votify.frontend.ui.TeamInfoDialog.show(getItem().participant());
+            });
+
             subtitleLabel.getStyleClass().add("vote-team-subtitle");
             subtitleLabel.setWrapText(true);
 
@@ -209,6 +217,6 @@ public class VotingFormController {
         }
     }
 
-    private record VoteCandidateItem(String teamName, String subtitle) {
+    private record VoteCandidateItem(String teamName, String subtitle, ParticipantResponse participant) {
     }
 }

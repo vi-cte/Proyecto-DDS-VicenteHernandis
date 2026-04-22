@@ -344,17 +344,7 @@
     -fx-cursor: hand;
 }
 
-.app-alert-error {
-    -fx-border-color: #f2c8c8;
-}
 
-.app-alert-info {
-    -fx-border-color: #cfe0ff;
-}
-
-.app-alert-warning {
-    -fx-border-color: #f0deb3;
-}
 
 .vote-title {
     -fx-text-fill: #11274b;

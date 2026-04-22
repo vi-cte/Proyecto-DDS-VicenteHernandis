@@ -1,7 +1,9 @@
 package com.votify.frontend.results.strategy;
 
+import com.votify.frontend.client.ApiClient;
 import com.votify.frontend.dto.ResultItemResponse;
 import com.votify.frontend.results.ResultsViewData;
+import com.votify.frontend.ui.TeamInfoDialog;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
@@ -13,6 +15,9 @@ import javafx.scene.layout.VBox;
 import javafx.scene.shape.SVGPath;
 
 public class RankingResultsViewStrategy implements ResultsViewStrategy {
+
+    private final ApiClient apiClient = new ApiClient();
+
     @Override
     public String id() {
         return "ranking";
@@ -55,6 +60,17 @@ public class RankingResultsViewStrategy implements ResultsViewStrategy {
         HBox.setHgrow(teamBox, Priority.ALWAYS);
         Label teamName = new Label(item.getTeamName());
         teamName.getStyleClass().add("ranking-team-name");
+        
+        // Estilo y evento de clic para abrir la vista previa del equipo
+        teamName.setStyle("-fx-text-fill: #2962ff; -fx-cursor: hand;");
+        teamName.setOnMouseClicked(event -> {
+            try {
+                apiClient.getParticipantResponses().stream()
+                        .filter(p -> p.getTeamName() != null && p.getTeamName().equals(item.getTeamName()))
+                        .findFirst()
+                        .ifPresent(TeamInfoDialog::show);
+            } catch (Exception ignored) {}
+        });
         teamBox.getChildren().add(teamName);
 
         VBox scoreBox = new VBox(2);

@@ -1,5 +1,8 @@
 package com.votify.frontend.controller;
 
+import com.votify.frontend.client.ApiClient;
+import com.votify.frontend.exception.ApiClientException;
+import com.votify.frontend.ui.AlertHelper;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.stage.Stage;
@@ -14,23 +17,30 @@ public class MainMenuController {
     private final VotingController votingController = new VotingController();
     private final RegistrationController registrationController = new RegistrationController();
     private final ResultsController resultsController = new ResultsController();
+    private final ApiClient apiClient = new ApiClient();
 
     @FXML
     private Button voteButton;
 
     @FXML
     private void vote() {
-        votingController.performVoting(currentStage());
+        if (checkConnection()) {
+            votingController.performVoting(currentStage());
+        }
     }
 
     @FXML
     private void register() {
-        registrationController.performRegistration(currentStage());
+        if (checkConnection()) {
+            registrationController.performRegistration(currentStage());
+        }
     }
 
     @FXML
     private void viewResults() {
-        resultsController.viewResults(currentStage());
+        if (checkConnection()) {
+            resultsController.viewResults(currentStage());
+        }
     }
 
     @FXML
@@ -40,5 +50,15 @@ public class MainMenuController {
 
     private Stage currentStage() {
         return (Stage) voteButton.getScene().getWindow();
+    }
+
+    private boolean checkConnection() {
+        try {
+            apiClient.getVotingLimit();
+            return true;
+        } catch (ApiClientException e) {
+            AlertHelper.showError(e.getMessage());
+            return false;
+        }
     }
 }
