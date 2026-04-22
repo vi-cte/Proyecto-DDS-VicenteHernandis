@@ -5,6 +5,7 @@ import com.votify.backend.dto.ResultItemResponse;
 import com.votify.backend.dto.ResultsResponse;
 import com.votify.backend.dto.VoteRequest;
 import com.votify.backend.dto.VoteResponse;
+import com.votify.backend.dto.VoteSettingsResponse;
 import com.votify.backend.entity.ParticipantEntity;
 import com.votify.backend.entity.VoteEntity;
 import com.votify.backend.exception.ApiException;
@@ -77,6 +78,11 @@ public class VoteService {
                 .map(item -> new ResultItemResponse(item.getTeamName(), item.getVotes()))
                 .toList();
         return new ResultsResponse(voteRepository.count(), results);
+    }
+
+    @Transactional(readOnly = true)
+    public VoteSettingsResponse getVoteSettings() {
+        return new VoteSettingsResponse(MAX_TEAMS_TO_VOTE);
     }
 
     private List<String> normalizeSelections(List<String> selections) {

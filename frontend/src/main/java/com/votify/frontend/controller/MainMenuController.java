@@ -20,24 +20,25 @@ public class MainMenuController {
 
     @FXML
     private void vote() {
-        Stage stage = (Stage) voteButton.getScene().getWindow();
-        votingController.performVoting(stage);
+        votingController.performVoting(currentStage());
     }
 
     @FXML
     private void register() {
-        Stage stage = (Stage) voteButton.getScene().getWindow();
-        registrationController.performRegistration(stage);
+        registrationController.performRegistration(currentStage());
     }
 
     @FXML
     private void viewResults() {
-        Stage stage = (Stage) voteButton.getScene().getWindow();
-        resultsController.viewResults(stage);
+        resultsController.viewResults(currentStage());
     }
 
     @FXML
     private void exit() {
         System.exit(0);
+    }
+
+    private Stage currentStage() {
+        return (Stage) voteButton.getScene().getWindow();
     }
 }

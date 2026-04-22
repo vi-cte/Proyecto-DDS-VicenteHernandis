@@ -1,0 +1,131 @@
+package com.votify.frontend.results.strategy;
+
+import com.votify.frontend.dto.ResultItemResponse;
+import com.votify.frontend.results.ResultsViewData;
+import javafx.geometry.Pos;
+import javafx.scene.Node;
+import javafx.scene.control.Label;
+import javafx.scene.control.ProgressBar;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
+import javafx.scene.shape.SVGPath;
+
+public class RankingResultsViewStrategy implements ResultsViewStrategy {
+    @Override
+    public String id() {
+        return "ranking";
+    }
+
+    @Override
+    public Node buildView(ResultsViewData data) {
+        VBox container = new VBox(18);
+        container.getStyleClass().add("results-ranking-list");
+
+        if (data.ranking().isEmpty()) {
+            container.getChildren().add(emptyState());
+            return container;
+        }
+
+        long totalVotes = Math.max(1, data.response().getTotalVotes());
+        for (int i = 0; i < data.ranking().size(); i++) {
+            ResultItemResponse item = data.ranking().get(i);
+            container.getChildren().add(rankCard(item, i + 1, totalVotes));
+        }
+        return container;
+    }
+
+    private Node rankCard(ResultItemResponse item, int position, long totalVotes) {
+        HBox card = new HBox(18);
+        card.getStyleClass().add("ranking-card");
+        card.setAlignment(Pos.CENTER_LEFT);
+
+        StackPane badge = new StackPane();
+        badge.getStyleClass().addAll("ranking-badge", badgeStyleClass(position));
+        badge.getChildren().add(badgeContent(position));
+
+        VBox center = new VBox(12);
+        HBox.setHgrow(center, Priority.ALWAYS);
+
+        HBox top = new HBox();
+        top.setAlignment(Pos.CENTER_LEFT);
+
+        VBox teamBox = new VBox(4);
+        HBox.setHgrow(teamBox, Priority.ALWAYS);
+        Label teamName = new Label(item.getTeamName());
+        teamName.getStyleClass().add("ranking-team-name");
+        teamBox.getChildren().add(teamName);
+
+        VBox scoreBox = new VBox(2);
+        scoreBox.setAlignment(Pos.CENTER_RIGHT);
+        Label votes = new Label(Long.toString(item.getVotes()));
+        votes.getStyleClass().add("ranking-votes");
+        scoreBox.getChildren().add(votes);
+
+        top.getChildren().addAll(teamBox, scoreBox);
+
+        HBox progressRow = new HBox(14);
+        progressRow.setAlignment(Pos.CENTER_LEFT);
+
+        double percentage = (item.getVotes() * 100.0) / totalVotes;
+        ProgressBar progressBar = new ProgressBar(item.getVotes() / (double) totalVotes);
+        progressBar.getStyleClass().add("ranking-progress");
+        HBox.setHgrow(progressBar, Priority.ALWAYS);
+        progressBar.setStyle("-fx-accent: " + progressColor(position) + ";");
+
+        Label percent = new Label(String.format(java.util.Locale.US, "%.1f%%", percentage));
+        percent.getStyleClass().add("ranking-percent");
+        progressRow.getChildren().addAll(progressBar, percent);
+
+        center.getChildren().addAll(top, progressRow);
+        card.getChildren().addAll(badge, center);
+        return card;
+    }
+
+    private Node badgeContent(int position) {
+        if (position <= 3) {
+            SVGPath trophy = new SVGPath();
+            trophy.setContent("M8 6H16V8H18C18.55 8 19 8.45 19 9V10C19 12.21 17.21 14 15 14H14.82C14.4 15.19 13.3 16.04 12 16.04C10.7 16.04 9.6 15.19 9.18 14H9C6.79 14 5 12.21 5 10V9C5 8.45 5.45 8 6 8H8V6ZM7 10C7 11.1 7.9 12 9 12V10H7ZM15 12C16.1 12 17 11.1 17 10H15V12ZM11 17H13V19H16V21H8V19H11V17Z");
+            trophy.getStyleClass().addAll("ranking-badge-cup", badgeCupStyleClass(position));
+            return trophy;
+        }
+
+        Label badgeLabel = new Label(Integer.toString(position));
+        badgeLabel.getStyleClass().add("ranking-badge-text");
+        return badgeLabel;
+    }
+
+    private String badgeStyleClass(int position) {
+        return switch (position) {
+            case 1 -> "ranking-badge-gold";
+            case 2 -> "ranking-badge-silver";
+            case 3 -> "ranking-badge-bronze";
+            default -> "ranking-badge-default";
+        };
+    }
+
+    private String badgeCupStyleClass(int position) {
+        return switch (position) {
+            case 1 -> "ranking-badge-cup-gold";
+            case 2 -> "ranking-badge-cup-silver";
+            case 3 -> "ranking-badge-cup-bronze";
+            default -> "ranking-badge-cup-default";
+        };
+    }
+
+    private String progressColor(int position) {
+        return switch (position) {
+            case 1 -> "#4a84f4";
+            case 2 -> "#23b785";
+            case 3 -> "#f2a54a";
+            default -> "#8da2c7";
+        };
+    }
+
+    private Node emptyState() {
+        Label label = new Label("No hay resultados para mostrar.");
+        label.getStyleClass().add("results-empty");
+        return label;
+    }
+}

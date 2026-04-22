@@ -2,15 +2,14 @@ package com.votify.frontend.controller;
 
 import com.votify.frontend.client.ApiClient;
 import com.votify.frontend.exception.ApiClientException;
+import com.votify.frontend.navigation.SceneNavigator;
+import com.votify.frontend.ui.AlertHelper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
-import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
@@ -29,7 +28,6 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
-import java.util.Objects;
 
 public class RegistrationFormController {
     private final ApiClient apiClient = new ApiClient();
@@ -122,9 +120,7 @@ public class RegistrationFormController {
 
         try {
             apiClient.createParticipant(team, email, phone, description, logoBase64, members);
-            Alert success = new Alert(Alert.AlertType.INFORMATION);
-            success.setContentText("Participante registrado: " + team);
-            success.showAndWait();
+            AlertHelper.showInfo("Participante registrado: " + team);
             goBack();
         } catch (ApiClientException e) {
             showError(e.getMessage());
@@ -141,33 +137,22 @@ public class RegistrationFormController {
     }
 
     @FXML
-private void exit() {
-    System.exit(0);
-}
+    private void exit() {
+        System.exit(0);
+    }
 
 
     @FXML
     private void goBack() {
         try {
-            Stage stage = (Stage) teamField.getScene().getWindow();
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/votify/frontend/view/MainMenu.fxml"));
-            Scene currentScene = stage.getScene();
-            Scene scene = new Scene(loader.load(), currentScene.getWidth(), currentScene.getHeight());
-            scene.getStylesheets().add(Objects.requireNonNull(
-                    RegistrationFormController.class.getResource("/com/votify/frontend/view/MainMenu.css")
-            ).toExternalForm());
-            stage.setTitle("Votify");
-            stage.setScene(scene);
-            stage.show();
+            SceneNavigator.showMainMenu((Stage) teamField.getScene().getWindow());
         } catch (IOException e) {
             showError("No se pudo volver al panel principal: " + e.getMessage());
         }
     }
 
     private void showError(String message) {
-        Alert error = new Alert(Alert.AlertType.ERROR);
-        error.setContentText(message);
-        error.showAndWait();
+        AlertHelper.showError(message);
     }
 
     private boolean validateForm() {

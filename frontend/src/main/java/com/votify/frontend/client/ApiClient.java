@@ -5,6 +5,7 @@ import com.votify.frontend.dto.ParticipantResponse;
 import com.votify.frontend.dto.ResultsResponse;
 import com.votify.frontend.dto.VoteRequest;
 import com.votify.frontend.dto.VoteResponse;
+import com.votify.frontend.dto.VoteSettingsResponse;
 import com.votify.frontend.exception.ErrorResponse;
 import com.votify.frontend.exception.ApiClientException;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -123,6 +124,25 @@ public class ApiClient {
             return MAPPER.readValue(response.body(), VoteResponse.class);
         } catch (Exception e) {
             throw new ApiClientException("No se pudo procesar la respuesta del voto");
+        }
+    }
+
+    public int getVotingLimit() {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(baseUrl + "/votes/settings"))
+                .GET()
+                .build();
+
+        HttpResponse<String> response = send(request);
+        if (response.statusCode() != 200) {
+            throw new ApiClientException(extractErrorMessage(response.body(), response.statusCode()));
+        }
+
+        try {
+            VoteSettingsResponse settings = MAPPER.readValue(response.body(), VoteSettingsResponse.class);
+            return settings.getMaxTeamsToVote();
+        } catch (Exception e) {
+            throw new ApiClientException("No se pudo procesar la configuración de votación");
         }
     }
 

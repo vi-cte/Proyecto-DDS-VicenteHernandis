@@ -1,11 +1,11 @@
 package com.votify.frontend.app;
 
+import com.votify.frontend.navigation.SceneNavigator;
 import javafx.application.Application;
-import javafx.fxml.FXMLLoader;
 import javafx.scene.image.Image;
-import javafx.scene.Scene;
 import javafx.stage.Stage;
 
+import java.io.IOException;
 import java.util.Objects;
 
 /**
@@ -16,20 +16,14 @@ import java.util.Objects;
  */
 public class VotingApp extends Application {
     @Override
-    public void start(Stage primaryStage) throws Exception {
-        FXMLLoader loader = new FXMLLoader(VotingApp.class.getResource("/com/votify/frontend/view/MainMenu.fxml"));
-        Scene scene = new Scene(loader.load(), 1365, 768);
-        scene.getStylesheets().add(Objects.requireNonNull(
-                VotingApp.class.getResource("/com/votify/frontend/view/MainMenu.css")
-        ).toExternalForm());
+    public void start(Stage primaryStage) throws IOException {
         primaryStage.setTitle("Votify");
         primaryStage.getIcons().add(new Image(Objects.requireNonNull(
                 VotingApp.class.getResourceAsStream("/com/votify/frontend/view/VotifyIcon.png")
         )));
         primaryStage.setMinWidth(1180);
         primaryStage.setMinHeight(720);
-        primaryStage.setScene(scene);
-        primaryStage.show();
+        SceneNavigator.showMainMenu(primaryStage);
     }
 
     public static void main(String[] args) {

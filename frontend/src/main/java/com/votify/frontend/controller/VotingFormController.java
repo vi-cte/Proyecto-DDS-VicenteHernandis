@@ -4,33 +4,34 @@ import com.votify.frontend.client.ApiClient;
 import com.votify.frontend.dto.ParticipantResponse;
 import com.votify.frontend.dto.VoteResponse;
 import com.votify.frontend.exception.ApiClientException;
+import com.votify.frontend.navigation.SceneNavigator;
+import com.votify.frontend.ui.AlertHelper;
 import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
-import javafx.scene.Scene;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
-import javafx.scene.control.SelectionMode;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Region;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Objects;
+import java.util.Set;
 
 public class VotingFormController {
-    private static final int MAX_TEAMS_TO_VOTE = 3;
+    private static final int FALLBACK_MAX_TEAMS_TO_VOTE = 3;
 
     private final ApiClient apiClient = new ApiClient();
+    private final Set<String> selectedTeamNames = new LinkedHashSet<>();
+
+    private int maxTeamsToVote = FALLBACK_MAX_TEAMS_TO_VOTE;
 
     @FXML
     private ListView<VoteCandidateItem> participantList;
@@ -46,15 +47,16 @@ public class VotingFormController {
 
     @FXML
     private void initialize() {
-        participantList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         participantList.setCellFactory(listView -> new VoteCandidateCell());
-        participantList.getSelectionModel().getSelectedItems().addListener(
-                (ListChangeListener<VoteCandidateItem>) change -> updateSelectionState()
-        );
 
         try {
-            List<ParticipantResponse> participants = apiClient.getParticipantResponses();
-            List<VoteCandidateItem> items = participants.stream()
+            maxTeamsToVote = apiClient.getVotingLimit();
+        } catch (ApiClientException ignored) {
+            maxTeamsToVote = FALLBACK_MAX_TEAMS_TO_VOTE;
+        }
+
+        try {
+            List<VoteCandidateItem> items = apiClient.getParticipantResponses().stream()
                     .filter(participant -> participant.getTeamName() != null && !participant.getTeamName().isBlank())
                     .map(participant -> new VoteCandidateItem(
                             participant.getTeamName(),
@@ -63,7 +65,7 @@ public class VotingFormController {
                     .toList();
 
             participantList.setItems(FXCollections.observableArrayList(items));
-            hintLabel.setText("Selecciona hasta " + MAX_TEAMS_TO_VOTE + " equipos para votar");
+            hintLabel.setText("Selecciona hasta " + maxTeamsToVote + " equipos para votar");
 
             if (items.isEmpty()) {
                 hintLabel.setText("Todavía no hay equipos registrados para votar.");
@@ -82,8 +84,9 @@ public class VotingFormController {
 
     @FXML
     private void submitVote() {
-        List<String> selectedTeams = participantList.getSelectionModel().getSelectedItems().stream()
+        List<String> selectedTeams = participantList.getItems().stream()
                 .map(VoteCandidateItem::teamName)
+                .filter(selectedTeamNames::contains)
                 .toList();
 
         if (selectedTeams.isEmpty()) {
@@ -93,9 +96,7 @@ public class VotingFormController {
 
         try {
             VoteResponse response = apiClient.createVotes(selectedTeams);
-            Alert success = new Alert(Alert.AlertType.INFORMATION);
-            success.setContentText("Votos registrados: " + response.getRecordedVotes());
-            success.showAndWait();
+            AlertHelper.showInfo("Votos registrados: " + response.getRecordedVotes());
             goBack();
         } catch (ApiClientException e) {
             showError(e.getMessage());
@@ -105,16 +106,7 @@ public class VotingFormController {
     @FXML
     private void goBack() {
         try {
-            Stage stage = (Stage) submitButton.getScene().getWindow();
-            FXMLLoader loader = new FXMLLoader(VotingFormController.class.getResource("/com/votify/frontend/view/MainMenu.fxml"));
-            Scene currentScene = stage.getScene();
-            Scene scene = new Scene(loader.load(), currentScene.getWidth(), currentScene.getHeight());
-            scene.getStylesheets().add(Objects.requireNonNull(
-                    VotingFormController.class.getResource("/com/votify/frontend/view/MainMenu.css")
-            ).toExternalForm());
-            stage.setTitle("Votify");
-            stage.setScene(scene);
-            stage.show();
+            SceneNavigator.showMainMenu(currentStage());
         } catch (IOException e) {
             showError("No se pudo volver al panel principal: " + e.getMessage());
         }
@@ -125,19 +117,42 @@ public class VotingFormController {
         System.exit(0);
     }
 
+    private void toggleSelection(VoteCandidateItem item) {
+        if (item == null) {
+            return;
+        }
+
+        if (selectedTeamNames.contains(item.teamName())) {
+            selectedTeamNames.remove(item.teamName());
+            updateSelectionState();
+            participantList.refresh();
+            return;
+        }
+
+        if (selectedTeamNames.size() >= maxTeamsToVote) {
+            showError("Solo puedes seleccionar hasta " + maxTeamsToVote + " equipos.");
+            participantList.refresh();
+            return;
+        }
+
+        selectedTeamNames.add(item.teamName());
+        updateSelectionState();
+        participantList.refresh();
+    }
+
     private void updateSelectionState() {
-        int selectedCount = participantList.getSelectionModel().getSelectedItems().size();
-        selectionCountLabel.setText(selectedCount + " / " + MAX_TEAMS_TO_VOTE);
+        int selectedCount = selectedTeamNames.size();
+        selectionCountLabel.setText(selectedCount + " / " + maxTeamsToVote);
         submitButton.setText("Enviar Votos (" + selectedCount + ")");
         submitButton.setDisable(selectedCount == 0);
     }
 
     private String buildSubtitle(ParticipantResponse participant) {
-        if (participant.getMembers() != null && !participant.getMembers().isEmpty()) {
-            return "Integrantes: " + String.join(", ", participant.getMembers());
-        }
         if (participant.getDescription() != null && !participant.getDescription().isBlank()) {
             return participant.getDescription();
+        }
+        if (participant.getMembers() != null && !participant.getMembers().isEmpty()) {
+            return "Integrantes: " + String.join(", ", participant.getMembers());
         }
         if (participant.getEmail() != null && !participant.getEmail().isBlank()) {
             return participant.getEmail();
@@ -145,10 +160,12 @@ public class VotingFormController {
         return "Equipo participante registrado en Votify";
     }
 
+    private Stage currentStage() {
+        return (Stage) submitButton.getScene().getWindow();
+    }
+
     private void showError(String message) {
-        Alert error = new Alert(Alert.AlertType.ERROR);
-        error.setContentText(message);
-        error.showAndWait();
+        AlertHelper.showError(message);
     }
 
     private final class VoteCandidateCell extends ListCell<VoteCandidateItem> {
@@ -161,26 +178,20 @@ public class VotingFormController {
         private VoteCandidateCell() {
             checkBox.getStyleClass().add("vote-checkbox");
             checkBox.setFocusTraversable(false);
+            checkBox.setMouseTransparent(true);
 
             titleLabel.getStyleClass().add("vote-team-name");
             subtitleLabel.getStyleClass().add("vote-team-subtitle");
             subtitleLabel.setWrapText(true);
 
             textBox.getChildren().addAll(titleLabel, subtitleLabel);
-            HBox.setHgrow(textBox, javafx.scene.layout.Priority.ALWAYS);
+            HBox.setHgrow(textBox, Priority.ALWAYS);
             root.setAlignment(Pos.CENTER_LEFT);
             root.getStyleClass().add("vote-row");
             root.getChildren().addAll(checkBox, textBox);
+            root.setOnMouseClicked(event -> toggleSelection(getItem()));
 
             setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
-            setGraphic(root);
-
-            this.addEventFilter(javafx.scene.input.MouseEvent.MOUSE_PRESSED, event -> {
-                if (event.getButton() == javafx.scene.input.MouseButton.PRIMARY && getItem() != null) {
-                    event.consume(); // Bloquea la selección por defecto de JavaFX
-                    toggleSelection();
-                }
-            });
         }
 
         @Override
@@ -193,35 +204,8 @@ public class VotingFormController {
 
             titleLabel.setText(item.teamName());
             subtitleLabel.setText(item.subtitle());
-            checkBox.setSelected(getListView().getSelectionModel().isSelected(getIndex()));
+            checkBox.setSelected(selectedTeamNames.contains(item.teamName()));
             setGraphic(root);
-        }
-
-        @Override
-        public void updateSelected(boolean selected) {
-            super.updateSelected(selected);
-            checkBox.setSelected(selected);
-        }
-
-        private void toggleSelection() {
-            if (getItem() == null) {
-                return;
-            }
-
-            var selectionModel = getListView().getSelectionModel();
-            int index = getIndex();
-            if (selectionModel.isSelected(index)) {
-                selectionModel.clearSelection(index);
-                return;
-            }
-
-            if (selectionModel.getSelectedIndices().size() >= MAX_TEAMS_TO_VOTE) {
-                showError("Solo puedes seleccionar hasta " + MAX_TEAMS_TO_VOTE + " equipos.");
-                checkBox.setSelected(false);
-                return;
-            }
-
-            selectionModel.select(index);
         }
     }
 

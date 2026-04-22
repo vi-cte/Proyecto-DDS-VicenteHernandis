@@ -3,6 +3,7 @@ package com.votify.backend.controller;
 import com.votify.backend.dto.ResultsResponse;
 import com.votify.backend.dto.VoteRequest;
 import com.votify.backend.dto.VoteResponse;
+import com.votify.backend.dto.VoteSettingsResponse;
 import com.votify.backend.service.VoteService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -34,5 +35,10 @@ public class VoteController {
     @GetMapping("/results")
     public ResultsResponse getResults() {
         return voteService.getResults();
+    }
+
+    @GetMapping("/votes/settings")
+    public VoteSettingsResponse getVoteSettings() {
+        return voteService.getVoteSettings();
     }
 }

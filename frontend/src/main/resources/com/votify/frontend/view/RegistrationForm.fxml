@@ -16,7 +16,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.SVGPath?>
 
-<BorderPane prefHeight="768.0" prefWidth="1365.0" stylesheets="@MainMenu.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.votify.frontend.controller.RegistrationFormController">
+<BorderPane prefHeight="768.0" prefWidth="1365.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.votify.frontend.controller.RegistrationFormController">
    <top>
       <VBox>
          <children>
@@ -65,33 +65,29 @@
                   </HBox>
                </children>
             </HBox>
-            <VBox spacing="8.0" style="-fx-padding: 26 38 0 38;">
+            <VBox spacing="8.0" styleClass="vote-header">
                <children>
                   <HBox alignment="CENTER_LEFT">
                      <children>
-                        <Button mnemonicParsing="false" onAction="#goBack" style="-fx-background-color: #ffffff; -fx-text-fill: #162642; -fx-font-size: 14px; -fx-font-weight: 700; -fx-padding: 8 12 8 12; -fx-background-radius: 12; -fx-border-color: #d8e0ea; -fx-border-radius: 12; -fx-border-width: 1; -fx-cursor: hand;" text="Volver" />
+                        <Button mnemonicParsing="false" onAction="#goBack" styleClass="back-button" text="Volver" />
                         <Region HBox.hgrow="ALWAYS" />
                      </children>
                   </HBox>
+                  <Label alignment="CENTER" maxWidth="1.7976931348623157E308" styleClass="vote-title" text="Registrar Equipo" />
+                  <Label alignment="CENTER" maxWidth="1.7976931348623157E308" styleClass="vote-subtitle" text="Completa la información del equipo" />
                </children>
             </VBox>
          </children>
       </VBox>
    </top>
    <center>
-      <ScrollPane fitToHeight="true" fitToWidth="true" style="-fx-background: transparent; -fx-background-color: transparent; -fx-control-inner-background: transparent; -fx-border-color: transparent; -fx-padding: 0;">
+      <ScrollPane fitToHeight="true" fitToWidth="true" styleClass="screen-scroll">
          <content>
-            <VBox alignment="TOP_CENTER" spacing="18.0">
+            <VBox alignment="TOP_CENTER" spacing="18.0" styleClass="screen-content">
                <children>
                   <VBox alignment="TOP_CENTER" maxWidth="800.0" spacing="24.0">
                      <children>
-                        <VBox alignment="TOP_CENTER" spacing="4.0">
-                           <children>
-                              <Label style="-fx-font-size: 24px;" styleClass="page-title" text="Registrar Equipo" />
-                              <Label style="-fx-font-size: 14px;" styleClass="page-subtitle" text="Completa la información del equipo" />
-                           </children>
-                        </VBox>
-                        <VBox spacing="16.0" style="-fx-background-color: #ffffff; -fx-background-radius: 16; -fx-border-color: transparent; -fx-border-radius: 16; -fx-effect: dropshadow(gaussian, rgba(29, 54, 95, 0.07), 16, 0.12, 0, 3);">
+                        <VBox spacing="16.0" styleClass="panel-card">
                            <padding>
                               <Insets bottom="30.0" left="40.0" right="40.0" top="30.0" />
                            </padding>
@@ -101,7 +97,7 @@
                                     <Label styleClass="card-subtitle" text="Logo del Equipo" />
                                     <HBox alignment="CENTER_LEFT" spacing="16.0">
                                        <children>
-                                          <StackPane prefHeight="64.0" prefWidth="64.0" style="-fx-border-color: #d7e0eb; -fx-border-radius: 8; -fx-background-radius: 8; -fx-background-color: #f7f9fc; -fx-padding: 4;">
+                                          <StackPane prefHeight="64.0" prefWidth="64.0" styleClass="logo-preview">
                                              <children>
                                                 <ImageView fx:id="logoImageView" fitHeight="56.0" fitWidth="56.0" preserveRatio="true" />
                                              </children>
@@ -109,7 +105,7 @@
                                           <VBox alignment="CENTER_LEFT" spacing="6.0">
                                              <children>
                                                 <Button onAction="#uploadLogo" styleClass="logout-button" text="Seleccionar Imagen" />
-                                                <Label fx:id="logoLabel" text="Ningún archivo seleccionado" textFill="#808080" />
+                                                <Label fx:id="logoLabel" styleClass="muted-label" text="Ningún archivo seleccionado" />
                                              </children>
                                           </VBox>
                                        </children>
@@ -119,27 +115,27 @@
                               <VBox spacing="6.0">
                                  <children>
                                     <Label styleClass="card-subtitle" text="Nombre del Equipo *" />
-                                    <TextField fx:id="teamField" promptText="Ej: Equipo Desarrollo" style="-fx-padding: 10; -fx-background-color: #ffffff; -fx-border-color: #d7e0eb; -fx-border-radius: 8; -fx-background-radius: 8; -fx-text-fill: #162642;" />
-                                    <Label fx:id="teamErrorLabel" style="-fx-text-fill: #c62828;" />
+                                    <TextField fx:id="teamField" promptText="Ej: Equipo Desarrollo" styleClass="form-field" />
+                                    <Label fx:id="teamErrorLabel" styleClass="error-label" />
                                  </children>
                               </VBox>
                               <VBox spacing="6.0">
                                  <children>
                                     <Label styleClass="card-subtitle" text="Correo Electrónico *" />
-                                    <TextField fx:id="emailField" promptText="equipo@ejemplo.com" style="-fx-padding: 10; -fx-background-color: #ffffff; -fx-border-color: #d7e0eb; -fx-border-radius: 8; -fx-background-radius: 8; -fx-text-fill: #162642;" />
-                                    <Label fx:id="emailErrorLabel" style="-fx-text-fill: #c62828;" />
+                                    <TextField fx:id="emailField" promptText="equipo@ejemplo.com" styleClass="form-field" />
+                                    <Label fx:id="emailErrorLabel" styleClass="error-label" />
                                  </children>
                               </VBox>
                               <VBox spacing="6.0">
                                  <children>
                                     <Label styleClass="card-subtitle" text="Teléfono" />
-                                    <TextField fx:id="phoneField" promptText="+34 123 456 789" style="-fx-padding: 10; -fx-background-color: #ffffff; -fx-border-color: #d7e0eb; -fx-border-radius: 8; -fx-background-radius: 8; -fx-text-fill: #162642;" />
+                                    <TextField fx:id="phoneField" promptText="+34 123 456 789" styleClass="form-field" />
                                  </children>
                               </VBox>
                               <VBox spacing="6.0">
                                  <children>
                                     <Label styleClass="card-subtitle" text="Descripción" />
-                                    <TextArea fx:id="descriptionArea" prefRowCount="3" promptText="Describe el propósito y objetivos del equipo..." style="-fx-padding: 10; -fx-background-color: #ffffff; -fx-border-color: #d7e0eb; -fx-border-radius: 8; -fx-background-radius: 8; -fx-text-fill: #162642;" wrapText="true" />
+                                    <TextArea fx:id="descriptionArea" prefRowCount="3" promptText="Describe el propósito y objetivos del equipo..." styleClass="form-field" wrapText="true" />
                                  </children>
                               </VBox>
                               <VBox spacing="6.0">
@@ -147,16 +143,16 @@
                                     <Label styleClass="card-subtitle" text="Integrantes" />
                                     <HBox spacing="10.0">
                                        <children>
-                                          <TextField fx:id="memberInputField" onAction="#addMember" promptText="Nombre del integrante" style="-fx-padding: 10; -fx-background-color: #ffffff; -fx-border-color: #d7e0eb; -fx-border-radius: 8; -fx-background-radius: 8; -fx-text-fill: #162642;" HBox.hgrow="ALWAYS" />
-                                          <Button onAction="#addMember" style="-fx-background-color: #ffffff; -fx-text-fill: #162642; -fx-font-weight: 700; -fx-border-color: #d8e0ea; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 10 15; -fx-cursor: hand;" text="+ Añadir" />
+                                          <TextField fx:id="memberInputField" onAction="#addMember" promptText="Nombre del integrante" styleClass="form-field" HBox.hgrow="ALWAYS" />
+                                          <Button onAction="#addMember" styleClass="secondary-button" text="+ Añadir" />
                                        </children>
                                     </HBox>
-                                    <ListView fx:id="membersListView" minHeight="120.0" prefHeight="150.0" style="-fx-background-color: #ffffff; -fx-border-color: #d7e0eb; -fx-border-radius: 8; -fx-background-radius: 8;" VBox.vgrow="ALWAYS" />
+                                    <ListView fx:id="membersListView" minHeight="120.0" prefHeight="150.0" styleClass="form-field" VBox.vgrow="ALWAYS" />
                                  </children>
                               </VBox>
                               <HBox alignment="CENTER">
                                  <children>
-                                    <Button onAction="#registerParticipant" style="-fx-background-color: linear-gradient(to bottom right, #3b88ff 0%, #245fe9 100%); -fx-text-fill: white; -fx-font-size: 16px; -fx-font-weight: 800; -fx-background-radius: 12; -fx-padding: 12 40; -fx-cursor: hand;" text="Registrar Equipo" />
+                                    <Button onAction="#registerParticipant" styleClass="primary-button" text="Registrar Equipo" />
                                  </children>
                               </HBox>
                            </children>
@@ -164,9 +160,6 @@
                      </children>
                   </VBox>
                </children>
-               <padding>
-                  <Insets bottom="38.0" left="38.0" right="38.0" top="18.0" />
-               </padding>
             </VBox>
          </content>
       </ScrollPane>

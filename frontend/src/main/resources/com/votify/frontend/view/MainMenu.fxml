@@ -13,7 +13,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.SVGPath?>
 
-<BorderPane prefHeight="768.0" prefWidth="1365.0" stylesheets="@MainMenu.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.votify.frontend.controller.MainMenuController">
+<BorderPane prefHeight="768.0" prefWidth="1365.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.votify.frontend.controller.MainMenuController">
    <top>
       <HBox alignment="CENTER_LEFT" prefHeight="100.0" spacing="18.0" styleClass="top-bar">
          <children>

@@ -4,7 +4,6 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
-<?import javafx.scene.control.TextArea?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.BorderPane?>
@@ -14,7 +13,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.SVGPath?>
 
-<BorderPane prefHeight="768.0" prefWidth="1365.0" stylesheets="@MainMenu.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.votify.frontend.controller.ResultsFormController">
+<BorderPane prefHeight="768.0" prefWidth="1365.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.votify.frontend.controller.ResultsFormController">
    <top>
       <VBox>
          <children>
@@ -63,45 +62,122 @@
                   </HBox>
                </children>
             </HBox>
-            <VBox spacing="8.0" style="-fx-padding: 26 38 0 38;">
+            <VBox spacing="8.0" styleClass="vote-header">
                <children>
                   <HBox alignment="CENTER_LEFT">
                      <children>
-                        <Button mnemonicParsing="false" onAction="#closeResults" style="-fx-background-color: #ffffff; -fx-text-fill: #162642; -fx-font-size: 14px; -fx-font-weight: 700; -fx-padding: 8 12 8 12; -fx-background-radius: 12; -fx-border-color: #d8e0ea; -fx-border-radius: 12; -fx-border-width: 1; -fx-cursor: hand;" text="Volver" />
+                        <Button mnemonicParsing="false" onAction="#closeResults" styleClass="back-button" text="Volver" />
                         <Region HBox.hgrow="ALWAYS" />
                      </children>
                   </HBox>
+                  <Label alignment="CENTER" maxWidth="1.7976931348623157E308" styleClass="vote-title" text="Resultados" />
+                  <Label alignment="CENTER" maxWidth="1.7976931348623157E308" styleClass="vote-subtitle" text="Visualiza el ranking de la votación en diferentes formatos" />
                </children>
+               <padding>
+                  <Insets bottom="0.0" left="38.0" right="38.0" top="26.0" />
+               </padding>
             </VBox>
          </children>
       </VBox>
    </top>
    <center>
-      <ScrollPane fitToHeight="true" fitToWidth="true" style="-fx-background: transparent; -fx-background-color: transparent; -fx-control-inner-background: transparent; -fx-border-color: transparent; -fx-padding: 0;">
+      <ScrollPane fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="ALWAYS" styleClass="screen-scroll">
          <content>
-            <VBox alignment="TOP_CENTER" spacing="18.0">
+            <VBox spacing="28.0" styleClass="results-page">
                <children>
-                  <VBox alignment="TOP_CENTER" maxWidth="800.0" spacing="24.0" VBox.vgrow="ALWAYS">
+                  <HBox spacing="22.0">
                      <children>
-                        <VBox alignment="TOP_CENTER" spacing="4.0">
+                        <HBox HBox.hgrow="ALWAYS" spacing="0.0" styleClass="results-summary-card">
                            <children>
-                              <Label style="-fx-font-size: 24px;" styleClass="page-title" text="Resultados de la Votación" />
-                              <Label fx:id="summaryLabel" style="-fx-font-size: 14px;" styleClass="page-subtitle" text="Votos totales: 0" />
+                              <HBox HBox.hgrow="ALWAYS" spacing="16.0" styleClass="results-summary-item">
+                                 <children>
+                                    <StackPane prefHeight="60.0" prefWidth="60.0" styleClass="results-stat-icon, results-stat-icon-blue">
+                                       <children>
+                                          <SVGPath content="M8 6H16V8H18C18.55 8 19 8.45 19 9V10C19 12.21 17.21 14 15 14H14.82C14.4 15.19 13.3 16.04 12 16.04C10.7 16.04 9.6 15.19 9.18 14H9C6.79 14 5 12.21 5 10V9C5 8.45 5.45 8 6 8H8V6ZM7 10C7 11.1 7.9 12 9 12V10H7ZM15 12C16.1 12 17 11.1 17 10H15V12ZM11 17H13V19H16V21H8V19H11V17Z" styleClass="results-stat-svg-icon, results-stat-svg-icon-blue" />
+                                       </children>
+                                    </StackPane>
+                                    <VBox alignment="CENTER_LEFT" spacing="6.0">
+                                       <children>
+                                          <Label styleClass="results-stat-label" text="Total de Votos" />
+                                          <Label fx:id="totalVotesLabel" styleClass="results-stat-value" text="0" />
+                                       </children>
+                                    </VBox>
+                                 </children>
+                              </HBox>
+                              <HBox HBox.hgrow="ALWAYS" spacing="16.0" styleClass="results-summary-item, results-summary-item-bordered">
+                                 <children>
+                                    <StackPane prefHeight="60.0" prefWidth="60.0" styleClass="results-stat-icon, results-stat-icon-green">
+                                       <children>
+                                          <SVGPath content="M6.5 18.5H18.5V20.0H5.0V7.0H6.5V18.5ZM9.0 17.0V11.0H10.8V17.0H9.0ZM12.8 17.0V6.8H14.6V17.0H12.8ZM16.6 17.0V9.5H18.4V17.0H16.6Z" styleClass="results-stat-svg-icon, results-stat-svg-icon-green" />
+                                       </children>
+                                    </StackPane>
+                                    <VBox alignment="CENTER_LEFT" spacing="6.0">
+                                       <children>
+                                          <Label styleClass="results-stat-label" text="Proyectos Participantes" />
+                                          <Label fx:id="participantsCountLabel" styleClass="results-stat-value" text="0" />
+                                       </children>
+                                    </VBox>
+                                 </children>
+                              </HBox>
+                              <HBox HBox.hgrow="ALWAYS" spacing="16.0" styleClass="results-summary-item, results-summary-item-bordered">
+                                 <children>
+                                    <StackPane prefHeight="60.0" prefWidth="60.0" styleClass="results-stat-icon, results-stat-icon-purple">
+                                       <children>
+                                          <SVGPath content="M8 6H16V8H18C18.55 8 19 8.45 19 9V10C19 12.21 17.21 14 15 14H14.82C14.4 15.19 13.3 16.04 12 16.04C10.7 16.04 9.6 15.19 9.18 14H9C6.79 14 5 12.21 5 10V9C5 8.45 5.45 8 6 8H8V6ZM7 10C7 11.1 7.9 12 9 12V10H7ZM15 12C16.1 12 17 11.1 17 10H15V12ZM11 17H13V19H16V21H8V19H11V17Z" styleClass="results-stat-svg-icon, results-stat-svg-icon-purple" />
+                                       </children>
+                                    </StackPane>
+                                    <VBox alignment="CENTER_LEFT" spacing="6.0">
+                                       <children>
+                                          <Label styleClass="results-stat-label" text="Proyecto Ganador" />
+                                          <Label fx:id="winnerLabel" styleClass="results-stat-winner" text="Sin datos" />
+                                       </children>
+                                    </VBox>
+                                 </children>
+                              </HBox>
                            </children>
-                        </VBox>
-                        <VBox spacing="16.0" style="-fx-background-color: #ffffff; -fx-background-radius: 16; -fx-border-color: transparent; -fx-border-radius: 16; -fx-effect: dropshadow(gaussian, rgba(29, 54, 95, 0.07), 16, 0.12, 0, 3);" VBox.vgrow="ALWAYS">
-                           <padding>
-                              <Insets bottom="30.0" left="40.0" right="40.0" top="30.0" />
-                           </padding>
+                        </HBox>
+                     </children>
+                  </HBox>
+
+                  <VBox spacing="0.0" styleClass="results-panel-card" VBox.vgrow="ALWAYS">
+                     <children>
+                        <HBox alignment="CENTER_LEFT" spacing="12.0" styleClass="results-tabs-bar">
                            <children>
-                              <TextArea fx:id="resultsArea" editable="false" prefRowCount="18" style="-fx-padding: 10; -fx-background-color: #f7f9fc; -fx-border-color: #d7e0eb; -fx-border-radius: 8; -fx-background-radius: 8; -fx-text-fill: #162642; -fx-font-size: 15px; -fx-font-family: 'Consolas';" wrapText="true" VBox.vgrow="ALWAYS" />
+                                    <Button fx:id="rankingButton" mnemonicParsing="false" onAction="#showRanking" styleClass="view-tab-button, view-tab-button-active" text="Ranking">
+                                 <graphic>
+                                    <StackPane prefHeight="22.0" prefWidth="22.0" styleClass="tab-icon-wrap">
+                                       <children>
+                                          <SVGPath content="M8 6H16V8H18C18.55 8 19 8.45 19 9V10C19 12.21 17.21 14 15 14H14.82C14.4 15.19 13.3 16.04 12 16.04C10.7 16.04 9.6 15.19 9.18 14H9C6.79 14 5 12.21 5 10V9C5 8.45 5.45 8 6 8H8V6ZM7 10C7 11.1 7.9 12 9 12V10H7ZM15 12C16.1 12 17 11.1 17 10H15V12ZM11 17H13V19H16V21H8V19H11V17Z" styleClass="tab-icon" />
+                                       </children>
+                                    </StackPane>
+                                 </graphic>
+                              </Button>
+                              <Button fx:id="barChartButton" mnemonicParsing="false" onAction="#showBarChart" styleClass="view-tab-button" text="Gráfico de Barras">
+                                 <graphic>
+                                    <StackPane prefHeight="22.0" prefWidth="22.0" styleClass="tab-icon-wrap">
+                                       <children>
+                                          <SVGPath content="M5.5 18.5H18.5V20H4V6H5.5V18.5ZM8 17V11.5H9.8V17H8ZM11.6 17V7H13.4V17H11.6ZM15.2 17V9.2H17V17H15.2Z" styleClass="tab-icon" />
+                                       </children>
+                                    </StackPane>
+                                 </graphic>
+                              </Button>
+                              <Button fx:id="pieChartButton" mnemonicParsing="false" onAction="#showPieChart" styleClass="view-tab-button" text="Gráfico Circular">
+                                 <graphic>
+                                    <StackPane prefHeight="22.0" prefWidth="22.0" styleClass="tab-icon-wrap">
+                                       <children>
+                                          <SVGPath content="M12 4C16.42 4 20 7.58 20 12C20 16.42 16.42 20 12 20C7.58 20 4 16.42 4 12C4 8.25 6.58 5.1 10.06 4.24V12H17.76C17.38 15.33 14.54 18 11.12 18C7.44 18 4.5 15.06 4.5 11.38C4.5 8.18 6.77 5.46 9.83 4.76V3.22C5.97 3.95 3 7.34 3 11.38C3 15.88 6.62 19.5 11.12 19.5C15.62 19.5 19.24 15.88 19.24 11.38V10.5H11.56V2.76H12Z" styleClass="tab-icon" />
+                                       </children>
+                                    </StackPane>
+                                 </graphic>
+                              </Button>
                            </children>
-                        </VBox>
+                        </HBox>
+                        <StackPane fx:id="resultsContent" styleClass="results-content" VBox.vgrow="ALWAYS" />
                      </children>
                   </VBox>
                </children>
                <padding>
-                  <Insets bottom="38.0" left="38.0" right="38.0" top="18.0" />
+                  <Insets bottom="26.0" left="22.0" right="22.0" top="38.0" />
                </padding>
             </VBox>
          </content>
