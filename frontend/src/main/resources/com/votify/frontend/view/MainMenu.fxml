@@ -49,12 +49,12 @@
                         <VBox spacing="2.0">
                            <children>
                               <Label styleClass="user-greeting" text="Bienvenido" />
-                              <Label styleClass="user-name" text="Juan Pérez" />
+                              <Label fx:id="userNameLabel" styleClass="user-name" text="" />
                            </children>
                         </VBox>
                      </children>
                   </HBox>
-                  <Button mnemonicParsing="false" onAction="#exit" styleClass="logout-button" text="Salir">
+                  <Button mnemonicParsing="false" onAction="#exit" styleClass="logout-button" text="Cerrar sesión">
                      <graphic>
                         <SVGPath content="M7.3 5.5H11.3V7.1H8.9V16.9H11.3V18.5H7.3V5.5ZM12.8 8.0L17.8 12.0L12.8 16.0V13.5H9.9V10.5H12.8V8.0Z" styleClass="logout-icon" />
                      </graphic>

@@ -1,5 +1,7 @@
 package com.votify.frontend.client;
 
+import com.votify.frontend.dto.AuthRequest;
+import com.votify.frontend.dto.AuthResponse;
 import com.votify.frontend.dto.ParticipantRequest;
 import com.votify.frontend.dto.ParticipantResponse;
 import com.votify.frontend.dto.ResultsResponse;
@@ -20,7 +22,7 @@ import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ApiClient {
+public class ApiClient implements VotifyApi {
     private static final ObjectMapper MAPPER = new ObjectMapper();
     static {
         MAPPER.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -32,6 +34,44 @@ public class ApiClient {
     public ApiClient() {
         this.httpClient = HttpClient.newHttpClient();
         this.baseUrl = System.getenv().getOrDefault("VOTIFY_API_BASE", "http://localhost:8080/api");
+    }
+
+    public AuthResponse login(String email, String password) {
+        return authenticate("/auth/login", email, password);
+    }
+
+    public AuthResponse registerUser(String email, String password) {
+        return authenticate("/auth/register", email, password);
+    }
+
+    private AuthResponse authenticate(String endpoint, String email, String password) {
+        String json;
+        try {
+            json = MAPPER.writeValueAsString(new AuthRequest(email, password));
+        } catch (JsonProcessingException e) {
+            throw new ApiClientException("No se pudo preparar la solicitud de autenticación");
+        }
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(baseUrl + endpoint))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(json))
+                .build();
+
+        HttpResponse<String> response = send(request);
+        
+        if (response.statusCode() == 401 || response.statusCode() == 400) {
+            throw new ApiClientException(extractErrorMessage(response.body(), response.statusCode()));
+        }
+        if (response.statusCode() != 200) {
+            throw new ApiClientException("Error del servidor al intentar autenticar");
+        }
+
+        try {
+            return MAPPER.readValue(response.body(), AuthResponse.class);
+        } catch (Exception e) {
+            throw new ApiClientException("No se procesó correctamente la sesión");
+        }
     }
 
     public void createParticipant(String teamName, String email, String phone, String description, String logoBase64, List<String> members) {
@@ -190,5 +230,10 @@ public class ApiClient {
 
     private String encode(String value) {
         return java.net.URLEncoder.encode(value == null ? "" : value, java.nio.charset.StandardCharsets.UTF_8);
+    }
+
+    @Override
+    public String getCurrentUserEmail() {
+        return "";
     }
 }

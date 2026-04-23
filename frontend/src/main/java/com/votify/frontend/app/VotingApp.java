@@ -23,7 +23,12 @@ public class VotingApp extends Application {
         )));
         primaryStage.setMinWidth(1180);
         primaryStage.setMinHeight(720);
-        SceneNavigator.showMainMenu(primaryStage);
+        SceneNavigator.showScene(
+                primaryStage,
+                "/com/votify/frontend/view/Access.fxml",
+                "/com/votify/frontend/view/MainMenu.css",
+                "Votify - Acceso"
+        );
     }
 
     public static void main(String[] args) {

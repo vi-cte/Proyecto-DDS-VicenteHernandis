@@ -1,6 +1,7 @@
 package com.votify.frontend.controller;
 
-import com.votify.frontend.client.ApiClient;
+import com.votify.frontend.client.ApiClientProxy;
+import com.votify.frontend.client.VotifyApi;
 import com.votify.frontend.dto.ResultItemResponse;
 import com.votify.frontend.dto.ResultsResponse;
 import com.votify.frontend.exception.ApiClientException;
@@ -16,6 +17,7 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
+import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.util.Comparator;
@@ -23,7 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 public class ResultsFormController {
-    private final ApiClient apiClient = new ApiClient();
+    private final VotifyApi apiClient = ApiClientProxy.getInstance();
     private final Map<String, ResultsViewStrategy> strategies = Map.of(
             "ranking", new RankingResultsViewStrategy(),
             "bars", new BarChartResultsViewStrategy(),
@@ -54,7 +56,14 @@ public class ResultsFormController {
     private Button pieChartButton;
 
     @FXML
+    private Label userNameLabel;
+
+    @FXML
     private void initialize() {
+        if (userNameLabel != null) {
+            userNameLabel.setText(apiClient.getCurrentUserEmail());
+        }
+
         try {
             ResultsResponse response = apiClient.getResults();
             int participantCount = apiClient.getParticipantResponses().size();
@@ -93,7 +102,7 @@ public class ResultsFormController {
     @FXML
     private void closeResults() {
         try {
-            SceneNavigator.showMainMenu((javafx.stage.Stage) resultsContent.getScene().getWindow());
+            SceneNavigator.showMainMenu((Stage) resultsContent.getScene().getWindow());
         } catch (IOException e) {
             AlertHelper.showError("No se pudo volver al menú principal: " + e.getMessage());
         }
@@ -101,7 +110,17 @@ public class ResultsFormController {
 
     @FXML
     private void exit() {
-        System.exit(0);
+        ApiClientProxy.getInstance().logout();
+        try {
+            SceneNavigator.showScene(
+                    (Stage) resultsContent.getScene().getWindow(),
+                    "/com/votify/frontend/view/Access.fxml",
+                    "/com/votify/frontend/view/MainMenu.css",
+                    "Votify - Acceso"
+            );
+        } catch (IOException e) {
+            AlertHelper.showError("Error al cerrar sesión: " + e.getMessage());
+        }
     }
 
     private void bindSummary(ResultsViewData data) {

@@ -1,6 +1,7 @@
 package com.votify.frontend.controller;
 
-import com.votify.frontend.client.ApiClient;
+import com.votify.frontend.client.ApiClientProxy;
+import com.votify.frontend.client.VotifyApi;
 import com.votify.frontend.exception.ApiClientException;
 import com.votify.frontend.navigation.SceneNavigator;
 import com.votify.frontend.ui.AlertHelper;
@@ -30,7 +31,7 @@ import java.util.Base64;
 import java.util.List;
 
 public class RegistrationFormController {
-    private final ApiClient apiClient = new ApiClient();
+    private final VotifyApi apiClient = ApiClientProxy.getInstance();
 
     @FXML
     private TextField teamField;
@@ -67,7 +68,14 @@ public class RegistrationFormController {
     private String logoBase64;
 
     @FXML
+    private Label userNameLabel;
+
+    @FXML
     private void initialize() {
+        if (userNameLabel != null) {
+            userNameLabel.setText(apiClient.getCurrentUserEmail());
+        }
+
         teamField.focusedProperty().addListener((obs, wasFocused, isFocused) -> {
             if (!isFocused) {
                 validateTeamField();
@@ -138,7 +146,17 @@ public class RegistrationFormController {
 
     @FXML
     private void exit() {
-        System.exit(0);
+        ApiClientProxy.getInstance().logout();
+        try {
+            SceneNavigator.showScene(
+                    (Stage) teamField.getScene().getWindow(),
+                    "/com/votify/frontend/view/Access.fxml",
+                    "/com/votify/frontend/view/MainMenu.css",
+                    "Votify - Acceso"
+            );
+        } catch (IOException e) {
+            showError("Error al cerrar sesión: " + e.getMessage());
+        }
     }
 
 

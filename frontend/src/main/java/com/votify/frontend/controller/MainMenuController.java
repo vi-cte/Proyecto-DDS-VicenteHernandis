@@ -1,11 +1,15 @@
 package com.votify.frontend.controller;
 
-import com.votify.frontend.client.ApiClient;
+import com.votify.frontend.client.ApiClientProxy;
+import com.votify.frontend.client.VotifyApi;
 import com.votify.frontend.exception.ApiClientException;
 import com.votify.frontend.ui.AlertHelper;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.stage.Stage;
+import java.io.IOException;
+import com.votify.frontend.navigation.SceneNavigator;
 
 /**
  * Controlador para el menú principal de la aplicación de votación. Este controlador maneja las acciones de los botones
@@ -17,10 +21,18 @@ public class MainMenuController {
     private final VotingController votingController = new VotingController();
     private final RegistrationController registrationController = new RegistrationController();
     private final ResultsController resultsController = new ResultsController();
-    private final ApiClient apiClient = new ApiClient();
+    private final VotifyApi apiClient = ApiClientProxy.getInstance();
 
     @FXML
     private Button voteButton;
+
+    @FXML
+    private Label userNameLabel;
+
+    @FXML
+    private void initialize() {
+        userNameLabel.setText(apiClient.getCurrentUserEmail());
+    }
 
     @FXML
     private void vote() {
@@ -45,7 +57,17 @@ public class MainMenuController {
 
     @FXML
     private void exit() {
-        System.exit(0);
+        ApiClientProxy.getInstance().logout();
+        try {
+            SceneNavigator.showScene(
+                    currentStage(),
+                    "/com/votify/frontend/view/Access.fxml",
+                    "/com/votify/frontend/view/MainMenu.css",
+                    "Votify - Acceso"
+            );
+        } catch (IOException e) {
+            AlertHelper.showError("Error al cerrar sesión: " + e.getMessage());
+        }
     }
 
     private Stage currentStage() {

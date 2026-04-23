@@ -1,6 +1,7 @@
 package com.votify.frontend.controller;
 
-import com.votify.frontend.client.ApiClient;
+import com.votify.frontend.client.ApiClientProxy;
+import com.votify.frontend.client.VotifyApi;
 import com.votify.frontend.dto.ParticipantResponse;
 import com.votify.frontend.dto.VoteResponse;
 import com.votify.frontend.exception.ApiClientException;
@@ -28,7 +29,7 @@ import java.util.Set;
 public class VotingFormController {
     private static final int FALLBACK_MAX_TEAMS_TO_VOTE = 3;
 
-    private final ApiClient apiClient = new ApiClient();
+    private final VotifyApi apiClient = ApiClientProxy.getInstance();
     private final Set<String> selectedTeamNames = new LinkedHashSet<>();
 
     private int maxTeamsToVote = FALLBACK_MAX_TEAMS_TO_VOTE;
@@ -46,7 +47,14 @@ public class VotingFormController {
     private Button submitButton;
 
     @FXML
+    private Label userNameLabel;
+
+    @FXML
     private void initialize() {
+        if (userNameLabel != null) {
+            userNameLabel.setText(apiClient.getCurrentUserEmail());
+        }
+
         participantList.setCellFactory(listView -> new VoteCandidateCell());
 
         try {
@@ -115,7 +123,17 @@ public class VotingFormController {
 
     @FXML
     private void exit() {
-        System.exit(0);
+        ApiClientProxy.getInstance().logout();
+        try {
+            SceneNavigator.showScene(
+                    currentStage(),
+                    "/com/votify/frontend/view/Access.fxml",
+                    "/com/votify/frontend/view/MainMenu.css",
+                    "Votify - Acceso"
+            );
+        } catch (IOException e) {
+            showError("Error al cerrar sesión: " + e.getMessage());
+        }
     }
 
     private void toggleSelection(VoteCandidateItem item) {
