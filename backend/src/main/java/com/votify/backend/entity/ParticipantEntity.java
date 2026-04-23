@@ -45,6 +45,9 @@ public class ParticipantEntity {
     @Column(name = "member_name", length = 120)
     private List<String> members = new ArrayList<>();
 
+    @Column(name = "owner_email", length = 180)
+    private String ownerEmail;
+
     public Long getId() {
         return id;
     }
@@ -95,5 +98,13 @@ public class ParticipantEntity {
 
     public void setMembers(List<String> members) {
         this.members = members == null ? new ArrayList<>() : new ArrayList<>(members);
+    }
+
+    public String getOwnerEmail() {
+        return ownerEmail;
+    }
+
+    public void setOwnerEmail(String ownerEmail) {
+        this.ownerEmail = ownerEmail;
     }
 }

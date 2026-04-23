@@ -152,7 +152,7 @@
                               </VBox>
                               <HBox alignment="CENTER">
                                  <children>
-                                    <Button onAction="#registerParticipant" styleClass="primary-button" text="Registrar Equipo" />
+                                    <Button fx:id="submitButton" onAction="#registerParticipant" styleClass="primary-button" text="Registrar Equipo" />
                                  </children>
                               </HBox>
                            </children>

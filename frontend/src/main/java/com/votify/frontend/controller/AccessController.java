@@ -9,10 +9,20 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Dialog;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.ButtonBar;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import javafx.stage.Modality;
+import javafx.scene.Scene;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.application.Platform;
 
 import java.io.IOException;
+import java.util.Optional;
 
 public class AccessController {
 
@@ -69,5 +79,49 @@ public class AccessController {
             SceneNavigator.showMainMenu(stage);
         } catch (ApiClientException e) { AlertHelper.showError(e.getMessage()); } 
         catch (IOException e) { AlertHelper.showError("Error abriendo menú: " + e.getMessage()); }
+    }
+
+    @FXML
+    public void handleAdminSettings() {
+        Dialog<String> dialog = new Dialog<>();
+        dialog.setTitle("Acceso Administrador");
+        dialog.setHeaderText("Ajustes de Votación");
+        
+        ButtonType okButtonType = new ButtonType("Aceptar", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(okButtonType, ButtonType.CANCEL);
+
+        PasswordField pwd = new PasswordField();
+        pwd.setPromptText("Contraseña");
+
+        VBox vbox = new VBox(10);
+        vbox.getChildren().addAll(new Label("Introduce la contraseña de administrador:"), pwd);
+        dialog.getDialogPane().setContent(vbox);
+
+        Platform.runLater(pwd::requestFocus);
+
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == okButtonType) {
+                return pwd.getText();
+            }
+            return null;
+        });
+
+        Optional<String> result = dialog.showAndWait();
+        if (result.isPresent()) {
+            if (authProxy.authenticateAdmin(result.get())) {
+                try {
+                    Stage stage = new Stage();
+                    stage.initModality(Modality.APPLICATION_MODAL);
+                    Parent root = FXMLLoader.load(getClass().getResource("/com/votify/frontend/view/SettingsForm.fxml"));
+                    stage.setScene(new Scene(root));
+                    stage.setTitle("Configuración del evento");
+                    stage.showAndWait();
+                } catch (IOException e) {
+                    AlertHelper.showError("Error abriendo ajustes: " + e.getMessage());
+                }
+            } else {
+                AlertHelper.showError("Contraseña incorrecta");
+            }
+        }
     }
 }

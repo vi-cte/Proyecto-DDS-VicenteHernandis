@@ -7,9 +7,9 @@ import com.votify.frontend.dto.ParticipantResponse;
 import com.votify.frontend.dto.ResultsResponse;
 import com.votify.frontend.dto.VoteRequest;
 import com.votify.frontend.dto.VoteResponse;
-import com.votify.frontend.dto.VoteSettingsResponse;
 import com.votify.frontend.exception.ErrorResponse;
 import com.votify.frontend.exception.ApiClientException;
+import com.votify.frontend.dto.EventSettingsResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -74,8 +74,8 @@ public class ApiClient implements VotifyApi {
         }
     }
 
-    public void createParticipant(String teamName, String email, String phone, String description, String logoBase64, List<String> members) {
-        ParticipantRequest requestBody = new ParticipantRequest(teamName, email, phone, description, logoBase64, members);
+    public void createParticipant(String teamName, String email, String phone, String description, String logoBase64, List<String> members, String ownerEmail) {
+        ParticipantRequest requestBody = new ParticipantRequest(teamName, email, phone, description, logoBase64, members, ownerEmail);
         String json;
         try {
             json = MAPPER.writeValueAsString(requestBody);
@@ -92,6 +92,30 @@ public class ApiClient implements VotifyApi {
         HttpResponse<String> response = send(request);
         int status = response.statusCode();
         if (status == 200 || status == 201) {
+            return;
+        }
+        throw new ApiClientException(extractErrorMessage(response.body(), status));
+    }
+
+    @Override
+    public void updateParticipant(Long id, String teamName, String email, String phone, String description, String logoBase64, List<String> members, String ownerEmail) {
+        ParticipantRequest requestBody = new ParticipantRequest(teamName, email, phone, description, logoBase64, members, ownerEmail);
+        String json;
+        try {
+            json = MAPPER.writeValueAsString(requestBody);
+        } catch (JsonProcessingException e) {
+            throw new ApiClientException("No se pudo preparar la solicitud al servidor");
+        }
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(baseUrl + "/participants/" + id))
+                .header("Content-Type", "application/json")
+                .PUT(HttpRequest.BodyPublishers.ofString(json))
+                .build();
+
+        HttpResponse<String> response = send(request);
+        int status = response.statusCode();
+        if (status == 200 || status == 204) {
             return;
         }
         throw new ApiClientException(extractErrorMessage(response.body(), status));
@@ -168,22 +192,7 @@ public class ApiClient implements VotifyApi {
     }
 
     public int getVotingLimit() {
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(baseUrl + "/votes/settings"))
-                .GET()
-                .build();
-
-        HttpResponse<String> response = send(request);
-        if (response.statusCode() != 200) {
-            throw new ApiClientException(extractErrorMessage(response.body(), response.statusCode()));
-        }
-
-        try {
-            VoteSettingsResponse settings = MAPPER.readValue(response.body(), VoteSettingsResponse.class);
-            return settings.getMaxTeamsToVote();
-        } catch (Exception e) {
-            throw new ApiClientException("No se pudo procesar la configuración de votación");
-        }
+        return getAdminSettings().getMaxTeamsToVote();
     }
 
     public ResultsResponse getResults() {
@@ -235,5 +244,60 @@ public class ApiClient implements VotifyApi {
     @Override
     public String getCurrentUserEmail() {
         return "";
+    }
+
+    @Override
+    public boolean authenticateAdmin(String password) {
+        return "admin".equals(password);
+    }
+
+    @Override
+    public EventSettingsResponse getAdminSettings() {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(baseUrl + "/admin/settings"))
+                .GET()
+                .build();
+
+        HttpResponse<String> response = send(request);
+        if (response.statusCode() != 200) {
+            throw new ApiClientException(extractErrorMessage(response.body(), response.statusCode()));
+        }
+
+        try {
+            return MAPPER.readValue(response.body(), EventSettingsResponse.class);
+        } catch (Exception e) {
+            throw new ApiClientException("No se pudo procesar la configuración");
+        }
+    }
+
+    @Override
+    public EventSettingsResponse getEventSettings() {
+        return getAdminSettings();
+    }
+
+    @Override
+    public void updateAdminSettings(boolean registrationsOpen, boolean votingOpen, int maxTeamsToVote) {
+        String json = String.format("{\"registrationsOpen\":%b, \"votingOpen\":%b, \"maxTeamsToVote\":%d}", registrationsOpen, votingOpen, maxTeamsToVote);
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(baseUrl + "/admin/settings"))
+                .header("Content-Type", "application/json")
+                .PUT(HttpRequest.BodyPublishers.ofString(json))
+                .build();
+        HttpResponse<String> response = send(request);
+        if (response.statusCode() != 200) {
+            throw new ApiClientException(extractErrorMessage(response.body(), response.statusCode()));
+        }
+    }
+
+    @Override
+    public void resetEvent() {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(baseUrl + "/admin/reset"))
+                .POST(HttpRequest.BodyPublishers.noBody())
+                .build();
+        HttpResponse<String> response = send(request);
+        if (response.statusCode() != 200) {
+            throw new ApiClientException(extractErrorMessage(response.body(), response.statusCode()));
+        }
     }
 }

@@ -2,6 +2,7 @@ package com.votify.frontend.controller;
 
 import com.votify.frontend.client.ApiClientProxy;
 import com.votify.frontend.client.VotifyApi;
+import com.votify.frontend.dto.ParticipantResponse;
 import com.votify.frontend.exception.ApiClientException;
 import com.votify.frontend.navigation.SceneNavigator;
 import com.votify.frontend.ui.AlertHelper;
@@ -25,6 +26,7 @@ import javafx.stage.Stage;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.ByteArrayInputStream;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -71,6 +73,12 @@ public class RegistrationFormController {
     private Label userNameLabel;
 
     @FXML
+    private Button submitButton;
+
+    private Long editingParticipantId = null;
+    private String originalTeamName = null;
+
+    @FXML
     private void initialize() {
         if (userNameLabel != null) {
             userNameLabel.setText(apiClient.getCurrentUserEmail());
@@ -90,6 +98,40 @@ public class RegistrationFormController {
 
         membersListView.setItems(membersList);
         membersListView.setCellFactory(lv -> new MemberCell());
+        
+        loadExistingParticipant();
+    }
+
+    private void loadExistingParticipant() {
+        String currentUserEmail = apiClient.getCurrentUserEmail();
+        try {
+            for (ParticipantResponse p : apiClient.getParticipantResponses()) {
+                if (currentUserEmail != null && currentUserEmail.equalsIgnoreCase(p.getOwnerEmail())) {
+                    editingParticipantId = p.getId();
+                    originalTeamName = p.getTeamName();
+                    
+                    teamField.setText(p.getTeamName());
+                    emailField.setText(p.getEmail());
+                    if (p.getPhone() != null) phoneField.setText(p.getPhone());
+                    if (p.getDescription() != null && descriptionArea != null) descriptionArea.setText(p.getDescription());
+                    if (p.getMembers() != null) membersList.setAll(p.getMembers());
+                    
+                    if (p.getLogo() != null && !p.getLogo().isBlank()) {
+                        logoBase64 = p.getLogo();
+                        try {
+                            byte[] imgBytes = Base64.getDecoder().decode(logoBase64);
+                            if (logoImageView != null) logoImageView.setImage(new Image(new ByteArrayInputStream(imgBytes)));
+                            if (logoLabel != null) logoLabel.setText("Logo cargado");
+                        } catch (Exception ignored) {}
+                    }
+
+                    if (submitButton != null) {
+                        submitButton.setText("Editar equipo");
+                    }
+                    break;
+                }
+            }
+        } catch (ApiClientException ignored) {}
     }
 
     @FXML
@@ -126,9 +168,15 @@ public class RegistrationFormController {
             return;
         }
 
+        String ownerEmail = apiClient.getCurrentUserEmail();
         try {
-            apiClient.createParticipant(team, email, phone, description, logoBase64, members);
-            AlertHelper.showInfo("Participante registrado: " + team);
+            if (editingParticipantId != null) {
+                apiClient.updateParticipant(editingParticipantId, team, email, phone, description, logoBase64, members, ownerEmail);
+                AlertHelper.showInfo("Participante actualizado: " + team);
+            } else {
+                apiClient.createParticipant(team, email, phone, description, logoBase64, members, ownerEmail);
+                AlertHelper.showInfo("Participante registrado: " + team);
+            }
             goBack();
         } catch (ApiClientException e) {
             showError(e.getMessage());
@@ -186,7 +234,11 @@ public class RegistrationFormController {
             return false;
         }
         try {
-            if (apiClient.teamNameExists(team)) {
+            boolean checkExists = true;
+            if (editingParticipantId != null && team.equalsIgnoreCase(originalTeamName)) {
+                checkExists = false; // No comprobar si el nombre no ha cambiado
+            }
+            if (checkExists && apiClient.teamNameExists(team)) {
                 teamErrorLabel.setText("El nombre del equipo ya esta registrado.");
                 return false;
             }

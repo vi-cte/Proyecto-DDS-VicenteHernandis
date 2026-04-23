@@ -15,6 +15,7 @@ public record ParticipantRequest(
         String phone,
         String description,
         String logo,
-        List<String> members
+        List<String> members,
+        String ownerEmail
 ) {
 }

@@ -33,6 +33,34 @@ public class ParticipantService {
         entity.setDescription(trimToNull(request.description()));
         entity.setLogo(trimToNull(request.logo()));
         entity.setMembers(request.members());
+        entity.setOwnerEmail(request.ownerEmail());
+
+        ParticipantEntity saved = participantRepository.save(entity);
+        return toResponse(saved);
+    }
+
+    @Transactional
+    public ParticipantResponse update(Long id, ParticipantRequest request) {
+        if (id == null) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "El ID del participante no puede ser nulo");
+        }
+
+        ParticipantEntity entity = participantRepository.findById(id)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "El participante no existe"));
+
+        String normalizedTeamName = request.teamName().trim();
+        if (!entity.getTeamName().equalsIgnoreCase(normalizedTeamName) &&
+                participantRepository.existsByTeamNameIgnoreCase(normalizedTeamName)) {
+            throw new ApiException(HttpStatus.CONFLICT, "El nombre del equipo ya esta registrado");
+        }
+
+        entity.setTeamName(normalizedTeamName);
+        entity.setEmail(request.email().trim());
+        entity.setPhone(trimToNull(request.phone()));
+        entity.setDescription(trimToNull(request.description()));
+        entity.setLogo(trimToNull(request.logo()));
+        entity.setMembers(request.members());
+        entity.setOwnerEmail(request.ownerEmail());
 
         ParticipantEntity saved = participantRepository.save(entity);
         return toResponse(saved);
@@ -64,7 +92,8 @@ public class ParticipantService {
                 entity.getPhone(),
                 entity.getDescription(),
                 entity.getLogo(),
-                entity.getMembers()
+                entity.getMembers(),
+                entity.getOwnerEmail()
         );
     }
 

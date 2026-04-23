@@ -37,14 +37,26 @@ public class MainMenuController {
     @FXML
     private void vote() {
         if (checkConnection()) {
-            votingController.performVoting(currentStage());
+            try {
+                if (!apiClient.getEventSettings().isVotingOpen()) {
+                    AlertHelper.showWarning("Las votaciones están cerradas actualmente.");
+                    return;
+                }
+                votingController.performVoting(currentStage());
+            } catch (ApiClientException e) { AlertHelper.showError("Error: " + e.getMessage()); }
         }
     }
 
     @FXML
     private void register() {
         if (checkConnection()) {
-            registrationController.performRegistration(currentStage());
+            try {
+                if (!apiClient.getEventSettings().isRegistrationsOpen()) {
+                    AlertHelper.showWarning("Las inscripciones están cerradas actualmente.");
+                    return;
+                }
+                registrationController.performRegistration(currentStage());
+            } catch (ApiClientException e) { AlertHelper.showError("Error: " + e.getMessage()); }
         }
     }
 
