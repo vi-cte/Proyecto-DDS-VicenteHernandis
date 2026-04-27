@@ -43,7 +43,7 @@
                 <Label text="Resultados" style="-fx-font-weight: bold; -fx-font-size: 15px; -fx-text-fill: #162642;" />
                 <Label fx:id="resultsStatusLabel" text="Ocultos" style="-fx-text-fill: #78879f; -fx-font-size: 13px;" />
             </VBox>
-            <CheckBox fx:id="resultsToggle" styleClass="toggle-switch" />
+            <CheckBox fx:id="resultsToggle" styleClass="toggle-switch" onAction="#onResultsToggle" />
         </HBox>
 
         <VBox spacing="8.0" style="-fx-border-color: transparent transparent #e2e8f2 transparent; -fx-border-width: 0 0 1 0; -fx-padding: 0 0 20 0;">

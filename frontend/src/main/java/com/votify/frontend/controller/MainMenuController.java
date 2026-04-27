@@ -1,6 +1,8 @@
 package com.votify.frontend.controller;
 
-import com.votify.frontend.client.ApiClientProxy;
+import com.votify.frontend.client.ApiClient;
+import com.votify.frontend.client.AccessDecision;
+import com.votify.frontend.client.AccessTarget;
 import com.votify.frontend.client.VotifyApi;
 import com.votify.frontend.exception.ApiClientException;
 import com.votify.frontend.ui.AlertHelper;
@@ -21,7 +23,7 @@ public class MainMenuController {
     private final VotingController votingController = new VotingController();
     private final RegistrationController registrationController = new RegistrationController();
     private final ResultsController resultsController = new ResultsController();
-    private final VotifyApi apiClient = ApiClientProxy.getInstance();
+    private final VotifyApi apiClient = ApiClient.getInstance();
 
     @FXML
     private Button voteButton;
@@ -48,27 +50,23 @@ public class MainMenuController {
     private void initialize() {
         userNameLabel.setText(apiClient.getCurrentUserEmail());
         try {
-            if (apiClient.hasVoted()) {
+            AccessDecision votingAccess = apiClient.checkAccess(AccessTarget.VOTING);
+            if (!votingAccess.allowed()) {
                 voteButton.setDisable(true);
-                if (voteSubtitle != null) voteSubtitle.setText("Ya has votado en este evento");
+                if (voteSubtitle != null) voteSubtitle.setText(votingAccess.message());
             }
 
-            com.votify.frontend.dto.EventSettingsResponse settings = apiClient.getEventSettings();
-            
-            if (!settings.isVotingOpen()) {
-                voteButton.setDisable(true);
-                if (voteSubtitle != null) voteSubtitle.setText("Votaciones cerradas en este momento");
-            }
-            
-            if (registerButton != null && !settings.isRegistrationsOpen()) {
+            AccessDecision registrationAccess = apiClient.checkAccess(AccessTarget.REGISTRATION);
+            if (registerButton != null && !registrationAccess.allowed()) {
                 registerButton.setDisable(true);
-                if (registerSubtitle != null) registerSubtitle.setText("Participaciones cerradas en este momento");
+                if (registerSubtitle != null) registerSubtitle.setText(registrationAccess.message());
             }
 
+            AccessDecision resultsAccess = apiClient.checkAccess(AccessTarget.RESULTS);
             if (viewResultsButton != null) {
-                if (!settings.isResultsVisible()) {
+                if (!resultsAccess.allowed()) {
                     viewResultsButton.setDisable(true);
-                    if (resultsSubtitle != null) resultsSubtitle.setText("Resultados aun no publicados");
+                    if (resultsSubtitle != null) resultsSubtitle.setText(resultsAccess.message());
                 } else {
                     viewResultsButton.setDisable(false);
                     if (resultsSubtitle != null) resultsSubtitle.setText("Visualiza el ranking");
@@ -84,8 +82,9 @@ public class MainMenuController {
     private void vote() {
         if (checkConnection()) {
             try {
-                if (!apiClient.getEventSettings().isVotingOpen()) {
-                    AlertHelper.showWarning("Las votaciones están cerradas actualmente.");
+                AccessDecision access = apiClient.checkAccess(AccessTarget.VOTING);
+                if (!access.allowed()) {
+                    AlertHelper.showWarning(access.message());
                     return;
                 }
                 votingController.performVoting(currentStage());
@@ -97,8 +96,9 @@ public class MainMenuController {
     private void register() {
         if (checkConnection()) {
             try {
-                if (!apiClient.getEventSettings().isRegistrationsOpen()) {
-                    AlertHelper.showWarning("Las inscripciones están cerradas actualmente.");
+                AccessDecision access = apiClient.checkAccess(AccessTarget.REGISTRATION);
+                if (!access.allowed()) {
+                    AlertHelper.showWarning(access.message());
                     return;
                 }
                 registrationController.performRegistration(currentStage());
@@ -110,8 +110,9 @@ public class MainMenuController {
     private void viewResults() {
         if (checkConnection()) {
             try {
-                if (!apiClient.getEventSettings().isResultsVisible()) {
-                    AlertHelper.showWarning("Los resultados están ocultos actualmente por el administrador.");
+                AccessDecision access = apiClient.checkAccess(AccessTarget.RESULTS);
+                if (!access.allowed()) {
+                    AlertHelper.showWarning(access.message());
                     return;
                 }
                 resultsController.viewResults(currentStage());
@@ -121,7 +122,7 @@ public class MainMenuController {
 
     @FXML
     private void exit() {
-        ApiClientProxy.getInstance().logout();
+        ApiClient.getInstance().logout();
         try {
             SceneNavigator.showScene(
                     currentStage(),
@@ -140,7 +141,7 @@ public class MainMenuController {
 
     private boolean checkConnection() {
         try {
-            apiClient.getVotingLimit();
+            apiClient.getEventSettings();
             return true;
         } catch (ApiClientException e) {
             AlertHelper.showError(e.getMessage());

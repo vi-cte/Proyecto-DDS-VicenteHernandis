@@ -1,6 +1,6 @@
 package com.votify.frontend.controller;
 
-import com.votify.frontend.client.ApiClientProxy;
+import com.votify.frontend.client.ApiClient;
 import com.votify.frontend.client.VotifyApi;
 import com.votify.frontend.dto.ParticipantResponse;
 import com.votify.frontend.exception.ApiClientException;
@@ -33,7 +33,7 @@ import java.util.Base64;
 import java.util.List;
 
 public class RegistrationFormController {
-    private final VotifyApi apiClient = ApiClientProxy.getInstance();
+    private final VotifyApi apiClient = ApiClient.getInstance();
 
     @FXML
     private TextField teamField;
@@ -103,33 +103,33 @@ public class RegistrationFormController {
     }
 
     private void loadExistingParticipant() {
-        String currentUserEmail = apiClient.getCurrentUserEmail();
         try {
-            for (ParticipantResponse p : apiClient.getParticipantResponses()) {
-                if (currentUserEmail != null && currentUserEmail.equalsIgnoreCase(p.getOwnerEmail())) {
-                    editingParticipantId = p.getId();
-                    originalTeamName = p.getTeamName();
-                    
-                    teamField.setText(p.getTeamName());
-                    emailField.setText(p.getEmail());
-                    if (p.getPhone() != null) phoneField.setText(p.getPhone());
-                    if (p.getDescription() != null && descriptionArea != null) descriptionArea.setText(p.getDescription());
-                    if (p.getMembers() != null) membersList.setAll(p.getMembers());
-                    
-                    if (p.getLogo() != null && !p.getLogo().isBlank()) {
-                        logoBase64 = p.getLogo();
-                        try {
-                            byte[] imgBytes = Base64.getDecoder().decode(logoBase64);
-                            if (logoImageView != null) logoImageView.setImage(new Image(new ByteArrayInputStream(imgBytes)));
-                            if (logoLabel != null) logoLabel.setText("Logo cargado");
-                        } catch (Exception ignored) {}
-                    }
+            ParticipantResponse p = apiClient.getCurrentParticipant();
+            if (p == null) {
+                return;
+            }
 
-                    if (submitButton != null) {
-                        submitButton.setText("Editar equipo");
-                    }
-                    break;
+            editingParticipantId = p.getId();
+            originalTeamName = p.getTeamName();
+
+            teamField.setText(p.getTeamName());
+            emailField.setText(p.getEmail());
+            if (p.getPhone() != null) phoneField.setText(p.getPhone());
+            if (p.getDescription() != null && descriptionArea != null) descriptionArea.setText(p.getDescription());
+            if (p.getMembers() != null) membersList.setAll(p.getMembers());
+
+            if (p.getLogo() != null && !p.getLogo().isBlank()) {
+                logoBase64 = p.getLogo();
+                try {
+                    byte[] imgBytes = Base64.getDecoder().decode(logoBase64);
+                    if (logoImageView != null) logoImageView.setImage(new Image(new ByteArrayInputStream(imgBytes)));
+                    if (logoLabel != null) logoLabel.setText("Logo cargado");
+                } catch (Exception ignored) {
                 }
+            }
+
+            if (submitButton != null) {
+                submitButton.setText("Editar equipo");
             }
         } catch (ApiClientException ignored) {}
     }
@@ -168,13 +168,12 @@ public class RegistrationFormController {
             return;
         }
 
-        String ownerEmail = apiClient.getCurrentUserEmail();
         try {
             if (editingParticipantId != null) {
-                apiClient.updateParticipant(editingParticipantId, team, email, phone, description, logoBase64, members, ownerEmail);
+                apiClient.updateParticipant(editingParticipantId, team, email, phone, description, logoBase64, members);
                 AlertHelper.showInfo("Participante actualizado: " + team);
             } else {
-                apiClient.createParticipant(team, email, phone, description, logoBase64, members, ownerEmail);
+                apiClient.createParticipant(team, email, phone, description, logoBase64, members);
                 AlertHelper.showInfo("Participante registrado: " + team);
             }
             goBack();
@@ -194,7 +193,7 @@ public class RegistrationFormController {
 
     @FXML
     private void exit() {
-        ApiClientProxy.getInstance().logout();
+        ApiClient.getInstance().logout();
         try {
             SceneNavigator.showScene(
                     (Stage) teamField.getScene().getWindow(),

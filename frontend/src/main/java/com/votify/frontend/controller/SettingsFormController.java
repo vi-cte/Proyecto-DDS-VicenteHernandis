@@ -1,6 +1,6 @@
 package com.votify.frontend.controller;
 
-import com.votify.frontend.client.ApiClientProxy;
+import com.votify.frontend.client.ApiClient;
 import com.votify.frontend.client.VotifyApi;
 import com.votify.frontend.dto.EventSettingsResponse;
 import com.votify.frontend.exception.ApiClientException;
@@ -17,7 +17,8 @@ import java.util.Optional;
 
 public class SettingsFormController {
 
-    private final VotifyApi apiClient = ApiClientProxy.getInstance();
+    private final VotifyApi apiClient = ApiClient.getInstance();
+    private boolean loadingSettings;
 
     @FXML private CheckBox registrationToggle;
     @FXML private CheckBox votingToggle;
@@ -30,6 +31,7 @@ public class SettingsFormController {
 
     @FXML
     private void initialize() {
+        loadingSettings = true;
         try {
             EventSettingsResponse settings = apiClient.getAdminSettings();
             registrationToggle.setSelected(settings.isRegistrationsOpen());
@@ -39,21 +41,22 @@ public class SettingsFormController {
             updateLabels();
         } catch (ApiClientException e) {
             AlertHelper.showWarning("Aviso: " + e.getMessage());
+        } finally {
+            loadingSettings = false;
         }
 
-        registrationToggle.selectedProperty().addListener((obs, oldV, newV) -> saveSettings());
-        votingToggle.selectedProperty().addListener((obs, oldV, newV) -> saveSettings());
-        if (resultsToggle != null) resultsToggle.selectedProperty().addListener((obs, oldV, newV) -> {
-            updateLabels();
-            saveSettings();
-        });
         maxVotesField.focusedProperty().addListener((obs, wasFocused, isFocused) -> {
-            if (!isFocused) saveSettings();
+            if (!isFocused) {
+                saveSettings();
+            }
         });
     }
 
     @FXML
     private void onRegistrationToggle() {
+        if (loadingSettings) {
+            return;
+        }
         if (registrationToggle.isSelected()) {
             votingToggle.setSelected(false);
         }
@@ -63,8 +66,20 @@ public class SettingsFormController {
 
     @FXML
     private void onVotingToggle() {
+        if (loadingSettings) {
+            return;
+        }
         if (votingToggle.isSelected()) {
             registrationToggle.setSelected(false);
+        }
+        updateLabels();
+        saveSettings();
+    }
+
+    @FXML
+    private void onResultsToggle() {
+        if (loadingSettings) {
+            return;
         }
         updateLabels();
         saveSettings();
@@ -79,6 +94,9 @@ public class SettingsFormController {
     }
 
     private void saveSettings() {
+        if (loadingSettings) {
+            return;
+        }
         try {
             int maxVotes = Integer.parseInt(maxVotesField.getText());
             boolean resVisible = resultsToggle != null && resultsToggle.isSelected();

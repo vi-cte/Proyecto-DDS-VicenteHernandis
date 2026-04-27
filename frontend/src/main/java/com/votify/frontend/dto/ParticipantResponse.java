@@ -10,7 +10,6 @@ public class ParticipantResponse {
     private String description;
     private String logo;
     private List<String> members;
-    private String ownerEmail;
 
     public ParticipantResponse() {
     }
@@ -69,13 +68,5 @@ public class ParticipantResponse {
 
     public void setMembers(List<String> members) {
         this.members = members;
-    }
-
-    public String getOwnerEmail() {
-        return ownerEmail;
-    }
-
-    public void setOwnerEmail(String ownerEmail) {
-        this.ownerEmail = ownerEmail;
     }
 }

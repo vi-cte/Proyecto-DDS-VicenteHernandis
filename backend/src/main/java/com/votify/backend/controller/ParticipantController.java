@@ -13,9 +13,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.http.ResponseEntity;
 
 import java.util.List;
+import java.util.Optional;
 
 // Controlador REST para gestionar participantes mediante el API /api/participants.
 @RestController
@@ -33,6 +36,15 @@ public class ParticipantController {
         return participantService.findAll();
     }
 
+    @GetMapping("/mine")
+    public ResponseEntity<ParticipantResponse> getCurrentParticipant(
+            @RequestHeader("X-User-ID") Long userId
+    ) {
+        Optional<ParticipantResponse> participant = participantService.findMine(userId);
+        return participant.map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.noContent().build());
+    }
+
     // GET /api/participants/exists?teamName=...: indica si existe el equipo.
     @GetMapping("/exists")
     public boolean existsByTeamName(@RequestParam String teamName) {
@@ -42,13 +54,20 @@ public class ParticipantController {
     // POST /api/participants: crea un participante y devuelve 201 Created.
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ParticipantResponse createParticipant(@Valid @RequestBody ParticipantRequest request) {
-        return participantService.create(request);
+    public ParticipantResponse createParticipant(
+            @Valid @RequestBody ParticipantRequest request,
+            @RequestHeader("X-User-ID") Long userId
+    ) {
+        return participantService.create(request, userId);
     }
 
     // PUT /api/participants/{id}: actualiza un participante existente.
     @PutMapping("/{id}")
-    public ParticipantResponse updateParticipant(@PathVariable Long id, @Valid @RequestBody ParticipantRequest request) {
-        return participantService.update(id, request);
+    public ParticipantResponse updateParticipant(
+            @PathVariable Long id,
+            @Valid @RequestBody ParticipantRequest request,
+            @RequestHeader("X-User-ID") Long userId
+    ) {
+        return participantService.update(id, request, userId);
     }
 }

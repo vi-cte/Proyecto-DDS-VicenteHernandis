@@ -23,20 +23,21 @@ import java.util.Set;
 
 @Service
 public class VoteService {
-    private static final int MAX_TEAMS_TO_VOTE = 3;
-
     private final VoteJpaRepository voteRepository;
     private final ParticipantService participantService;
     private final PublicVoteCreator voteCreator;
+    private final EventSettingsService eventSettingsService;
 
     public VoteService(
             VoteJpaRepository voteRepository,
             ParticipantService participantService,
-            PublicVoteCreator voteCreator
+            PublicVoteCreator voteCreator,
+            EventSettingsService eventSettingsService
     ) {
         this.voteRepository = voteRepository;
         this.participantService = participantService;
         this.voteCreator = voteCreator;
+        this.eventSettingsService = eventSettingsService;
     }
 
     @Transactional
@@ -47,11 +48,12 @@ public class VoteService {
         }
 
         List<String> normalizedSelections = normalizeSelections(request.selections());
+        int maxTeamsToVote = eventSettingsService.getMaxTeamsToVote();
         if (normalizedSelections.isEmpty()) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Debes seleccionar al menos un participante");
         }
-        if (normalizedSelections.size() > MAX_TEAMS_TO_VOTE) {
-            throw new ApiException(HttpStatus.BAD_REQUEST, "Solo puedes votar a " + MAX_TEAMS_TO_VOTE + " equipos");
+        if (normalizedSelections.size() > maxTeamsToVote) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Solo puedes votar a " + maxTeamsToVote + " equipos");
         }
         Set<String> uniqueSelections = new LinkedHashSet<>(normalizedSelections);
         if (uniqueSelections.size() != normalizedSelections.size()) {
@@ -88,7 +90,7 @@ public class VoteService {
 
     @Transactional(readOnly = true)
     public VoteSettingsResponse getVoteSettings() {
-        return new VoteSettingsResponse(MAX_TEAMS_TO_VOTE);
+        return new VoteSettingsResponse(eventSettingsService.getMaxTeamsToVote());
     }
 
     @Transactional(readOnly = true)

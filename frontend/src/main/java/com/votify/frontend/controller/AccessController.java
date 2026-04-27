@@ -1,6 +1,8 @@
 package com.votify.frontend.controller;
 
-import com.votify.frontend.client.ApiClientProxy;
+import com.votify.frontend.client.ApiClient;
+import com.votify.frontend.client.AccessDecision;
+import com.votify.frontend.client.AccessTarget;
 import com.votify.frontend.exception.ApiClientException;
 import com.votify.frontend.navigation.SceneNavigator;
 import com.votify.frontend.ui.AlertHelper;
@@ -37,7 +39,7 @@ public class AccessController {
     @FXML private Label errorLabel;
 
     private boolean isLoginMode = true;
-    private final ApiClientProxy authProxy = ApiClientProxy.getInstance();
+    private final ApiClient authProxy = ApiClient.getInstance();
 
     @FXML
     public void initialize() { 
@@ -145,7 +147,7 @@ public class AccessController {
 
         try {
             if (isLoginMode) { authProxy.login(email, password); }
-            else { authProxy.register(email, password); AlertHelper.showInfo("Registro exitoso."); }
+            else { authProxy.registerUser(email, password); AlertHelper.showInfo("Registro exitoso."); }
             
             Stage stage = (Stage) actionButton.getScene().getWindow();
             SceneNavigator.showMainMenu(stage);
@@ -175,8 +177,9 @@ public class AccessController {
             return;
         }
         try {
-            if (!authProxy.getEventSettings().isResultsVisible()) {
-                AlertHelper.showWarning("Los resultados están ocultos actualmente por el administrador.");
+            AccessDecision access = authProxy.checkAccess(AccessTarget.RESULTS);
+            if (!access.allowed()) {
+                AlertHelper.showWarning(access.message());
                 return;
             }
             Stage stage = (Stage) actionButton.getScene().getWindow();

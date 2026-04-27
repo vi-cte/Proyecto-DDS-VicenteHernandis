@@ -1,6 +1,6 @@
 package com.votify.frontend.controller;
 
-import com.votify.frontend.client.ApiClientProxy;
+import com.votify.frontend.client.ApiClient;
 import com.votify.frontend.client.VotifyApi;
 import com.votify.frontend.dto.ParticipantResponse;
 import com.votify.frontend.dto.VoteResponse;
@@ -29,7 +29,7 @@ import java.util.Set;
 public class VotingFormController {
     private static final int FALLBACK_MAX_TEAMS_TO_VOTE = 3;
 
-    private final VotifyApi apiClient = ApiClientProxy.getInstance();
+    private final VotifyApi apiClient = ApiClient.getInstance();
     private final Set<String> selectedTeamNames = new LinkedHashSet<>();
 
     private int maxTeamsToVote = FALLBACK_MAX_TEAMS_TO_VOTE;
@@ -135,7 +135,7 @@ public class VotingFormController {
 
     @FXML
     private void exit() {
-        ApiClientProxy.getInstance().logout();
+        ApiClient.getInstance().logout();
         try {
             SceneNavigator.showScene(
                     currentStage(),

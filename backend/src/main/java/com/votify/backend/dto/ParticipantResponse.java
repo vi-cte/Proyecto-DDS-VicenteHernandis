@@ -10,7 +10,6 @@ public record ParticipantResponse(
         String phone,
         String description,
         String logo,
-        List<String> members,
-        String ownerEmail
+        List<String> members
 ) {
 }

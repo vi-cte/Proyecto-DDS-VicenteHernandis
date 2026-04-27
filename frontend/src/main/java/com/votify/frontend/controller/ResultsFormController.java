@@ -1,6 +1,6 @@
 package com.votify.frontend.controller;
 
-import com.votify.frontend.client.ApiClientProxy;
+import com.votify.frontend.client.ApiClient;
 import com.votify.frontend.client.VotifyApi;
 import com.votify.frontend.dto.ResultItemResponse;
 import com.votify.frontend.dto.ResultsResponse;
@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 public class ResultsFormController {
-    private final VotifyApi apiClient = ApiClientProxy.getInstance();
+    private final VotifyApi apiClient = ApiClient.getInstance();
     private final Map<String, ResultsViewStrategy> strategies = Map.of(
             "ranking", new RankingResultsViewStrategy(),
             "bars", new BarChartResultsViewStrategy(),
@@ -133,7 +133,7 @@ public class ResultsFormController {
 
     @FXML
     private void exit() {
-        ApiClientProxy.getInstance().logout();
+        ApiClient.getInstance().logout();
         try {
             SceneNavigator.showScene(
                     (Stage) resultsContent.getScene().getWindow(),

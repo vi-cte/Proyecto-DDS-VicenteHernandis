@@ -11,4 +11,6 @@ public interface ParticipantJpaRepository extends JpaRepository<ParticipantEntit
     boolean existsByTeamNameIgnoreCase(String teamName);
 
     Optional<ParticipantEntity> findByTeamNameIgnoreCase(String teamName);
+
+    Optional<ParticipantEntity> findByOwnerEmailIgnoreCase(String ownerEmail);
 }

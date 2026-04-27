@@ -7,10 +7,12 @@ import com.votify.frontend.dto.EventSettingsResponse;
 import java.util.List;
 
 public interface VotifyApi {
-    void createParticipant(String teamName, String email, String phone, String description, String logoBase64, List<String> members, String ownerEmail);
-    void updateParticipant(Long id, String teamName, String email, String phone, String description, String logoBase64, List<String> members, String ownerEmail);
+    AccessDecision checkAccess(AccessTarget target);
+    void createParticipant(String teamName, String email, String phone, String description, String logoBase64, List<String> members);
+    void updateParticipant(Long id, String teamName, String email, String phone, String description, String logoBase64, List<String> members);
     List<String> getParticipants();
     List<ParticipantResponse> getParticipantResponses();
+    ParticipantResponse getCurrentParticipant();
     boolean teamNameExists(String teamName);
     VoteResponse createVotes(List<String> selections);
     int getVotingLimit();

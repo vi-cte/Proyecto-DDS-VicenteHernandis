@@ -16,7 +16,7 @@ import javafx.scene.shape.SVGPath;
 
 public class RankingResultsViewStrategy implements ResultsViewStrategy {
 
-    private final ApiClient apiClient = new ApiClient();
+    private final ApiClient apiClient = ApiClient.getInstance();
 
     @Override
     public String id() {

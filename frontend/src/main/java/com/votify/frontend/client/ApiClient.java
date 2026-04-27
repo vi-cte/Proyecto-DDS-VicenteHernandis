@@ -30,13 +30,22 @@ public class ApiClient implements VotifyApi {
 
     private static String sessionToken; // Contendrá el ID del usuario como String
     private static String sessionEmail;
+    private static String adminPassword; // Token/Password admin
+    private static ApiClient instance;
 
     private final HttpClient httpClient;
     private final String baseUrl;
 
-    public ApiClient() {
+    private ApiClient() {
         this.httpClient = HttpClient.newHttpClient();
         this.baseUrl = System.getenv().getOrDefault("VOTIFY_API_BASE", "http://localhost:8080/api");
+    }
+
+    public static synchronized ApiClient getInstance() {
+        if (instance == null) {
+            instance = new ApiClient();
+        }
+        return instance;
     }
 
     public AuthResponse login(String email, String password) {
@@ -45,6 +54,41 @@ public class ApiClient implements VotifyApi {
 
     public AuthResponse registerUser(String email, String password) {
         return authenticate("/auth/register", email, password);
+    }
+
+    @Override
+    public AccessDecision checkAccess(AccessTarget target) {
+        EventSettingsResponse settings = getEventSettings();
+
+        return switch (target) {
+            case REGISTRATION -> {
+                if (!isUserLoggedIn()) {
+                    yield AccessDecision.deny("Debes iniciar sesión para registrar un equipo.");
+                }
+                if (!settings.isRegistrationsOpen()) {
+                    yield AccessDecision.deny("Las inscripciones están cerradas actualmente.");
+                }
+                yield AccessDecision.allow();
+            }
+            case VOTING -> {
+                if (!isUserLoggedIn()) {
+                    yield AccessDecision.deny("Debes iniciar sesión para votar.");
+                }
+                if (!settings.isVotingOpen()) {
+                    yield AccessDecision.deny("Las votaciones están cerradas actualmente.");
+                }
+                if (hasVoted()) {
+                    yield AccessDecision.deny("Ya has votado en este evento.");
+                }
+                yield AccessDecision.allow();
+            }
+            case RESULTS -> {
+                if (!settings.isResultsVisible()) {
+                    yield AccessDecision.deny("Los resultados están ocultos actualmente por el administrador.");
+                }
+                yield AccessDecision.allow();
+            }
+        };
     }
 
     private AuthResponse authenticate(String endpoint, String email, String password) {
@@ -80,8 +124,8 @@ public class ApiClient implements VotifyApi {
         }
     }
 
-    public void createParticipant(String teamName, String email, String phone, String description, String logoBase64, List<String> members, String ownerEmail) {
-        ParticipantRequest requestBody = new ParticipantRequest(teamName, email, phone, description, logoBase64, members, ownerEmail);
+    public void createParticipant(String teamName, String email, String phone, String description, String logoBase64, List<String> members) {
+        ParticipantRequest requestBody = new ParticipantRequest(teamName, email, phone, description, logoBase64, members);
         String json;
         try {
             json = MAPPER.writeValueAsString(requestBody);
@@ -92,6 +136,7 @@ public class ApiClient implements VotifyApi {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(baseUrl + "/participants"))
                 .header("Content-Type", "application/json")
+                .header("X-User-ID", sessionToken == null ? "" : sessionToken)
                 .POST(HttpRequest.BodyPublishers.ofString(json))
                 .build();
 
@@ -104,8 +149,8 @@ public class ApiClient implements VotifyApi {
     }
 
     @Override
-    public void updateParticipant(Long id, String teamName, String email, String phone, String description, String logoBase64, List<String> members, String ownerEmail) {
-        ParticipantRequest requestBody = new ParticipantRequest(teamName, email, phone, description, logoBase64, members, ownerEmail);
+    public void updateParticipant(Long id, String teamName, String email, String phone, String description, String logoBase64, List<String> members) {
+        ParticipantRequest requestBody = new ParticipantRequest(teamName, email, phone, description, logoBase64, members);
         String json;
         try {
             json = MAPPER.writeValueAsString(requestBody);
@@ -116,6 +161,7 @@ public class ApiClient implements VotifyApi {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(baseUrl + "/participants/" + id))
                 .header("Content-Type", "application/json")
+                .header("X-User-ID", sessionToken == null ? "" : sessionToken)
                 .PUT(HttpRequest.BodyPublishers.ofString(json))
                 .build();
 
@@ -154,6 +200,29 @@ public class ApiClient implements VotifyApi {
             return List.of(participants);
         } catch (Exception e) {
             throw new ApiClientException("No se pudo procesar la respuesta de participantes");
+        }
+    }
+
+    @Override
+    public ParticipantResponse getCurrentParticipant() {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(baseUrl + "/participants/mine"))
+                .header("X-User-ID", sessionToken == null ? "" : sessionToken)
+                .GET()
+                .build();
+
+        HttpResponse<String> response = send(request);
+        if (response.statusCode() == 204 || response.statusCode() == 404) {
+            return null;
+        }
+        if (response.statusCode() != 200) {
+            throw new ApiClientException(extractErrorMessage(response.body(), response.statusCode()));
+        }
+
+        try {
+            return MAPPER.readValue(response.body(), ParticipantResponse.class);
+        } catch (Exception e) {
+            throw new ApiClientException("No se pudo procesar tu participante");
         }
     }
 
@@ -203,7 +272,7 @@ public class ApiClient implements VotifyApi {
     }
 
     public int getVotingLimit() {
-        return getAdminSettings().getMaxTeamsToVote();
+        return getEventSettings().getMaxTeamsToVote();
     }
 
     public ResultsResponse getResults() {
@@ -282,15 +351,31 @@ public class ApiClient implements VotifyApi {
         sessionEmail = null;
     }
 
+    private boolean isUserLoggedIn() {
+        return sessionToken != null && !sessionToken.isBlank()
+                && sessionEmail != null && !sessionEmail.isBlank();
+    }
+
     @Override
     public boolean authenticateAdmin(String password) {
-        return "admin".equals(password);
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(baseUrl + "/admin/auth"))
+                .header("X-Admin-Password", password)
+                .POST(HttpRequest.BodyPublishers.noBody())
+                .build();
+        HttpResponse<String> response = send(request);
+        if (response.statusCode() == 200) {
+            adminPassword = password;
+            return true;
+        }
+        return false;
     }
 
     @Override
     public EventSettingsResponse getAdminSettings() {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(baseUrl + "/admin/settings"))
+                .header("X-Admin-Password", adminPassword == null ? "" : adminPassword)
                 .GET()
                 .build();
 
@@ -308,7 +393,21 @@ public class ApiClient implements VotifyApi {
 
     @Override
     public EventSettingsResponse getEventSettings() {
-        return getAdminSettings();
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(baseUrl + "/event/settings"))
+                .GET()
+                .build();
+
+        HttpResponse<String> response = send(request);
+        if (response.statusCode() != 200) {
+            throw new ApiClientException(extractErrorMessage(response.body(), response.statusCode()));
+        }
+
+        try {
+            return MAPPER.readValue(response.body(), EventSettingsResponse.class);
+        } catch (Exception e) {
+            throw new ApiClientException("No se pudo procesar la configuración");
+        }
     }
 
     @Override
@@ -317,6 +416,7 @@ public class ApiClient implements VotifyApi {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(baseUrl + "/admin/settings"))
                 .header("Content-Type", "application/json")
+                .header("X-Admin-Password", adminPassword == null ? "" : adminPassword)
                 .PUT(HttpRequest.BodyPublishers.ofString(json))
                 .build();
         HttpResponse<String> response = send(request);
@@ -329,6 +429,7 @@ public class ApiClient implements VotifyApi {
     public void resetEvent() {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(baseUrl + "/admin/reset"))
+                .header("X-Admin-Password", adminPassword == null ? "" : adminPassword)
                 .POST(HttpRequest.BodyPublishers.noBody())
                 .build();
         HttpResponse<String> response = send(request);
