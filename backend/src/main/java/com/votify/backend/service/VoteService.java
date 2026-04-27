@@ -40,7 +40,12 @@ public class VoteService {
     }
 
     @Transactional
-    public VoteResponse createVotes(VoteRequest request) {
+    public VoteResponse createVotes(VoteRequest request, Long userId) {
+        // Comprobamos si el usuario ya ha votado. Necesitarás añadir `existsByUserId` a tu VoteJpaRepository.
+        if (voteRepository.existsByUserId(userId)) {
+            throw new ApiException(HttpStatus.CONFLICT, "Ya has votado. No puedes votar de nuevo.");
+        }
+
         List<String> normalizedSelections = normalizeSelections(request.selections());
         if (normalizedSelections.isEmpty()) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Debes seleccionar al menos un participante");
@@ -65,6 +70,7 @@ public class VoteService {
             ParticipantEntity participant = participantService.getByTeamName(vote.getOption());
             VoteEntity entity = new VoteEntity();
             entity.setParticipant(participant);
+            entity.setUserId(userId);
             voteRepository.save(entity);
         }
 
@@ -83,6 +89,12 @@ public class VoteService {
     @Transactional(readOnly = true)
     public VoteSettingsResponse getVoteSettings() {
         return new VoteSettingsResponse(MAX_TEAMS_TO_VOTE);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean hasUserVoted(Long userId) {
+        // Necesitarás añadir `boolean existsByUserId(Long userId);` a tu interface VoteJpaRepository.
+        return voteRepository.existsByUserId(userId);
     }
 
     private List<String> normalizeSelections(List<String> selections) {

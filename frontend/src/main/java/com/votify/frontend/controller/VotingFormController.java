@@ -58,6 +58,18 @@ public class VotingFormController {
         participantList.setCellFactory(listView -> new VoteCandidateCell());
 
         try {
+            if (apiClient.hasVoted()) {
+                hintLabel.setText("Ya has emitido tu voto para este evento.");
+                submitButton.setDisable(true);
+                participantList.setDisable(true);
+                selectionCountLabel.setText("Voto emitido");
+                return; // Salimos para no cargar la lista de participantes si ya ha votado.
+            }
+        } catch (ApiClientException e) {
+            // Permitir continuar si la comprobación falla, pero registrar el error.
+        }
+
+        try {
             maxTeamsToVote = apiClient.getVotingLimit();
         } catch (ApiClientException ignored) {
             maxTeamsToVote = FALLBACK_MAX_TEAMS_TO_VOTE;

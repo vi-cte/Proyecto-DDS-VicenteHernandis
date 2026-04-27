@@ -34,6 +34,7 @@ public class AccessController {
     @FXML private Button actionButton;
     @FXML private Button viewResultsButton;
     @FXML private Button adminSettingsButton;
+    @FXML private Label errorLabel;
 
     private boolean isLoginMode = true;
     private final ApiClientProxy authProxy = ApiClientProxy.getInstance();
@@ -63,6 +64,7 @@ public class AccessController {
 
     @FXML
     private void showLogin() {
+        if (errorLabel != null) errorLabel.setText("");
         isLoginMode = true;
         loginTab.getStyleClass().addAll("active-tab-login");
         registerTab.getStyleClass().removeAll("active-tab-register");
@@ -74,6 +76,7 @@ public class AccessController {
 
     @FXML
     private void showRegister() {
+        if (errorLabel != null) errorLabel.setText("");
         isLoginMode = false;
         registerTab.getStyleClass().addAll("active-tab-register");
         loginTab.getStyleClass().removeAll("active-tab-login");
@@ -90,8 +93,17 @@ public class AccessController {
 
     @FXML
     private void handleAction() {
+        if (errorLabel != null) errorLabel.setText("");
         String email = emailField.getText(), password = passwordField.getText();
-        if (email.isBlank() || password.isBlank()) { AlertHelper.showWarning("Por favor, rellena todos los campos."); return; }
+        if (email.isBlank() || password.isBlank()) { 
+            showInlineError("Por favor, rellena todos los campos."); 
+            return; 
+        }
+
+        if (!isValidEmail(email)) {
+            showInlineError("Formato de correo no válido.");
+            return;
+        }
 
         try {
             if (isLoginMode) { authProxy.login(email, password); }
@@ -99,8 +111,23 @@ public class AccessController {
             
             Stage stage = (Stage) actionButton.getScene().getWindow();
             SceneNavigator.showMainMenu(stage);
-        } catch (ApiClientException e) { AlertHelper.showError(e.getMessage()); } 
+        } catch (ApiClientException e) { 
+            showInlineError(e.getMessage());
+        } 
         catch (IOException e) { AlertHelper.showError("Error abriendo menú: " + e.getMessage()); }
+    }
+
+    private void showInlineError(String message) {
+        if (errorLabel != null) {
+            errorLabel.setText(message);
+            errorLabel.setStyle("-fx-text-fill: #e53935; -fx-font-size: 13px;"); // Color rojo
+        } else {
+            AlertHelper.showWarning(message); // Fallback si el FXML aún no tiene el Label
+        }
+    }
+
+    private boolean isValidEmail(String email) {
+        return email != null && email.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
     }
 
     @FXML

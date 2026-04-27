@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -27,8 +28,11 @@ public class VoteController {
     // POST /api/votes: registra votos y devuelve 201 Created.
     @PostMapping("/votes")
     @ResponseStatus(HttpStatus.CREATED)
-    public VoteResponse createVotes(@Valid @RequestBody VoteRequest request) {
-        return voteService.createVotes(request);
+    public VoteResponse createVotes(
+            @Valid @RequestBody VoteRequest request,
+            @RequestHeader("X-User-ID") Long userId
+    ) {
+        return voteService.createVotes(request, userId);
     }
 
     // GET /api/results: devuelve resultados agregados.
@@ -40,5 +44,11 @@ public class VoteController {
     @GetMapping("/votes/settings")
     public VoteSettingsResponse getVoteSettings() {
         return voteService.getVoteSettings();
+    }
+
+    // GET /api/votes/has-voted: comprueba si un usuario ya ha votado.
+    @GetMapping("/votes/has-voted")
+    public boolean hasVoted(@RequestHeader("X-User-ID") Long userId) {
+        return voteService.hasUserVoted(userId);
     }
 }

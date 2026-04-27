@@ -80,6 +80,12 @@ public class ApiClientProxy implements VotifyApi {
     public ResultsResponse getResults() { return realClient.getResults(); }
 
     @Override
+    public boolean hasVoted() {
+        checkAccess();
+        return realClient.hasVoted();
+    }
+
+    @Override
     public boolean authenticateAdmin(String password) {
         boolean isValid = realClient.authenticateAdmin(password);
         if (isValid) {

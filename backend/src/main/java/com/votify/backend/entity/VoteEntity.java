@@ -26,6 +26,9 @@ public class VoteEntity {
     @JoinColumn(name = "participant_id", nullable = false)
     private ParticipantEntity participant;
 
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -44,6 +47,14 @@ public class VoteEntity {
 
     public void setParticipant(ParticipantEntity participant) {
         this.participant = participant;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
     }
 
     public Instant getCreatedAt() {

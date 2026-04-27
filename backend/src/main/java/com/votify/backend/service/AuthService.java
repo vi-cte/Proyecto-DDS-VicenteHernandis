@@ -10,7 +10,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
-import java.util.UUID;
 
 @Service
 public class AuthService {
@@ -28,14 +27,14 @@ public class AuthService {
         user.setEmail(request.email());
         user.setPassword(hashPassword(request.password()));
         userRepository.save(user);
-        return new AuthResponse(UUID.randomUUID().toString(), user.getEmail(), "Registro exitoso");
+        return new AuthResponse(user.getId().toString(), user.getEmail(), "Registro exitoso");
     }
 
     public AuthResponse login(AuthRequest request) {
         User user = userRepository.findByEmail(request.email())
                 .filter(u -> u.getPassword().equals(hashPassword(request.password())))
                 .orElseThrow(() -> new RuntimeException("Credenciales inválidas"));
-        return new AuthResponse(UUID.randomUUID().toString(), user.getEmail(), "Login exitoso");
+        return new AuthResponse(user.getId().toString(), user.getEmail(), "Login exitoso");
     }
 
     private String hashPassword(String password) {

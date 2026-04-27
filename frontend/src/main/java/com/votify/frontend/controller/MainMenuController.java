@@ -32,6 +32,15 @@ public class MainMenuController {
     @FXML
     private void initialize() {
         userNameLabel.setText(apiClient.getCurrentUserEmail());
+        try {
+            if (apiClient.hasVoted()) {
+                voteButton.setDisable(true);
+                voteButton.setText("Ya has votado");
+            }
+        } catch (ApiClientException e) {
+            // No bloquear la UI, pero es útil registrar el error para depuración.
+            System.err.println("No se pudo comprobar el estado del voto: " + e.getMessage());
+        }
     }
 
     @FXML

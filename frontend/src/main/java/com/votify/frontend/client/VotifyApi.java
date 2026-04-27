@@ -15,6 +15,7 @@ public interface VotifyApi {
     VoteResponse createVotes(List<String> selections);
     int getVotingLimit();
     ResultsResponse getResults();
+    boolean hasVoted();
     String getCurrentUserEmail();
     boolean authenticateAdmin(String password);
     EventSettingsResponse getAdminSettings();

@@ -38,10 +38,9 @@ public class AdminController {
     @PostMapping("/reset")
     public ResponseEntity<Void> resetEvent() {
         // IMPORTANTE: Asegúrate de que el nombre de estas tablas coincida con el generado en tu Base de Datos.
-        jdbcTemplate.execute("DELETE FROM vote_selections"); 
-        jdbcTemplate.execute("DELETE FROM vote");
+        jdbcTemplate.execute("DELETE FROM votes");
         jdbcTemplate.execute("DELETE FROM participant_members");
-        jdbcTemplate.execute("DELETE FROM participant");
+        jdbcTemplate.execute("DELETE FROM participants");
         
         return ResponseEntity.ok().build();
     }

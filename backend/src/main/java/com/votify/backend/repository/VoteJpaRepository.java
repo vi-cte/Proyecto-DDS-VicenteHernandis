@@ -17,4 +17,6 @@ public interface VoteJpaRepository extends JpaRepository<VoteEntity, Long> {
             order by count(v) desc, v.participant.teamName asc
             """)
     List<VoteTallyProjection> tally();
+
+    boolean existsByUserId(Long userId);
 }

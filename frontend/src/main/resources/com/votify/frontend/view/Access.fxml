@@ -41,6 +41,7 @@
                                     <PasswordField fx:id="passwordField" promptText="••••••••" styleClass="input-field"/>
                                 </VBox>
                                 <HBox alignment="CENTER_RIGHT" fx:id="forgotPasswordBox"><Label text="¿Olvidaste tu contraseña?" styleClass="link-label" onMouseClicked="#handleForgotPassword"/></HBox>
+                                <Label fx:id="errorLabel" wrapText="true" />
                                 <Button fx:id="actionButton" text="Iniciar sesión" styleClass="action-button" maxWidth="1.7976931348623157E308" onAction="#handleAction"/>
                                 <Button fx:id="viewResultsButton" text="Ver resultados votación" styleClass="secondary-button" maxWidth="1.7976931348623157E308" onAction="#handleViewResults"/>
                             </children>

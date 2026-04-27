@@ -28,6 +28,9 @@ public class ApiClient implements VotifyApi {
         MAPPER.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
+    private static String sessionToken; // Contendrá el ID del usuario como String
+    private static String sessionEmail;
+
     private final HttpClient httpClient;
     private final String baseUrl;
 
@@ -68,7 +71,10 @@ public class ApiClient implements VotifyApi {
         }
 
         try {
-            return MAPPER.readValue(response.body(), AuthResponse.class);
+            AuthResponse authResponse = MAPPER.readValue(response.body(), AuthResponse.class);
+            sessionToken = authResponse.token();
+            sessionEmail = authResponse.email();
+            return authResponse;
         } catch (Exception e) {
             throw new ApiClientException("No se procesó correctamente la sesión");
         }
@@ -166,6 +172,10 @@ public class ApiClient implements VotifyApi {
     }
 
     public VoteResponse createVotes(List<String> selections) {
+        if (sessionToken == null) {
+            throw new ApiClientException("No has iniciado sesión para poder votar.");
+        }
+
         String json;
         try {
             json = MAPPER.writeValueAsString(new VoteRequest(selections));
@@ -176,6 +186,7 @@ public class ApiClient implements VotifyApi {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(baseUrl + "/votes"))
                 .header("Content-Type", "application/json")
+                .header("X-User-ID", sessionToken)
                 .POST(HttpRequest.BodyPublishers.ofString(json))
                 .build();
 
@@ -212,6 +223,26 @@ public class ApiClient implements VotifyApi {
         }
     }
 
+    public boolean hasVoted() {
+        if (sessionToken == null) {
+            return false; // Si no ha iniciado sesión, no puede haber votado.
+        }
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(baseUrl + "/votes/has-voted"))
+                .header("X-User-ID", sessionToken)
+                .GET()
+                .build();
+
+        HttpResponse<String> response = send(request);
+        if (response.statusCode() != 200) {
+            throw new ApiClientException(extractErrorMessage(response.body(), response.statusCode()));
+        }
+
+        String body = response.body() == null ? "" : response.body().trim();
+        return "true".equalsIgnoreCase(body);
+    }
+
     private HttpResponse<String> send(HttpRequest request) {
         try {
             return httpClient.send(request, HttpResponse.BodyHandlers.ofString());
@@ -243,7 +274,12 @@ public class ApiClient implements VotifyApi {
 
     @Override
     public String getCurrentUserEmail() {
-        return "";
+        return sessionEmail;
+    }
+
+    public void logout() {
+        sessionToken = null;
+        sessionEmail = null;
     }
 
     @Override
