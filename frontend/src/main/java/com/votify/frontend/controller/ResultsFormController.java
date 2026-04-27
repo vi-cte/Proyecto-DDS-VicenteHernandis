@@ -56,12 +56,25 @@ public class ResultsFormController {
     private Button pieChartButton;
 
     @FXML
+    private Button exitButton;
+
+    @FXML
     private Label userNameLabel;
 
     @FXML
     private void initialize() {
-        if (userNameLabel != null) {
-            userNameLabel.setText(apiClient.getCurrentUserEmail());
+        String currentUserEmail = apiClient.getCurrentUserEmail();
+
+        if (currentUserEmail == null || currentUserEmail.isBlank()) {
+            if (userNameLabel != null) {
+                userNameLabel.setText("Invitado");
+            }
+            if (exitButton != null) {
+                exitButton.setVisible(false);
+                exitButton.setManaged(false);
+            }
+        } else if (userNameLabel != null) {
+            userNameLabel.setText(currentUserEmail);
         }
 
         try {
@@ -102,9 +115,19 @@ public class ResultsFormController {
     @FXML
     private void closeResults() {
         try {
-            SceneNavigator.showMainMenu((Stage) resultsContent.getScene().getWindow());
+            String currentUserEmail = apiClient.getCurrentUserEmail();
+            if (currentUserEmail == null || currentUserEmail.isBlank()) {
+                SceneNavigator.showScene(
+                        (Stage) resultsContent.getScene().getWindow(),
+                        "/com/votify/frontend/view/Access.fxml",
+                        "/com/votify/frontend/view/MainMenu.css",
+                        "Votify - Acceso"
+                );
+            } else {
+                SceneNavigator.showMainMenu((Stage) resultsContent.getScene().getWindow());
+            }
         } catch (IOException e) {
-            AlertHelper.showError("No se pudo volver al menú principal: " + e.getMessage());
+            AlertHelper.showError("No se pudo volver a la pantalla anterior: " + e.getMessage());
         }
     }
 

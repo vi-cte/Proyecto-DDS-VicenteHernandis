@@ -32,12 +32,34 @@ public class AccessController {
     @FXML private PasswordField passwordField;
     @FXML private HBox forgotPasswordBox;
     @FXML private Button actionButton;
+    @FXML private Button viewResultsButton;
+    @FXML private Button adminSettingsButton;
 
     private boolean isLoginMode = true;
     private final ApiClientProxy authProxy = ApiClientProxy.getInstance();
 
     @FXML
-    public void initialize() { showLogin(); }
+    public void initialize() { 
+        showLogin(); 
+        checkBackendConnection();
+    }
+
+    private void checkBackendConnection() {
+        try {
+            // Intentamos hacer una petición pública rápida para comprobar si el servidor responde
+            authProxy.getResults(); 
+        } catch (ApiClientException e) {
+            actionButton.setDisable(true);
+            emailField.setDisable(true);
+            passwordField.setDisable(true);
+            loginTab.setDisable(true);
+            registerTab.setDisable(true);
+            viewResultsButton.setDisable(true);
+            adminSettingsButton.setDisable(true);
+            forgotPasswordBox.setDisable(true);
+            Platform.runLater(() -> AlertHelper.showError("No se pudo conectar con el servidor backend. Verifica que esté iniciado."));
+        }
+    }
 
     @FXML
     private void showLogin() {
@@ -82,7 +104,30 @@ public class AccessController {
     }
 
     @FXML
+    public void handleViewResults() {
+        if (actionButton.isDisabled()) {
+            AlertHelper.showError("No hay conexión con el servidor.");
+            return;
+        }
+        try {
+            Stage stage = (Stage) actionButton.getScene().getWindow();
+            SceneNavigator.showScene(
+                    stage,
+                    "/com/votify/frontend/view/ResultsForm.fxml",
+                    "/com/votify/frontend/view/MainMenu.css",
+                    "Votify - Resultados"
+            );
+        } catch (IOException e) {
+            AlertHelper.showError("Error abriendo resultados: " + e.getMessage());
+        }
+    }
+
+    @FXML
     public void handleAdminSettings() {
+        if (actionButton.isDisabled()) {
+            AlertHelper.showError("No hay conexión con el servidor.");
+            return;
+        }
         Dialog<String> dialog = new Dialog<>();
         dialog.setTitle("Acceso Administrador");
         dialog.setHeaderText("Ajustes de Votación");

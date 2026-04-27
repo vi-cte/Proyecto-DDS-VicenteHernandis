@@ -69,7 +69,7 @@ public class ApiClientProxy implements VotifyApi {
     @Override
     public List<String> getParticipants() { checkAccess(); return realClient.getParticipants(); }
     @Override
-    public List<ParticipantResponse> getParticipantResponses() { checkAccess(); return realClient.getParticipantResponses(); }
+    public List<ParticipantResponse> getParticipantResponses() { return realClient.getParticipantResponses(); }
     @Override
     public boolean teamNameExists(String teamName) { checkAccess(); return realClient.teamNameExists(teamName); }
     @Override
@@ -77,7 +77,7 @@ public class ApiClientProxy implements VotifyApi {
     @Override
     public int getVotingLimit() { checkAccess(); return realClient.getVotingLimit(); }
     @Override
-    public ResultsResponse getResults() { checkAccess(); return realClient.getResults(); }
+    public ResultsResponse getResults() { return realClient.getResults(); }
 
     @Override
     public boolean authenticateAdmin(String password) {
