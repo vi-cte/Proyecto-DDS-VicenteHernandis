@@ -312,8 +312,8 @@ public class ApiClient implements VotifyApi {
     }
 
     @Override
-    public void updateAdminSettings(boolean registrationsOpen, boolean votingOpen, int maxTeamsToVote) {
-        String json = String.format("{\"registrationsOpen\":%b, \"votingOpen\":%b, \"maxTeamsToVote\":%d}", registrationsOpen, votingOpen, maxTeamsToVote);
+    public void updateAdminSettings(boolean registrationsOpen, boolean votingOpen, boolean resultsVisible, int maxTeamsToVote) {
+        String json = String.format("{\"registrationsOpen\":%b, \"votingOpen\":%b, \"resultsVisible\":%b, \"maxTeamsToVote\":%d}", registrationsOpen, votingOpen, resultsVisible, maxTeamsToVote);
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(baseUrl + "/admin/settings"))
                 .header("Content-Type", "application/json")

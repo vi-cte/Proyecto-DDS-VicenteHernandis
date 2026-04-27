@@ -105,13 +105,12 @@ public class ApiClientProxy implements VotifyApi {
 
     @Override
     public EventSettingsResponse getEventSettings() { 
-        checkAccess(); 
         return realClient.getAdminSettings(); 
     }
 
     @Override
-    public void updateAdminSettings(boolean registrationsOpen, boolean votingOpen, int maxTeamsToVote) {
-        checkAdminAccess(); realClient.updateAdminSettings(registrationsOpen, votingOpen, maxTeamsToVote);
+    public void updateAdminSettings(boolean registrationsOpen, boolean votingOpen, boolean resultsVisible, int maxTeamsToVote) {
+        checkAdminAccess(); realClient.updateAdminSettings(registrationsOpen, votingOpen, resultsVisible, maxTeamsToVote);
     }
 
     @Override

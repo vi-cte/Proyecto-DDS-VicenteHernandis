@@ -20,6 +20,6 @@ public interface VotifyApi {
     boolean authenticateAdmin(String password);
     EventSettingsResponse getAdminSettings();
     EventSettingsResponse getEventSettings();
-    void updateAdminSettings(boolean registrationsOpen, boolean votingOpen, int maxTeamsToVote);
+    void updateAdminSettings(boolean registrationsOpen, boolean votingOpen, boolean resultsVisible, int maxTeamsToVote);
     void resetEvent();
 }

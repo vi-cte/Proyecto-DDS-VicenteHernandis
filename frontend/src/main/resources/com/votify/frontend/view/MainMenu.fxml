@@ -98,14 +98,14 @@
                               <VBox alignment="CENTER" spacing="10.0">
                                  <children>
                                     <Label styleClass="card-title" text="Votar" />
-                                    <Label styleClass="card-subtitle" text="Evalúa proyectos participantes" wrapText="true" />
+                                    <Label fx:id="voteSubtitle" styleClass="card-subtitle" text="Evalúa proyectos participantes" wrapText="true" />
                                  </children>
                               </VBox>
                            </children>
                         </VBox>
                      </graphic>
                   </Button>
-                  <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#register" prefHeight="228.0" prefWidth="392.0" text="" HBox.hgrow="ALWAYS">
+                  <Button fx:id="registerButton" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#register" prefHeight="228.0" prefWidth="392.0" text="" HBox.hgrow="ALWAYS">
                      <styleClass>
                         <String fx:value="action-card" />
                         <String fx:value="action-card-green" />
@@ -125,14 +125,14 @@
                               <VBox alignment="CENTER" spacing="10.0">
                                  <children>
                                     <Label styleClass="card-title" text="Participar" />
-                                    <Label styleClass="card-subtitle" text="Registra tu proyecto" wrapText="true" />
+                                    <Label fx:id="registerSubtitle" styleClass="card-subtitle" text="Registra tu proyecto" wrapText="true" />
                                  </children>
                               </VBox>
                            </children>
                         </VBox>
                      </graphic>
                   </Button>
-                  <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#viewResults" prefHeight="228.0" prefWidth="392.0" text="" HBox.hgrow="ALWAYS">
+                  <Button fx:id="viewResultsButton" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#viewResults" prefHeight="228.0" prefWidth="392.0" text="" HBox.hgrow="ALWAYS">
                      <styleClass>
                         <String fx:value="action-card" />
                         <String fx:value="action-card-purple" />
@@ -152,7 +152,7 @@
                               <VBox alignment="CENTER" spacing="10.0">
                                  <children>
                                     <Label styleClass="card-title" text="Resultados" />
-                                    <Label styleClass="card-subtitle" text="Visualiza el ranking" wrapText="true" />
+                                    <Label fx:id="resultsSubtitle" styleClass="card-subtitle" text="Visualiza el ranking" wrapText="true" />
                                  </children>
                               </VBox>
                            </children>

@@ -27,6 +27,21 @@ public class MainMenuController {
     private Button voteButton;
 
     @FXML
+    private Button registerButton;
+
+    @FXML
+    private Button viewResultsButton;
+
+    @FXML
+    private Label voteSubtitle;
+
+    @FXML
+    private Label registerSubtitle;
+
+    @FXML
+    private Label resultsSubtitle;
+
+    @FXML
     private Label userNameLabel;
 
     @FXML
@@ -35,7 +50,29 @@ public class MainMenuController {
         try {
             if (apiClient.hasVoted()) {
                 voteButton.setDisable(true);
-                voteButton.setText("Ya has votado");
+                if (voteSubtitle != null) voteSubtitle.setText("Ya has votado en este evento");
+            }
+
+            com.votify.frontend.dto.EventSettingsResponse settings = apiClient.getEventSettings();
+            
+            if (!settings.isVotingOpen()) {
+                voteButton.setDisable(true);
+                if (voteSubtitle != null) voteSubtitle.setText("Votaciones cerradas en este momento");
+            }
+            
+            if (registerButton != null && !settings.isRegistrationsOpen()) {
+                registerButton.setDisable(true);
+                if (registerSubtitle != null) registerSubtitle.setText("Participaciones cerradas en este momento");
+            }
+
+            if (viewResultsButton != null) {
+                if (!settings.isResultsVisible()) {
+                    viewResultsButton.setDisable(true);
+                    if (resultsSubtitle != null) resultsSubtitle.setText("Resultados aun no publicados");
+                } else {
+                    viewResultsButton.setDisable(false);
+                    if (resultsSubtitle != null) resultsSubtitle.setText("Visualiza el ranking");
+                }
             }
         } catch (ApiClientException e) {
             // No bloquear la UI, pero es útil registrar el error para depuración.
@@ -72,7 +109,13 @@ public class MainMenuController {
     @FXML
     private void viewResults() {
         if (checkConnection()) {
-            resultsController.viewResults(currentStage());
+            try {
+                if (!apiClient.getEventSettings().isResultsVisible()) {
+                    AlertHelper.showWarning("Los resultados están ocultos actualmente por el administrador.");
+                    return;
+                }
+                resultsController.viewResults(currentStage());
+            } catch (ApiClientException e) { AlertHelper.showError("Error: " + e.getMessage()); }
         }
     }
 

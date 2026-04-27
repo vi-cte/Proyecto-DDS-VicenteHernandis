@@ -20,6 +20,9 @@ public class AuthService {
     }
 
     public AuthResponse register(AuthRequest request) {
+        if (request.password() == null || request.password().length() < 8) {
+            throw new RuntimeException("La contraseña debe tener al menos 8 caracteres");
+        }
         if (userRepository.findByEmail(request.email()).isPresent()) {
             throw new RuntimeException("El correo ya está registrado");
         }

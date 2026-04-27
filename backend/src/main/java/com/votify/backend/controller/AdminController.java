@@ -16,11 +16,12 @@ public class AdminController {
     // Estado simple en memoria. (En una app en producción, podría conectarse a tu BD)
     private boolean registrationsOpen = true;
     private boolean votingOpen = false;
+    private boolean resultsVisible = false;
     private int maxTeamsToVote = 1;
 
     @GetMapping("/settings")
     public ResponseEntity<EventSettingsDto> getSettings() {
-        return ResponseEntity.ok(new EventSettingsDto(registrationsOpen, votingOpen, maxTeamsToVote));
+        return ResponseEntity.ok(new EventSettingsDto(registrationsOpen, votingOpen, resultsVisible, maxTeamsToVote));
     }
 
     @PutMapping("/settings")
@@ -31,6 +32,7 @@ public class AdminController {
         if (this.registrationsOpen && this.votingOpen) {
             this.votingOpen = false;
         }
+        this.resultsVisible = settings.resultsVisible();
         this.maxTeamsToVote = settings.maxTeamsToVote();
         return ResponseEntity.ok().build();
     }

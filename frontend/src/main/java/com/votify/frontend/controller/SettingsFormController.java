@@ -21,8 +21,10 @@ public class SettingsFormController {
 
     @FXML private CheckBox registrationToggle;
     @FXML private CheckBox votingToggle;
+    @FXML private CheckBox resultsToggle;
     @FXML private Label registrationStatusLabel;
     @FXML private Label votingStatusLabel;
+    @FXML private Label resultsStatusLabel;
     @FXML private TextField maxVotesField;
     @FXML private Button resetButton;
 
@@ -32,6 +34,7 @@ public class SettingsFormController {
             EventSettingsResponse settings = apiClient.getAdminSettings();
             registrationToggle.setSelected(settings.isRegistrationsOpen());
             votingToggle.setSelected(settings.isVotingOpen());
+            if (resultsToggle != null) resultsToggle.setSelected(settings.isResultsVisible());
             maxVotesField.setText(String.valueOf(settings.getMaxTeamsToVote()));
             updateLabels();
         } catch (ApiClientException e) {
@@ -40,6 +43,10 @@ public class SettingsFormController {
 
         registrationToggle.selectedProperty().addListener((obs, oldV, newV) -> saveSettings());
         votingToggle.selectedProperty().addListener((obs, oldV, newV) -> saveSettings());
+        if (resultsToggle != null) resultsToggle.selectedProperty().addListener((obs, oldV, newV) -> {
+            updateLabels();
+            saveSettings();
+        });
         maxVotesField.focusedProperty().addListener((obs, wasFocused, isFocused) -> {
             if (!isFocused) saveSettings();
         });
@@ -66,12 +73,16 @@ public class SettingsFormController {
     private void updateLabels() {
         registrationStatusLabel.setText(registrationToggle.isSelected() ? "Abiertas" : "Cerradas");
         votingStatusLabel.setText(votingToggle.isSelected() ? "Abiertas" : "Cerradas");
+        if (resultsStatusLabel != null && resultsToggle != null) {
+            resultsStatusLabel.setText(resultsToggle.isSelected() ? "Visibles" : "Ocultos");
+        }
     }
 
     private void saveSettings() {
         try {
             int maxVotes = Integer.parseInt(maxVotesField.getText());
-            apiClient.updateAdminSettings(registrationToggle.isSelected(), votingToggle.isSelected(), maxVotes);
+            boolean resVisible = resultsToggle != null && resultsToggle.isSelected();
+            apiClient.updateAdminSettings(registrationToggle.isSelected(), votingToggle.isSelected(), resVisible, maxVotes);
         } catch (NumberFormatException e) {
             AlertHelper.showError("El número de votos debe ser numérico.");
         } catch (ApiClientException e) {

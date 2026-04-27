@@ -43,12 +43,45 @@ public class AccessController {
     public void initialize() { 
         showLogin(); 
         checkBackendConnection();
+
+        // Listener para validar el correo al salir de la casilla (perder el foco)
+        emailField.focusedProperty().addListener((observable, oldValue, newValue) -> {
+            if (!newValue) { 
+                String email = emailField.getText();
+                if (!email.isBlank() && !isValidEmail(email)) {
+                    showInlineError("Formato de correo no válido.");
+                } else if (errorLabel != null && "Formato de correo no válido.".equals(errorLabel.getText())) {
+                    errorLabel.setText(""); // Limpia el error si se ha corregido
+                }
+            }
+        });
+
+        // Listener para validar la contraseña al salir de la casilla (solo en registro)
+        passwordField.focusedProperty().addListener((observable, oldValue, newValue) -> {
+            if (!newValue && !isLoginMode) { 
+                String password = passwordField.getText();
+                if (!password.isBlank() && password.length() < 8) {
+                    showInlineError("La contraseña debe tener al menos 8 caracteres.");
+                } else if (errorLabel != null && "La contraseña debe tener al menos 8 caracteres.".equals(errorLabel.getText())) {
+                    errorLabel.setText(""); // Limpia el error si se ha corregido
+                }
+            }
+        });
     }
 
     private void checkBackendConnection() {
         try {
-            // Intentamos hacer una petición pública rápida para comprobar si el servidor responde
-            authProxy.getResults(); 
+            // Obtenemos los ajustes del evento para comprobar la conexión y configurar la vista
+            var settings = authProxy.getEventSettings();
+            if (viewResultsButton != null) {
+                if (!settings.isResultsVisible()) {
+                    viewResultsButton.setDisable(true);
+                    viewResultsButton.setText("Resultados aun no publicados");
+                } else {
+                    viewResultsButton.setDisable(false);
+                    viewResultsButton.setText("Ver resultados votación");
+                }
+            }
         } catch (ApiClientException e) {
             actionButton.setDisable(true);
             emailField.setDisable(true);
@@ -105,6 +138,11 @@ public class AccessController {
             return;
         }
 
+        if (!isLoginMode && password.length() < 8) {
+            showInlineError("La contraseña debe tener al menos 8 caracteres.");
+            return;
+        }
+
         try {
             if (isLoginMode) { authProxy.login(email, password); }
             else { authProxy.register(email, password); AlertHelper.showInfo("Registro exitoso."); }
@@ -137,6 +175,10 @@ public class AccessController {
             return;
         }
         try {
+            if (!authProxy.getEventSettings().isResultsVisible()) {
+                AlertHelper.showWarning("Los resultados están ocultos actualmente por el administrador.");
+                return;
+            }
             Stage stage = (Stage) actionButton.getScene().getWindow();
             SceneNavigator.showScene(
                     stage,
@@ -144,6 +186,8 @@ public class AccessController {
                     "/com/votify/frontend/view/MainMenu.css",
                     "Votify - Resultados"
             );
+        } catch (ApiClientException e) {
+            AlertHelper.showError("Error comprobando el estado del evento: " + e.getMessage());
         } catch (IOException e) {
             AlertHelper.showError("Error abriendo resultados: " + e.getMessage());
         }
@@ -188,6 +232,9 @@ public class AccessController {
                     stage.setScene(new Scene(root));
                     stage.setTitle("Configuración del evento");
                     stage.showAndWait();
+                    
+                    // Refrescamos la vista para aplicar los cambios (ej. mostrar/ocultar el botón de resultados)
+                    checkBackendConnection(); 
                 } catch (IOException e) {
                     AlertHelper.showError("Error abriendo ajustes: " + e.getMessage());
                 }
