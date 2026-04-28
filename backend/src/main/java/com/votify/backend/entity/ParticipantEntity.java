@@ -13,6 +13,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
 import java.util.ArrayList;
 import java.util.List;
+import org.springframework.lang.NonNull;
 
 /*ParticipantEntity mapea la tabla participants: datos del equipo (nombre único, email, dirección, teléfono) 
 y su lista de miembros en tabla participant_members como @ElementCollection.*/
@@ -47,6 +48,10 @@ public class ParticipantEntity {
 
     @Column(name = "owner_email", length = 180)
     private String ownerEmail;
+
+    public static Builder builder() {
+        return new Builder();
+    }
 
     public Long getId() {
         return id;
@@ -106,5 +111,66 @@ public class ParticipantEntity {
 
     public void setOwnerEmail(String ownerEmail) {
         this.ownerEmail = ownerEmail;
+    }
+
+    public static final class Builder {
+        private String teamName;
+        private String email;
+        private String phone;
+        private String description;
+        private String logo;
+        private List<String> members;
+        private String ownerEmail;
+
+        private Builder() {
+        }
+
+        public Builder teamName(String teamName) {
+            this.teamName = teamName;
+            return this;
+        }
+
+        public Builder email(String email) {
+            this.email = email;
+            return this;
+        }
+
+        public Builder phone(String phone) {
+            this.phone = phone;
+            return this;
+        }
+
+        public Builder description(String description) {
+            this.description = description;
+            return this;
+        }
+
+        public Builder logo(String logo) {
+            this.logo = logo;
+            return this;
+        }
+
+        public Builder members(List<String> members) {
+            this.members = members;
+            return this;
+        }
+
+        public Builder ownerEmail(String ownerEmail) {
+            this.ownerEmail = ownerEmail;
+            return this;
+        }
+
+        @NonNull
+        public ParticipantEntity build() {
+            ParticipantEntity participant = new ParticipantEntity();
+            participant.setTeamName(teamName);
+            participant.setEmail(email);
+            participant.setPhone(phone);
+            participant.setDescription(description);
+            participant.setLogo(logo);
+            participant.setMembers(members);
+            participant.setOwnerEmail(ownerEmail);
+            return participant;
+        }
     }
 }

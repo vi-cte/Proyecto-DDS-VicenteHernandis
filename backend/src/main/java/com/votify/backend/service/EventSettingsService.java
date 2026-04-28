@@ -1,5 +1,9 @@
 package com.votify.backend.service;
 
+import com.votify.backend.domain.event.ClosedEventState;
+import com.votify.backend.domain.event.EventSettingsStateContext;
+import com.votify.backend.domain.event.RegistrationOpenState;
+import com.votify.backend.domain.event.VotingOpenState;
 import com.votify.backend.dto.EventSettingsDto;
 import com.votify.backend.entity.EventSettingsEntity;
 import com.votify.backend.exception.ApiException;
@@ -10,6 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class EventSettingsService {
+    private static final int DEFAULT_MAX_TEAMS_TO_VOTE = 1;
+
     private final EventSettingsRepository eventSettingsRepository;
 
     public EventSettingsService(EventSettingsRepository eventSettingsRepository) {
@@ -19,12 +25,7 @@ public class EventSettingsService {
     @Transactional(readOnly = true)
     public EventSettingsDto getSettings() {
         EventSettingsEntity entity = getOrCreateSettings();
-        return new EventSettingsDto(
-                entity.isRegistrationsOpen(),
-                entity.isVotingOpen(),
-                entity.isResultsVisible(),
-                entity.getMaxTeamsToVote()
-        );
+        return EventSettingsStateContext.fromEntity(entity).toDto();
     }
 
     @Transactional
@@ -33,32 +34,65 @@ public class EventSettingsService {
             throw new ApiException(HttpStatus.BAD_REQUEST, "El número de votos debe ser al menos 1");
         }
 
-        EventSettingsEntity entity = getOrCreateSettings();
-        entity.setRegistrationsOpen(settings.registrationsOpen());
-        entity.setVotingOpen(settings.votingOpen() && !settings.registrationsOpen());
-        entity.setResultsVisible(settings.resultsVisible());
-        entity.setMaxTeamsToVote(settings.maxTeamsToVote());
-        eventSettingsRepository.save(entity);
+        if (settings.registrationsOpen()) {
+            openRegistrations(settings.resultsVisible(), settings.maxTeamsToVote());
+            return;
+        }
+        if (settings.votingOpen()) {
+            openVoting(settings.resultsVisible(), settings.maxTeamsToVote());
+            return;
+        }
+        closeEvent(settings.resultsVisible(), settings.maxTeamsToVote());
+    }
+
+    @Transactional
+    public void openRegistrations(boolean resultsVisible, int maxTeamsToVote) {
+        updatePhase(new RegistrationOpenState(), resultsVisible, maxTeamsToVote);
+    }
+
+    @Transactional
+    public void openVoting(boolean resultsVisible, int maxTeamsToVote) {
+        updatePhase(new VotingOpenState(), resultsVisible, maxTeamsToVote);
+    }
+
+    @Transactional
+    public void closeEvent(boolean resultsVisible, int maxTeamsToVote) {
+        updatePhase(new ClosedEventState(), resultsVisible, maxTeamsToVote);
     }
 
     @Transactional(readOnly = true)
     public boolean areRegistrationsOpen() {
-        return getOrCreateSettings().isRegistrationsOpen();
+        return currentContext().registrationsOpen();
     }
 
     @Transactional(readOnly = true)
     public boolean isVotingOpen() {
-        return getOrCreateSettings().isVotingOpen();
+        return currentContext().votingOpen();
     }
 
     @Transactional(readOnly = true)
     public boolean areResultsVisible() {
-        return getOrCreateSettings().isResultsVisible();
+        return currentContext().resultsVisible();
     }
 
     @Transactional(readOnly = true)
     public int getMaxTeamsToVote() {
-        return getOrCreateSettings().getMaxTeamsToVote();
+        return currentContext().maxTeamsToVote();
+    }
+
+    @Transactional(readOnly = true)
+    public boolean allowsTeamRegistration() {
+        return currentContext().registrationsOpen();
+    }
+
+    @Transactional(readOnly = true)
+    public boolean allowsVoting() {
+        return currentContext().votingOpen();
+    }
+
+    @Transactional(readOnly = true)
+    public boolean allowsResultsVisibility() {
+        return currentContext().resultsVisible();
     }
 
     private EventSettingsEntity getOrCreateSettings() {
@@ -69,10 +103,44 @@ public class EventSettingsService {
     private EventSettingsEntity createDefaultSettings() {
         EventSettingsEntity entity = new EventSettingsEntity();
         entity.setId(EventSettingsEntity.SINGLETON_ID);
+        EventSettingsStateContext context = EventSettingsStateContext.fromEntity(defaultSettings(entity));
+        context.applyTo(entity);
+        return eventSettingsRepository.save(entity);
+    }
+
+    private EventSettingsStateContext currentContext() {
+        return EventSettingsStateContext.fromEntity(getOrCreateSettings());
+    }
+
+    private EventSettingsEntity defaultSettings(EventSettingsEntity entity) {
         entity.setRegistrationsOpen(true);
         entity.setVotingOpen(false);
         entity.setResultsVisible(false);
-        entity.setMaxTeamsToVote(1);
-        return eventSettingsRepository.save(entity);
+        entity.setMaxTeamsToVote(DEFAULT_MAX_TEAMS_TO_VOTE);
+        entity.setPhase("REGISTRATION_OPEN");
+        return entity;
+    }
+
+    private void updatePhase(
+            com.votify.backend.domain.event.EventPhaseState phaseState,
+            boolean resultsVisible,
+            int maxTeamsToVote
+    ) {
+        if (maxTeamsToVote < 1) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "El número de votos debe ser al menos 1");
+        }
+
+        EventSettingsEntity entity = getOrCreateSettings();
+        EventSettingsStateContext context = EventSettingsStateContext.fromEntity(entity);
+        EventSettingsDto transition = new EventSettingsDto(
+                phaseState.registrationsOpen(),
+                phaseState.votingOpen(),
+                resultsVisible,
+                maxTeamsToVote
+        );
+        context.applyAdminSelection(transition);
+        context.applyTo(entity);
+        java.util.Objects.requireNonNull(entity);
+        eventSettingsRepository.save(entity);
     }
 }

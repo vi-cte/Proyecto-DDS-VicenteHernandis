@@ -35,14 +35,15 @@ public class ParticipantService {
             throw new ApiException(HttpStatus.CONFLICT, "Este usuario ya tiene un equipo registrado");
         }
 
-        ParticipantEntity entity = new ParticipantEntity();
-        entity.setTeamName(normalizedTeamName);
-        entity.setEmail(request.email().trim());
-        entity.setPhone(trimToNull(request.phone()));
-        entity.setDescription(trimToNull(request.description()));
-        entity.setLogo(trimToNull(request.logo()));
-        entity.setMembers(request.members());
-        entity.setOwnerEmail(currentUser.getEmail());
+        ParticipantEntity entity = ParticipantEntity.builder()
+                .teamName(normalizedTeamName)
+                .email(request.email().trim())
+                .phone(trimToNull(request.phone()))
+                .description(trimToNull(request.description()))
+                .logo(trimToNull(request.logo()))
+                .members(request.members())
+                .ownerEmail(currentUser.getEmail())
+                .build();
 
         ParticipantEntity saved = participantRepository.save(entity);
         return toResponse(saved);

@@ -36,6 +36,24 @@ public class AdminController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/phase/registration")
+    public ResponseEntity<Void> openRegistrations(@RequestBody EventSettingsDto settings) {
+        eventSettingsService.openRegistrations(settings.resultsVisible(), settings.maxTeamsToVote());
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/phase/voting")
+    public ResponseEntity<Void> openVoting(@RequestBody EventSettingsDto settings) {
+        eventSettingsService.openVoting(settings.resultsVisible(), settings.maxTeamsToVote());
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/phase/closed")
+    public ResponseEntity<Void> closeEvent(@RequestBody EventSettingsDto settings) {
+        eventSettingsService.closeEvent(settings.resultsVisible(), settings.maxTeamsToVote());
+        return ResponseEntity.ok().build();
+    }
+
     @PostMapping("/reset")
     public ResponseEntity<Void> resetEvent() {
         // Se eliminan todos los datos relacionados con la votación, pero 

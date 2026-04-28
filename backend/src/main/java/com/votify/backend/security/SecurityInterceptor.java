@@ -109,7 +109,7 @@ public class SecurityInterceptor implements HandlerInterceptor {
         if (userId == null) {
             return false;
         }
-        if (!eventSettingsService.areRegistrationsOpen()) {
+        if (!eventSettingsService.allowsTeamRegistration()) {
             writeError(response, request, HttpStatus.FORBIDDEN, "Las inscripciones están cerradas actualmente");
             return false;
         }
@@ -125,7 +125,7 @@ public class SecurityInterceptor implements HandlerInterceptor {
         if (userId == null) {
             return false;
         }
-        if (!eventSettingsService.isVotingOpen()) {
+        if (!eventSettingsService.allowsVoting()) {
             writeError(response, request, HttpStatus.FORBIDDEN, "Las votaciones están cerradas actualmente");
             return false;
         }
@@ -137,7 +137,7 @@ public class SecurityInterceptor implements HandlerInterceptor {
     }
 
     private boolean validateVisibleResults(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        if (!eventSettingsService.areResultsVisible()) {
+        if (!eventSettingsService.allowsResultsVisibility()) {
             writeError(response, request, HttpStatus.FORBIDDEN, "Los resultados están ocultos actualmente por el administrador");
             return false;
         }

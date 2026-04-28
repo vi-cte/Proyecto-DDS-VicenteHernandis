@@ -22,6 +22,9 @@ public class EventSettingsEntity {
     @Column(name = "results_visible", nullable = false)
     private boolean resultsVisible;
 
+    @Column(name = "phase", length = 40)
+    private String phase;
+
     @Column(name = "max_teams_to_vote", nullable = false)
     private int maxTeamsToVote;
 
@@ -55,6 +58,14 @@ public class EventSettingsEntity {
 
     public void setResultsVisible(boolean resultsVisible) {
         this.resultsVisible = resultsVisible;
+    }
+
+    public String getPhase() {
+        return phase;
+    }
+
+    public void setPhase(String phase) {
+        this.phase = phase;
     }
 
     public int getMaxTeamsToVote() {

@@ -26,9 +26,10 @@ public class AuthService {
         if (userRepository.findByEmail(request.email()).isPresent()) {
             throw new RuntimeException("El correo ya está registrado");
         }
-        User user = new User();
-        user.setEmail(request.email());
-        user.setPassword(hashPassword(request.password()));
+        User user = User.builder()
+                .email(request.email())
+                .password(hashPassword(request.password()))
+                .build();
         userRepository.save(user);
         return new AuthResponse(user.getId().toString(), user.getEmail(), "Registro exitoso");
     }
