@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class VoteController {
     private final VoteService voteService;
 
+    // Inyecta el servicio que gestiona votos y resultados.
     public VoteController(VoteService voteService) {
         this.voteService = voteService;
     }
@@ -42,6 +43,7 @@ public class VoteController {
     }
 
     @GetMapping("/votes/settings")
+    // GET /api/votes/settings: devuelve el límite de equipos votables.
     public VoteSettingsResponse getVoteSettings() {
         return voteService.getVoteSettings();
     }

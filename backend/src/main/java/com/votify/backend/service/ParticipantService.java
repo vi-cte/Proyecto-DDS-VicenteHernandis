@@ -1,5 +1,7 @@
 package com.votify.backend.service;
 
+import com.votify.backend.builder.DefaultParticipantBuilder;
+import com.votify.backend.builder.ParticipantDirector;
 import com.votify.backend.dto.ParticipantRequest;
 import com.votify.backend.dto.ParticipantResponse;
 import com.votify.backend.entity.ParticipantEntity;
@@ -15,16 +17,19 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+// Gestiona las reglas de negocio de equipos participantes.
 public class ParticipantService {
     private final ParticipantJpaRepository participantRepository;
     private final UserRepository userRepository;
 
+    // Inyecta los repositorios de participantes y usuarios.
     public ParticipantService(ParticipantJpaRepository participantRepository, UserRepository userRepository) {
         this.participantRepository = participantRepository;
         this.userRepository = userRepository;
     }
 
     @Transactional
+    // Crea un equipo para el usuario autenticado validando duplicados.
     public ParticipantResponse create(ParticipantRequest request, Long userId) {
         User currentUser = getUser(userId);
         String normalizedTeamName = request.teamName().trim();
@@ -35,21 +40,23 @@ public class ParticipantService {
             throw new ApiException(HttpStatus.CONFLICT, "Este usuario ya tiene un equipo registrado");
         }
 
-        ParticipantEntity entity = ParticipantEntity.builder()
-                .teamName(normalizedTeamName)
-                .email(request.email().trim())
-                .phone(trimToNull(request.phone()))
-                .description(trimToNull(request.description()))
-                .logo(trimToNull(request.logo()))
-                .members(request.members())
-                .ownerEmail(currentUser.getEmail())
-                .build();
+        ParticipantDirector director = new ParticipantDirector(new DefaultParticipantBuilder());
+        ParticipantEntity entity = director.buildParticipant(
+                normalizedTeamName,
+                request.email().trim(),
+                trimToNull(request.phone()),
+                trimToNull(request.description()),
+                trimToNull(request.logo()),
+                request.members(),
+                currentUser.getEmail()
+        );
 
         ParticipantEntity saved = participantRepository.save(entity);
         return toResponse(saved);
     }
 
     @Transactional
+    // Actualiza un equipo existente si pertenece al usuario autenticado.
     public ParticipantResponse update(Long id, ParticipantRequest request, Long userId) {
         User currentUser = getUser(userId);
         if (id == null) {
@@ -81,6 +88,7 @@ public class ParticipantService {
     }
 
     @Transactional(readOnly = true)
+    // Devuelve todos los equipos participantes como DTOs.
     public List<ParticipantResponse> findAll() {
         return participantRepository.findAll().stream()
                 .map(this::toResponse)
@@ -88,6 +96,7 @@ public class ParticipantService {
     }
 
     @Transactional(readOnly = true)
+    // Busca el equipo registrado por el usuario autenticado.
     public Optional<ParticipantResponse> findMine(Long userId) {
         User currentUser = getUser(userId);
         return participantRepository.findByOwnerEmailIgnoreCase(currentUser.getEmail())
@@ -95,16 +104,19 @@ public class ParticipantService {
     }
 
     @Transactional(readOnly = true)
+    // Comprueba si existe un equipo con el nombre indicado.
     public boolean existsByTeamName(String teamName) {
         return participantRepository.existsByTeamNameIgnoreCase(teamName);
     }
 
     @Transactional(readOnly = true)
+    // Devuelve la entidad de un equipo o lanza error si no existe.
     public ParticipantEntity getByTeamName(String teamName) {
         return participantRepository.findByTeamNameIgnoreCase(teamName)
                 .orElseThrow(() -> new ApiException(HttpStatus.BAD_REQUEST, "El equipo no existe: " + teamName));
     }
 
+    // Convierte una entidad participante en su DTO de respuesta.
     private ParticipantResponse toResponse(ParticipantEntity entity) {
         return new ParticipantResponse(
                 entity.getId(),
@@ -117,6 +129,7 @@ public class ParticipantService {
         );
     }
 
+    // Limpia un texto y devuelve null si queda vacío.
     private String trimToNull(String value) {
         if (value == null) {
             return null;
@@ -125,6 +138,7 @@ public class ParticipantService {
         return trimmed.isEmpty() ? null : trimmed;
     }
 
+    // Obtiene el usuario autenticado o lanza error de sesión.
     private User getUser(Long userId) {
         if (userId == null) {
             throw new ApiException(HttpStatus.UNAUTHORIZED, "Debes iniciar sesión para realizar esta acción");

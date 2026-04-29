@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.time.Instant;
 
 @Component
+// Intercepta llamadas API para aplicar autenticación simple y reglas del evento.
 public class SecurityInterceptor implements HandlerInterceptor {
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
@@ -26,6 +27,7 @@ public class SecurityInterceptor implements HandlerInterceptor {
     private final VoteService voteService;
     private final String adminPassword;
 
+    // Inyecta dependencias para validar usuarios, ajustes del evento y contraseña admin.
     public SecurityInterceptor(
             UserRepository userRepository,
             EventSettingsService eventSettingsService,
@@ -39,6 +41,7 @@ public class SecurityInterceptor implements HandlerInterceptor {
     }
 
     @Override
+    // Decide si una petición puede continuar según ruta, método y cabeceras.
     public boolean preHandle(
             @NonNull HttpServletRequest request,
             @NonNull HttpServletResponse response,
@@ -65,10 +68,12 @@ public class SecurityInterceptor implements HandlerInterceptor {
         return true;
     }
 
+    // Indica si la ruta requiere contraseña de administrador.
     private boolean requiresAdmin(String path, String method) {
         return path.startsWith("/api/admin");
     }
 
+    // Indica si la ruta modifica participantes y requiere inscripción abierta.
     private boolean requiresRegistrationAccess(String path, String method) {
         if (!path.startsWith("/api/participants")) {
             return false;
@@ -76,10 +81,12 @@ public class SecurityInterceptor implements HandlerInterceptor {
         return "POST".equalsIgnoreCase(method) || "PUT".equalsIgnoreCase(method);
     }
 
+    // Indica si la ruta consulta el equipo del usuario autenticado.
     private boolean requiresAuthenticatedParticipantLookup(String path, String method) {
         return "/api/participants/mine".equals(path) && "GET".equalsIgnoreCase(method);
     }
 
+    // Indica si la ruta de votos requiere votación abierta y usuario válido.
     private boolean requiresVotingAccess(String path, String method) {
         if (!path.startsWith("/api/votes")) {
             return false;
@@ -87,10 +94,12 @@ public class SecurityInterceptor implements HandlerInterceptor {
         return "POST".equalsIgnoreCase(method) || "GET".equalsIgnoreCase(method);
     }
 
+    // Indica si la ruta de resultados requiere visibilidad habilitada.
     private boolean requiresVisibleResults(String path, String method) {
         return "/api/results".equals(path) && "GET".equalsIgnoreCase(method);
     }
 
+    // Valida la contraseña administrativa recibida por cabecera.
     private boolean validateAdmin(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String providedPassword = request.getHeader("X-Admin-Password");
         if (providedPassword == null || providedPassword.isBlank()) {
@@ -104,6 +113,7 @@ public class SecurityInterceptor implements HandlerInterceptor {
         return true;
     }
 
+    // Valida usuario y apertura de inscripciones.
     private boolean validateRegistrationAccess(HttpServletRequest request, HttpServletResponse response) throws IOException {
         Long userId = extractUserId(request, response);
         if (userId == null) {
@@ -116,10 +126,12 @@ public class SecurityInterceptor implements HandlerInterceptor {
         return true;
     }
 
+    // Valida que exista un usuario autenticado por cabecera.
     private boolean validateAuthenticatedUser(HttpServletRequest request, HttpServletResponse response) throws IOException {
         return extractUserId(request, response) != null;
     }
 
+    // Valida usuario, apertura de votación y ausencia de voto previo.
     private boolean validateVotingAccess(HttpServletRequest request, HttpServletResponse response) throws IOException {
         Long userId = extractUserId(request, response);
         if (userId == null) {
@@ -136,6 +148,7 @@ public class SecurityInterceptor implements HandlerInterceptor {
         return true;
     }
 
+    // Valida que los resultados estén visibles para el público.
     private boolean validateVisibleResults(HttpServletRequest request, HttpServletResponse response) throws IOException {
         if (!eventSettingsService.allowsResultsVisibility()) {
             writeError(response, request, HttpStatus.FORBIDDEN, "Los resultados están ocultos actualmente por el administrador");
@@ -144,6 +157,7 @@ public class SecurityInterceptor implements HandlerInterceptor {
         return true;
     }
 
+    // Extrae y valida el identificador de usuario de la cabecera X-User-ID.
     private @Nullable Long extractUserId(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String rawUserId = request.getHeader("X-User-ID");
         if (rawUserId == null || rawUserId.isBlank()) {
@@ -163,6 +177,7 @@ public class SecurityInterceptor implements HandlerInterceptor {
         }
     }
 
+    // Escribe una respuesta de error JSON con el formato común de la API.
     private void writeError(
             HttpServletResponse response,
             HttpServletRequest request,

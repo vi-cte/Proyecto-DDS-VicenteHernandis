@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 
+// Controlador del formulario de creación y edición de equipos.
 public class RegistrationFormController {
     private final VotifyApi apiClient = ApiClient.getInstance();
 
@@ -79,6 +80,7 @@ public class RegistrationFormController {
     private String originalTeamName = null;
 
     @FXML
+    // Inicializa validaciones, lista de miembros y datos existentes.
     private void initialize() {
         if (userNameLabel != null) {
             userNameLabel.setText(apiClient.getCurrentUserEmail());
@@ -102,6 +104,7 @@ public class RegistrationFormController {
         loadExistingParticipant();
     }
 
+    // Carga el equipo del usuario si ya tenía uno registrado.
     private void loadExistingParticipant() {
         try {
             ParticipantResponse p = apiClient.getCurrentParticipant();
@@ -135,6 +138,7 @@ public class RegistrationFormController {
     }
 
     @FXML
+    // Abre un selector de archivo y carga el logo en Base64.
     private void uploadLogo() {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Seleccionar Logo del Equipo");
@@ -157,6 +161,7 @@ public class RegistrationFormController {
     }
 
     @FXML
+    // Valida el formulario y crea o actualiza el equipo.
     private void registerParticipant() {
         String team = teamField.getText().trim();
         String email = emailField.getText().trim();
@@ -183,6 +188,7 @@ public class RegistrationFormController {
     }
 
     @FXML
+    // Añade un miembro nuevo a la lista del equipo.
     private void addMember() {
         String memberName = memberInputField.getText().trim();
         if (!memberName.isEmpty()) {
@@ -192,6 +198,7 @@ public class RegistrationFormController {
     }
 
     @FXML
+    // Cierra la sesión local y vuelve a acceso.
     private void exit() {
         ApiClient.getInstance().logout();
         try {
@@ -208,6 +215,7 @@ public class RegistrationFormController {
 
 
     @FXML
+    // Vuelve al menú principal.
     private void goBack() {
         try {
             SceneNavigator.showMainMenu((Stage) teamField.getScene().getWindow());
@@ -216,16 +224,19 @@ public class RegistrationFormController {
         }
     }
 
+    // Muestra un error en el formulario.
     private void showError(String message) {
         AlertHelper.showError(message);
     }
 
+    // Valida todos los campos obligatorios del formulario.
     private boolean validateForm() {
         boolean teamOk = validateTeamField();
         boolean emailOk = validateEmailField();
         return teamOk && emailOk;
     }
 
+    // Valida el nombre del equipo y comprueba duplicados.
     private boolean validateTeamField() {
         String team = teamField.getText() == null ? "" : teamField.getText().trim();
         if (team.isEmpty()) {
@@ -249,6 +260,7 @@ public class RegistrationFormController {
         return true;
     }
 
+    // Valida que el correo tenga formato correcto.
     private boolean validateEmailField() {
         String email = emailField.getText() == null ? "" : emailField.getText().trim();
         if (email.isEmpty()) {
@@ -263,6 +275,7 @@ public class RegistrationFormController {
         return true;
     }
 
+    // Comprueba el formato básico de un correo.
     private boolean validEmail(String email) {
         return email != null && email.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
     }
@@ -273,6 +286,7 @@ public class RegistrationFormController {
         private final Button editButton = new Button("Editar");
         private final Button removeButton = new Button("Quitar");
 
+        // Configura la celda editable de un miembro.
         public MemberCell() {
             super();
             setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
@@ -304,6 +318,7 @@ public class RegistrationFormController {
         }
 
         @Override
+        // Refresca la celda cuando cambia el miembro mostrado.
         protected void updateItem(String item, boolean empty) {
             super.updateItem(item, empty);
             setText(null);

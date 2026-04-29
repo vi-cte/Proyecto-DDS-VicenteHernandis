@@ -14,13 +14,16 @@ import javafx.scene.layout.VBox;
 
 import java.util.List;
 
+// Estrategia que muestra los resultados como gráfico de barras.
 public class BarChartResultsViewStrategy implements ResultsViewStrategy {
     @Override
+    // Devuelve el identificador de la vista de barras.
     public String id() {
         return "bars";
     }
 
     @Override
+    // Construye el gráfico de barras con el ranking recibido.
     public Node buildView(ResultsViewData data) {
         if (data.ranking().isEmpty()) {
             Label label = new Label("No hay resultados para mostrar.");

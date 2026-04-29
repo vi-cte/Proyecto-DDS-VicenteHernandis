@@ -10,7 +10,9 @@ public interface ParticipantJpaRepository extends JpaRepository<ParticipantEntit
     // Indica si existe un equipo con ese nombre, ignorando mayusculas/minusculas.
     boolean existsByTeamNameIgnoreCase(String teamName);
 
+    // Busca un equipo por nombre ignorando mayúsculas y minúsculas.
     Optional<ParticipantEntity> findByTeamNameIgnoreCase(String teamName);
 
+    // Busca el equipo asociado al correo del usuario propietario.
     Optional<ParticipantEntity> findByOwnerEmailIgnoreCase(String ownerEmail);
 }

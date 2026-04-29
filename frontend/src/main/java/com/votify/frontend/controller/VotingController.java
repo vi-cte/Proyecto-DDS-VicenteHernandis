@@ -6,7 +6,9 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 
+// Controlador auxiliar que abre la pantalla de votación.
 public class VotingController {
+    // Navega al formulario de votación o muestra aviso si falla.
     public void performVoting(Stage stage) {
         try {
             SceneNavigator.showScene(

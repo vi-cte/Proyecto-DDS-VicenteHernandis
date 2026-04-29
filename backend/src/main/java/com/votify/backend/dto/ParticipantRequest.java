@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 
 import java.util.List;
 
-// DTO de entrada para crear un participante.
+// DTO de entrada para crear o actualizar un participante.
 public record ParticipantRequest(
         @NotBlank(message = "El nombre del equipo es obligatorio")
         String teamName,

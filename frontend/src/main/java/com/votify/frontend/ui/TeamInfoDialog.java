@@ -25,8 +25,10 @@ import java.io.ByteArrayInputStream;
 import java.util.Base64;
 import java.util.List;
 
+// Diálogo modal que muestra la información completa de un equipo.
 public class TeamInfoDialog {
 
+    // Construye y muestra la ventana con los datos del participante.
     public static void show(ParticipantResponse participant) {
         Stage stage = new Stage();
         stage.initModality(Modality.APPLICATION_MODAL);

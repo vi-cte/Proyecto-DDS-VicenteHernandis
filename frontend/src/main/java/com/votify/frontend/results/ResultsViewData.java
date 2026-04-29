@@ -5,11 +5,13 @@ import com.votify.frontend.dto.ResultsResponse;
 
 import java.util.List;
 
+// Agrupa los datos preparados para renderizar las vistas de resultados.
 public record ResultsViewData(
         ResultsResponse response,
         List<ResultItemResponse> ranking,
         int participantCount
 ) {
+    // Devuelve el primer clasificado o null si no hay resultados.
     public ResultItemResponse winner() {
         return ranking.isEmpty() ? null : ranking.getFirst();
     }

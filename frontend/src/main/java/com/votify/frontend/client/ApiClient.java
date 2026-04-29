@@ -22,6 +22,7 @@ import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.List;
 
+// Cliente HTTP singleton que implementa las llamadas a la API backend.
 public class ApiClient implements VotifyApi {
     private static final ObjectMapper MAPPER = new ObjectMapper();
     static {
@@ -36,11 +37,13 @@ public class ApiClient implements VotifyApi {
     private final HttpClient httpClient;
     private final String baseUrl;
 
+    // Configura el cliente HTTP y la URL base de la API.
     private ApiClient() {
         this.httpClient = HttpClient.newHttpClient();
         this.baseUrl = System.getenv().getOrDefault("VOTIFY_API_BASE", "http://localhost:8080/api");
     }
 
+    // Devuelve la instancia compartida del cliente API.
     public static synchronized ApiClient getInstance() {
         if (instance == null) {
             instance = new ApiClient();
@@ -48,15 +51,18 @@ public class ApiClient implements VotifyApi {
         return instance;
     }
 
+    // Inicia sesión contra el backend.
     public AuthResponse login(String email, String password) {
         return authenticate("/auth/login", email, password);
     }
 
+    // Registra un usuario contra el backend.
     public AuthResponse registerUser(String email, String password) {
         return authenticate("/auth/register", email, password);
     }
 
     @Override
+    // Comprueba acceso a inscripción, votación o resultados según estado y sesión.
     public AccessDecision checkAccess(AccessTarget target) {
         EventSettingsResponse settings = getEventSettings();
 
@@ -91,6 +97,7 @@ public class ApiClient implements VotifyApi {
         };
     }
 
+    // Ejecuta una petición de autenticación y guarda la sesión local si es correcta.
     private AuthResponse authenticate(String endpoint, String email, String password) {
         String json;
         try {
@@ -124,6 +131,7 @@ public class ApiClient implements VotifyApi {
         }
     }
 
+    // Envía al backend la creación de un nuevo equipo participante.
     public void createParticipant(String teamName, String email, String phone, String description, String logoBase64, List<String> members) {
         ParticipantRequest requestBody = new ParticipantRequest(teamName, email, phone, description, logoBase64, members);
         String json;
@@ -149,6 +157,7 @@ public class ApiClient implements VotifyApi {
     }
 
     @Override
+    // Envía al backend la actualización de un equipo participante.
     public void updateParticipant(Long id, String teamName, String email, String phone, String description, String logoBase64, List<String> members) {
         ParticipantRequest requestBody = new ParticipantRequest(teamName, email, phone, description, logoBase64, members);
         String json;
@@ -173,6 +182,7 @@ public class ApiClient implements VotifyApi {
         throw new ApiClientException(extractErrorMessage(response.body(), status));
     }
 
+    // Obtiene los nombres de todos los equipos participantes.
     public List<String> getParticipants() {
         List<ParticipantResponse> participants = getParticipantResponses();
         List<String> names = new ArrayList<>();
@@ -184,6 +194,7 @@ public class ApiClient implements VotifyApi {
         return names;
     }
 
+    // Obtiene todos los participantes como DTOs completos.
     public List<ParticipantResponse> getParticipantResponses() {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(baseUrl + "/participants"))
@@ -204,6 +215,7 @@ public class ApiClient implements VotifyApi {
     }
 
     @Override
+    // Obtiene el equipo del usuario actual si existe.
     public ParticipantResponse getCurrentParticipant() {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(baseUrl + "/participants/mine"))
@@ -226,6 +238,7 @@ public class ApiClient implements VotifyApi {
         }
     }
 
+    // Consulta si el nombre de equipo ya está registrado.
     public boolean teamNameExists(String teamName) {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(baseUrl + "/participants/exists?teamName=" + encode(teamName)))
@@ -240,6 +253,7 @@ public class ApiClient implements VotifyApi {
         return "true".equalsIgnoreCase(body);
     }
 
+    // Crea votos para las selecciones indicadas.
     public VoteResponse createVotes(List<String> selections) {
         if (sessionToken == null) {
             throw new ApiClientException("No has iniciado sesión para poder votar.");
@@ -271,10 +285,12 @@ public class ApiClient implements VotifyApi {
         }
     }
 
+    // Obtiene el límite de votos por usuario.
     public int getVotingLimit() {
         return getEventSettings().getMaxTeamsToVote();
     }
 
+    // Obtiene los resultados agregados desde el backend.
     public ResultsResponse getResults() {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(baseUrl + "/results"))
@@ -292,6 +308,7 @@ public class ApiClient implements VotifyApi {
         }
     }
 
+    // Consulta si el usuario actual ya ha votado.
     public boolean hasVoted() {
         if (sessionToken == null) {
             return false; // Si no ha iniciado sesión, no puede haber votado.
@@ -312,6 +329,7 @@ public class ApiClient implements VotifyApi {
         return "true".equalsIgnoreCase(body);
     }
 
+    // Envía una petición HTTP y convierte errores en ApiClientException.
     private HttpResponse<String> send(HttpRequest request) {
         try {
             return httpClient.send(request, HttpResponse.BodyHandlers.ofString());
@@ -323,6 +341,7 @@ public class ApiClient implements VotifyApi {
         }
     }
 
+    // Extrae un mensaje legible desde el cuerpo de error JSON.
     private String extractErrorMessage(String body, int status) {
         if (body == null || body.isBlank()) {
             return "Error del servidor (" + status + ")";
@@ -337,26 +356,31 @@ public class ApiClient implements VotifyApi {
         return "Error del servidor (" + status + ")";
     }
 
+    // Codifica valores para incluirlos de forma segura en una URL.
     private String encode(String value) {
         return java.net.URLEncoder.encode(value == null ? "" : value, java.nio.charset.StandardCharsets.UTF_8);
     }
 
     @Override
+    // Devuelve el correo del usuario actualmente autenticado.
     public String getCurrentUserEmail() {
         return sessionEmail;
     }
 
+    // Limpia los datos de sesión local.
     public void logout() {
         sessionToken = null;
         sessionEmail = null;
     }
 
+    // Indica si hay una sesión de usuario guardada localmente.
     private boolean isUserLoggedIn() {
         return sessionToken != null && !sessionToken.isBlank()
                 && sessionEmail != null && !sessionEmail.isBlank();
     }
 
     @Override
+    // Valida la contraseña de administrador y la conserva para llamadas admin.
     public boolean authenticateAdmin(String password) {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(baseUrl + "/admin/auth"))
@@ -372,6 +396,7 @@ public class ApiClient implements VotifyApi {
     }
 
     @Override
+    // Obtiene los ajustes del evento usando credenciales admin.
     public EventSettingsResponse getAdminSettings() {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(baseUrl + "/admin/settings"))
@@ -392,6 +417,7 @@ public class ApiClient implements VotifyApi {
     }
 
     @Override
+    // Obtiene los ajustes públicos del evento.
     public EventSettingsResponse getEventSettings() {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(baseUrl + "/event/settings"))
@@ -411,6 +437,7 @@ public class ApiClient implements VotifyApi {
     }
 
     @Override
+    // Actualiza los ajustes administrativos del evento.
     public void updateAdminSettings(boolean registrationsOpen, boolean votingOpen, boolean resultsVisible, int maxTeamsToVote) {
         String json = String.format("{\"registrationsOpen\":%b, \"votingOpen\":%b, \"resultsVisible\":%b, \"maxTeamsToVote\":%d}", registrationsOpen, votingOpen, resultsVisible, maxTeamsToVote);
         HttpRequest request = HttpRequest.newBuilder()
@@ -426,6 +453,7 @@ public class ApiClient implements VotifyApi {
     }
 
     @Override
+    // Reinicia votos y participantes desde el endpoint admin.
     public void resetEvent() {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(baseUrl + "/admin/reset"))

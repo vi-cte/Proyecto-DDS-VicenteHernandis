@@ -26,6 +26,7 @@ import javafx.application.Platform;
 import java.io.IOException;
 import java.util.Optional;
 
+// Controlador de la pantalla de acceso, registro y entrada admin.
 public class AccessController {
 
     @FXML private Label loginTab;
@@ -42,7 +43,8 @@ public class AccessController {
     private final ApiClient authProxy = ApiClient.getInstance();
 
     @FXML
-    public void initialize() { 
+    // Configura acciones iniciales y comprueba la conexión con el backend.
+    public void initialize() {
         showLogin(); 
         checkBackendConnection();
 
@@ -71,6 +73,7 @@ public class AccessController {
         });
     }
 
+    // Valida si el backend está disponible al abrir la pantalla.
     private void checkBackendConnection() {
         try {
             // Obtenemos los ajustes del evento para comprobar la conexión y configurar la vista
@@ -98,6 +101,7 @@ public class AccessController {
     }
 
     @FXML
+    // Cambia el formulario al modo de inicio de sesión.
     private void showLogin() {
         if (errorLabel != null) errorLabel.setText("");
         isLoginMode = true;
@@ -110,6 +114,7 @@ public class AccessController {
     }
 
     @FXML
+    // Cambia el formulario al modo de registro.
     private void showRegister() {
         if (errorLabel != null) errorLabel.setText("");
         isLoginMode = false;
@@ -122,11 +127,13 @@ public class AccessController {
     }
 
     @FXML
+    // Muestra la información de contacto para recuperar contraseña.
     private void handleForgotPassword() {
         AlertHelper.showInfo("Contacte con el administrador a traves del correo: admin@votify.com");
     }
 
     @FXML
+    // Ejecuta login o registro según el modo activo.
     private void handleAction() {
         if (errorLabel != null) errorLabel.setText("");
         String email = emailField.getText(), password = passwordField.getText();
@@ -157,6 +164,7 @@ public class AccessController {
         catch (IOException e) { AlertHelper.showError("Error abriendo menú: " + e.getMessage()); }
     }
 
+    // Muestra un error dentro de la pantalla de acceso.
     private void showInlineError(String message) {
         if (errorLabel != null) {
             errorLabel.setText(message);
@@ -166,11 +174,13 @@ public class AccessController {
         }
     }
 
+    // Valida el formato básico del correo introducido.
     private boolean isValidEmail(String email) {
         return email != null && email.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
     }
 
     @FXML
+    // Permite consultar resultados desde la pantalla de acceso si están visibles.
     public void handleViewResults() {
         if (actionButton.isDisabled()) {
             AlertHelper.showError("No hay conexión con el servidor.");
@@ -197,6 +207,7 @@ public class AccessController {
     }
 
     @FXML
+    // Solicita contraseña admin y abre la pantalla de ajustes.
     public void handleAdminSettings() {
         if (actionButton.isDisabled()) {
             AlertHelper.showError("No hay conexión con el servidor.");

@@ -9,11 +9,13 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/admin")
+// Expone endpoints administrativos para autenticación, ajustes y reinicio del evento.
 public class AdminController {
     @Autowired
     private JdbcTemplate jdbcTemplate;
     private final EventSettingsService eventSettingsService;
 
+    // Inyecta el servicio de ajustes usado por el panel de administración.
     public AdminController(EventSettingsService eventSettingsService) {
         this.eventSettingsService = eventSettingsService;
     }
@@ -26,35 +28,20 @@ public class AdminController {
     }
 
     @GetMapping("/settings")
+    // Devuelve la configuración actual del evento para el panel admin.
     public ResponseEntity<EventSettingsDto> getSettings() {
         return ResponseEntity.ok(eventSettingsService.getSettings());
     }
 
     @PutMapping("/settings")
+    // Actualiza la configuración del evento desde el panel admin.
     public ResponseEntity<Void> updateSettings(@RequestBody EventSettingsDto settings) {
         eventSettingsService.updateSettings(settings);
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/phase/registration")
-    public ResponseEntity<Void> openRegistrations(@RequestBody EventSettingsDto settings) {
-        eventSettingsService.openRegistrations(settings.resultsVisible(), settings.maxTeamsToVote());
-        return ResponseEntity.ok().build();
-    }
-
-    @PostMapping("/phase/voting")
-    public ResponseEntity<Void> openVoting(@RequestBody EventSettingsDto settings) {
-        eventSettingsService.openVoting(settings.resultsVisible(), settings.maxTeamsToVote());
-        return ResponseEntity.ok().build();
-    }
-
-    @PostMapping("/phase/closed")
-    public ResponseEntity<Void> closeEvent(@RequestBody EventSettingsDto settings) {
-        eventSettingsService.closeEvent(settings.resultsVisible(), settings.maxTeamsToVote());
-        return ResponseEntity.ok().build();
-    }
-
     @PostMapping("/reset")
+    // Borra votos y participantes manteniendo usuarios y configuración.
     public ResponseEntity<Void> resetEvent() {
         // Se eliminan todos los datos relacionados con la votación, pero 
         // se mantienen las configuraciones del evento. y los usuarios de la aplicacion.

@@ -14,5 +14,6 @@ public abstract class VoteCreator {
         return createVote(option.trim());
     }
 
+    // Crea el tipo concreto de voto definido por cada subclase.
     protected abstract Vote createVote(String option);
 }

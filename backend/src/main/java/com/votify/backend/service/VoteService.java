@@ -22,12 +22,14 @@ import java.util.List;
 import java.util.Set;
 
 @Service
+// Gestiona registro de votos, consulta de resultados y límites de votación.
 public class VoteService {
     private final VoteJpaRepository voteRepository;
     private final ParticipantService participantService;
     private final PublicVoteCreator voteCreator;
     private final EventSettingsService eventSettingsService;
 
+    // Inyecta repositorios y servicios necesarios para registrar votos.
     public VoteService(
             VoteJpaRepository voteRepository,
             ParticipantService participantService,
@@ -41,6 +43,7 @@ public class VoteService {
     }
 
     @Transactional
+    // Registra los votos de un usuario validando límites, duplicados y equipos existentes.
     public VoteResponse createVotes(VoteRequest request, Long userId) {
         // Comprobamos si el usuario ya ha votado. Necesitarás añadir `existsByUserId` a tu VoteJpaRepository.
         if (voteRepository.existsByUserId(userId)) {
@@ -80,6 +83,7 @@ public class VoteService {
     }
 
     @Transactional(readOnly = true)
+    // Calcula y devuelve el resumen agregado de resultados.
     public ResultsResponse getResults() {
         List<VoteTallyProjection> tally = voteRepository.tally();
         List<ResultItemResponse> results = tally.stream()
@@ -89,16 +93,19 @@ public class VoteService {
     }
 
     @Transactional(readOnly = true)
+    // Devuelve la configuración de votación consumida por el frontend.
     public VoteSettingsResponse getVoteSettings() {
         return new VoteSettingsResponse(eventSettingsService.getMaxTeamsToVote());
     }
 
     @Transactional(readOnly = true)
+    // Indica si el usuario ya tiene votos registrados.
     public boolean hasUserVoted(Long userId) {
         // Necesitarás añadir `boolean existsByUserId(Long userId);` a tu interface VoteJpaRepository.
         return voteRepository.existsByUserId(userId);
     }
 
+    // Normaliza las selecciones eliminando nulos y espacios sobrantes.
     private List<String> normalizeSelections(List<String> selections) {
         List<String> normalizedSelections = new ArrayList<>();
         if (selections == null) {

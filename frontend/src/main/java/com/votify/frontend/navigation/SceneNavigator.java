@@ -8,13 +8,16 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.Objects;
 
+// Utilidad centralizada para cambiar escenas JavaFX.
 public final class SceneNavigator {
     private static final double DEFAULT_WIDTH = 1365;
     private static final double DEFAULT_HEIGHT = 768;
 
+    // Evita instancias de esta clase de utilidad.
     private SceneNavigator() {
     }
 
+    // Carga un FXML, aplica estilos y lo muestra en el escenario.
     public static void showScene(Stage stage, String fxmlPath, String stylesheetPath, String title) throws IOException {
         FXMLLoader loader = new FXMLLoader(resource(fxmlPath));
         Scene currentScene = stage.getScene();
@@ -29,6 +32,7 @@ public final class SceneNavigator {
         stage.show();
     }
 
+    // Muestra el menú principal de la aplicación.
     public static void showMainMenu(Stage stage) throws IOException {
         showScene(
                 stage,
@@ -38,6 +42,7 @@ public final class SceneNavigator {
         );
     }
 
+    // Resuelve un recurso del classpath o falla si no existe.
     private static URL resource(String path) {
         return Objects.requireNonNull(SceneNavigator.class.getResource(path));
     }

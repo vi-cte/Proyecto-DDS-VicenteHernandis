@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class PublicVoteCreator extends VoteCreator {
     @Override
+    // Devuelve una instancia de voto público para la opción recibida.
     protected Vote createVote(String option) {
         return new PublicVote(option);
     }

@@ -1,5 +1,7 @@
 package com.votify.backend.service;
 
+import com.votify.backend.builder.DefaultUserBuilder;
+import com.votify.backend.builder.UserDirector;
 import com.votify.backend.dto.AuthRequest;
 import com.votify.backend.dto.AuthResponse;
 import com.votify.backend.entity.User;
@@ -12,13 +14,16 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 
 @Service
+// Gestiona registro, login y cifrado simple de contraseñas.
 public class AuthService {
     private final UserRepository userRepository;
 
+    // Inyecta el repositorio de usuarios.
     public AuthService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
+    // Registra un usuario nuevo tras validar contraseña y correo único.
     public AuthResponse register(AuthRequest request) {
         if (request.password() == null || request.password().length() < 8) {
             throw new RuntimeException("La contraseña debe tener al menos 8 caracteres");
@@ -26,14 +31,13 @@ public class AuthService {
         if (userRepository.findByEmail(request.email()).isPresent()) {
             throw new RuntimeException("El correo ya está registrado");
         }
-        User user = User.builder()
-                .email(request.email())
-                .password(hashPassword(request.password()))
-                .build();
+        UserDirector director = new UserDirector(new DefaultUserBuilder());
+        User user = director.buildRegisteredUser(request.email(), hashPassword(request.password()));
         userRepository.save(user);
         return new AuthResponse(user.getId().toString(), user.getEmail(), "Registro exitoso");
     }
 
+    // Comprueba credenciales y devuelve una respuesta de sesión si son válidas.
     public AuthResponse login(AuthRequest request) {
         User user = userRepository.findByEmail(request.email())
                 .filter(u -> u.getPassword().equals(hashPassword(request.password())))
@@ -41,6 +45,7 @@ public class AuthService {
         return new AuthResponse(user.getId().toString(), user.getEmail(), "Login exitoso");
     }
 
+    // Calcula el hash SHA-256 en Base64 de la contraseña recibida.
     private String hashPassword(String password) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");

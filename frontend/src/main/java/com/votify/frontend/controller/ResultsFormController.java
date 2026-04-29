@@ -24,6 +24,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
+// Controlador de la pantalla de resultados y cambio de visualización.
 public class ResultsFormController {
     private final VotifyApi apiClient = ApiClient.getInstance();
     private final Map<String, ResultsViewStrategy> strategies = Map.of(
@@ -62,6 +63,7 @@ public class ResultsFormController {
     private Label userNameLabel;
 
     @FXML
+    // Carga resultados y prepara las estrategias de visualización.
     private void initialize() {
         String currentUserEmail = apiClient.getCurrentUserEmail();
 
@@ -98,21 +100,25 @@ public class ResultsFormController {
     }
 
     @FXML
+    // Selecciona la vista de ranking.
     private void showRanking() {
         selectStrategy("ranking");
     }
 
     @FXML
+    // Selecciona la vista de gráfico de barras.
     private void showBarChart() {
         selectStrategy("bars");
     }
 
     @FXML
+    // Selecciona la vista de gráfico circular.
     private void showPieChart() {
         selectStrategy("pie");
     }
 
     @FXML
+    // Vuelve al menú o a la pantalla de acceso según la sesión.
     private void closeResults() {
         try {
             String currentUserEmail = apiClient.getCurrentUserEmail();
@@ -132,6 +138,7 @@ public class ResultsFormController {
     }
 
     @FXML
+    // Cierra la sesión local y vuelve a la pantalla de acceso.
     private void exit() {
         ApiClient.getInstance().logout();
         try {
@@ -146,12 +153,14 @@ public class ResultsFormController {
         }
     }
 
+    // Actualiza los indicadores resumen de la pantalla.
     private void bindSummary(ResultsViewData data) {
         totalVotesLabel.setText(Long.toString(data.response().getTotalVotes()));
         participantsCountLabel.setText(Integer.toString(data.participantCount()));
         winnerLabel.setText(data.winner() == null ? "Sin datos" : data.winner().getTeamName());
     }
 
+    // Renderiza la estrategia seleccionada y marca su botón.
     private void selectStrategy(String strategyId) {
         ResultsViewStrategy strategy = strategies.get(strategyId);
         if (strategy == null || viewData == null) {
@@ -174,6 +183,7 @@ public class ResultsFormController {
         resultsContent.getChildren().setAll(strategy.buildView(viewData));
     }
 
+    // Construye una etiqueta de error para mostrar en el contenido.
     private Label errorLabel(String message) {
         Label label = new Label(message);
         label.getStyleClass().add("results-empty");

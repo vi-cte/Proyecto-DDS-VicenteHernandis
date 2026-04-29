@@ -26,6 +26,7 @@ import java.util.Optional;
 public class ParticipantController {
     private final ParticipantService participantService;
 
+    // Inyecta el servicio de participantes.
     public ParticipantController(ParticipantService participantService) {
         this.participantService = participantService;
     }
@@ -37,6 +38,7 @@ public class ParticipantController {
     }
 
     @GetMapping("/mine")
+    // GET /api/participants/mine: devuelve el equipo del usuario autenticado.
     public ResponseEntity<ParticipantResponse> getCurrentParticipant(
             @RequestHeader("X-User-ID") Long userId
     ) {

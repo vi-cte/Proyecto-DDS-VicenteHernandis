@@ -33,30 +33,37 @@ public class VoteEntity {
     private Instant createdAt;
 
     @PrePersist
+    // Rellena la fecha de creación justo antes de guardar el voto.
     void prePersist() {
         this.createdAt = Instant.now();
     }
 
+    // Devuelve el identificador generado del voto.
     public Long getId() {
         return id;
     }
 
+    // Devuelve el participante votado.
     public ParticipantEntity getParticipant() {
         return participant;
     }
 
+    // Asigna el participante votado.
     public void setParticipant(ParticipantEntity participant) {
         this.participant = participant;
     }
 
+    // Devuelve el identificador del usuario que votó.
     public Long getUserId() {
         return userId;
     }
 
+    // Asigna el identificador del usuario que votó.
     public void setUserId(Long userId) {
         this.userId = userId;
     }
 
+    // Devuelve la fecha de creación del voto.
     public Instant getCreatedAt() {
         return createdAt;
     }

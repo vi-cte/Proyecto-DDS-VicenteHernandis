@@ -1,10 +1,10 @@
 package com.votify.backend.entity;
 
 import jakarta.persistence.*;
-import org.springframework.lang.NonNull;
 
 @Entity
 @Table(name = "users")
+// Entidad JPA que representa un usuario registrado.
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -16,53 +16,28 @@ public class User {
     @Column(nullable = false)
     private String password;
 
-    public static Builder builder() {
-        return new Builder();
-    }
-
+    // Devuelve el identificador generado del usuario.
     public Long getId() {
         return id;
     }
 
+    // Devuelve el correo del usuario.
     public String getEmail() {
         return email;
     }
 
+    // Actualiza el correo del usuario.
     public void setEmail(String email) {
         this.email = email;
     }
 
+    // Devuelve la contraseña almacenada del usuario.
     public String getPassword() {
         return password;
     }
 
+    // Actualiza la contraseña almacenada del usuario.
     public void setPassword(String password) {
         this.password = password;
-    }
-
-    public static final class Builder {
-        private String email;
-        private String password;
-
-        private Builder() {
-        }
-
-        public Builder email(String email) {
-            this.email = email;
-            return this;
-        }
-
-        public Builder password(String password) {
-            this.password = password;
-            return this;
-        }
-
-        @NonNull
-        public User build() {
-            User user = new User();
-            user.setEmail(email);
-            user.setPassword(password);
-            return user;
-        }
     }
 }

@@ -19,6 +19,7 @@ import com.votify.frontend.navigation.SceneNavigator;
  * Utiliza instancias de VotingController, RegistrationController y ResultsController para delegar las acciones correspondientes.
  */
 
+// Controlador del menú principal de la aplicación.
 public class MainMenuController {
     private final VotingController votingController = new VotingController();
     private final RegistrationController registrationController = new RegistrationController();
@@ -47,6 +48,7 @@ public class MainMenuController {
     private Label userNameLabel;
 
     @FXML
+    // Inicializa saludo, estado de conexión y acciones del menú.
     private void initialize() {
         userNameLabel.setText(apiClient.getCurrentUserEmail());
         try {
@@ -79,6 +81,7 @@ public class MainMenuController {
     }
 
     @FXML
+    // Comprueba permisos y abre la pantalla de votación.
     private void vote() {
         if (checkConnection()) {
             try {
@@ -93,6 +96,7 @@ public class MainMenuController {
     }
 
     @FXML
+    // Comprueba permisos y abre la pantalla de registro.
     private void register() {
         if (checkConnection()) {
             try {
@@ -107,6 +111,7 @@ public class MainMenuController {
     }
 
     @FXML
+    // Comprueba permisos y abre la pantalla de resultados.
     private void viewResults() {
         if (checkConnection()) {
             try {
@@ -121,6 +126,7 @@ public class MainMenuController {
     }
 
     @FXML
+    // Cierra la sesión local y vuelve a la pantalla de acceso.
     private void exit() {
         ApiClient.getInstance().logout();
         try {
@@ -135,10 +141,12 @@ public class MainMenuController {
         }
     }
 
+    // Obtiene el Stage actual desde un nodo de la pantalla.
     private Stage currentStage() {
         return (Stage) voteButton.getScene().getWindow();
     }
 
+    // Comprueba si el backend responde a una llamada sencilla.
     private boolean checkConnection() {
         try {
             apiClient.getEventSettings();

@@ -6,7 +6,9 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 
+// Controlador auxiliar que abre la pantalla de resultados.
 public class ResultsController {
+    // Navega a la vista de resultados o muestra error si falla.
     public void viewResults(Stage stage) {
         try {
             SceneNavigator.showScene(

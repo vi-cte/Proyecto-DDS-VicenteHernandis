@@ -15,6 +15,7 @@ import javafx.scene.control.ButtonType;
 import javafx.stage.Stage;
 import java.util.Optional;
 
+// Controlador de la pantalla de ajustes administrativos del evento.
 public class SettingsFormController {
 
     private final VotifyApi apiClient = ApiClient.getInstance();
@@ -30,6 +31,7 @@ public class SettingsFormController {
     @FXML private Button resetButton;
 
     @FXML
+    // Inicializa los controles con la configuración actual.
     private void initialize() {
         loadingSettings = true;
         try {
@@ -53,6 +55,7 @@ public class SettingsFormController {
     }
 
     @FXML
+    // Sincroniza el estado cuando se activa o desactiva el registro.
     private void onRegistrationToggle() {
         if (loadingSettings) {
             return;
@@ -65,6 +68,7 @@ public class SettingsFormController {
     }
 
     @FXML
+    // Sincroniza el estado cuando se activa o desactiva la votación.
     private void onVotingToggle() {
         if (loadingSettings) {
             return;
@@ -77,6 +81,7 @@ public class SettingsFormController {
     }
 
     @FXML
+    // Actualiza etiquetas al cambiar la visibilidad de resultados.
     private void onResultsToggle() {
         if (loadingSettings) {
             return;
@@ -85,6 +90,7 @@ public class SettingsFormController {
         saveSettings();
     }
 
+    // Refresca los textos visibles de los interruptores.
     private void updateLabels() {
         registrationStatusLabel.setText(registrationToggle.isSelected() ? "Abiertas" : "Cerradas");
         votingStatusLabel.setText(votingToggle.isSelected() ? "Abiertas" : "Cerradas");
@@ -93,6 +99,7 @@ public class SettingsFormController {
         }
     }
 
+    // Envía los ajustes actuales al backend.
     private void saveSettings() {
         if (loadingSettings) {
             return;
@@ -109,6 +116,7 @@ public class SettingsFormController {
     }
 
     @FXML
+    // Solicita confirmación y reinicia votos y participantes.
     private void resetEvent() {
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle("Confirmar Reinicio");
@@ -127,6 +135,7 @@ public class SettingsFormController {
     }
 
     @FXML
+    // Cierra la pantalla de ajustes.
     private void close() {
         ((Stage) registrationToggle.getScene().getWindow()).close();
     }

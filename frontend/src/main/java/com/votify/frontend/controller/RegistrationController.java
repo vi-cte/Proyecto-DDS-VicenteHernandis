@@ -6,7 +6,9 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 
+// Controlador auxiliar que abre la pantalla de registro de equipos.
 public class RegistrationController {
+    // Navega al formulario de registro o muestra error si falla.
     public void performRegistration(Stage stage) {
         try {
             SceneNavigator.showScene(

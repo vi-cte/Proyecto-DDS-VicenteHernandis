@@ -9,14 +9,17 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/event")
+// Expone información pública de configuración del evento.
 public class EventController {
     private final EventSettingsService eventSettingsService;
 
+    // Inyecta el servicio de ajustes del evento.
     public EventController(EventSettingsService eventSettingsService) {
         this.eventSettingsService = eventSettingsService;
     }
 
     @GetMapping("/settings")
+    // Devuelve los ajustes actuales del evento.
     public ResponseEntity<EventSettingsDto> getSettings() {
         return ResponseEntity.ok(eventSettingsService.getSettings());
     }

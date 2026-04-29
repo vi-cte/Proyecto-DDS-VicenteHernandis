@@ -8,13 +8,16 @@ import javafx.scene.chart.PieChart;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 
+// Estrategia que muestra los resultados como gráfico circular.
 public class PieChartResultsViewStrategy implements ResultsViewStrategy {
     @Override
+    // Devuelve el identificador de la vista circular.
     public String id() {
         return "pie";
     }
 
     @Override
+    // Construye el gráfico circular con el ranking recibido.
     public Node buildView(ResultsViewData data) {
         if (data.ranking().isEmpty()) {
             Label label = new Label("No hay resultados para mostrar.");

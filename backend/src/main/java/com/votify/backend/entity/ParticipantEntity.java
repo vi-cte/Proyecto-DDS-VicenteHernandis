@@ -13,7 +13,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
 import java.util.ArrayList;
 import java.util.List;
-import org.springframework.lang.NonNull;
 
 /*ParticipantEntity mapea la tabla participants: datos del equipo (nombre único, email, dirección, teléfono) 
 y su lista de miembros en tabla participant_members como @ElementCollection.*/
@@ -49,128 +48,78 @@ public class ParticipantEntity {
     @Column(name = "owner_email", length = 180)
     private String ownerEmail;
 
-    public static Builder builder() {
-        return new Builder();
-    }
-
+    // Devuelve el identificador generado del participante.
     public Long getId() {
         return id;
     }
 
+    // Devuelve el nombre del equipo participante.
     public String getTeamName() {
         return teamName;
     }
 
+    // Actualiza el nombre del equipo participante.
     public void setTeamName(String teamName) {
         this.teamName = teamName;
     }
 
+    // Devuelve el correo de contacto del equipo.
     public String getEmail() {
         return email;
     }
 
+    // Actualiza el correo de contacto del equipo.
     public void setEmail(String email) {
         this.email = email;
     }
 
+    // Devuelve el teléfono de contacto del equipo.
     public String getPhone() {
         return phone;
     }
 
+    // Actualiza el teléfono de contacto del equipo.
     public void setPhone(String phone) {
         this.phone = phone;
     }
 
+    // Devuelve la descripción del equipo.
     public String getDescription() {
         return description;
     }
 
+    // Actualiza la descripción del equipo.
     public void setDescription(String description) {
         this.description = description;
     }
 
+    // Devuelve el logo del equipo en Base64.
     public String getLogo() {
         return logo;
     }
 
+    // Actualiza el logo del equipo en Base64.
     public void setLogo(String logo) {
         this.logo = logo;
     }
 
+    // Devuelve la lista de miembros del equipo.
     public List<String> getMembers() {
         return members;
     }
 
+    // Actualiza la lista de miembros evitando referencias externas mutables.
     public void setMembers(List<String> members) {
         this.members = members == null ? new ArrayList<>() : new ArrayList<>(members);
     }
 
+    // Devuelve el correo del usuario propietario del equipo.
     public String getOwnerEmail() {
         return ownerEmail;
     }
 
+    // Actualiza el correo del usuario propietario del equipo.
     public void setOwnerEmail(String ownerEmail) {
         this.ownerEmail = ownerEmail;
-    }
-
-    public static final class Builder {
-        private String teamName;
-        private String email;
-        private String phone;
-        private String description;
-        private String logo;
-        private List<String> members;
-        private String ownerEmail;
-
-        private Builder() {
-        }
-
-        public Builder teamName(String teamName) {
-            this.teamName = teamName;
-            return this;
-        }
-
-        public Builder email(String email) {
-            this.email = email;
-            return this;
-        }
-
-        public Builder phone(String phone) {
-            this.phone = phone;
-            return this;
-        }
-
-        public Builder description(String description) {
-            this.description = description;
-            return this;
-        }
-
-        public Builder logo(String logo) {
-            this.logo = logo;
-            return this;
-        }
-
-        public Builder members(List<String> members) {
-            this.members = members;
-            return this;
-        }
-
-        public Builder ownerEmail(String ownerEmail) {
-            this.ownerEmail = ownerEmail;
-            return this;
-        }
-
-        @NonNull
-        public ParticipantEntity build() {
-            ParticipantEntity participant = new ParticipantEntity();
-            participant.setTeamName(teamName);
-            participant.setEmail(email);
-            participant.setPhone(phone);
-            participant.setDescription(description);
-            participant.setLogo(logo);
-            participant.setMembers(members);
-            participant.setOwnerEmail(ownerEmail);
-            return participant;
-        }
     }
 }

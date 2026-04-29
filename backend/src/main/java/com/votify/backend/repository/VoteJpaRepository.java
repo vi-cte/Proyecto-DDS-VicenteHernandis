@@ -18,5 +18,6 @@ public interface VoteJpaRepository extends JpaRepository<VoteEntity, Long> {
             """)
     List<VoteTallyProjection> tally();
 
+    // Indica si un usuario ya tiene votos registrados.
     boolean existsByUserId(Long userId);
 }

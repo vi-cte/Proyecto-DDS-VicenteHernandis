@@ -14,16 +14,19 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.SVGPath;
 
+// Estrategia que muestra los resultados como ranking de equipos.
 public class RankingResultsViewStrategy implements ResultsViewStrategy {
 
     private final ApiClient apiClient = ApiClient.getInstance();
 
     @Override
+    // Devuelve el identificador de la vista de ranking.
     public String id() {
         return "ranking";
     }
 
     @Override
+    // Construye la lista visual del ranking con tarjetas por equipo.
     public Node buildView(ResultsViewData data) {
         VBox container = new VBox(18);
         container.getStyleClass().add("results-ranking-list");
@@ -41,6 +44,7 @@ public class RankingResultsViewStrategy implements ResultsViewStrategy {
         return container;
     }
 
+    // Crea una tarjeta visual para una posición del ranking.
     private Node rankCard(ResultItemResponse item, int position, long totalVotes) {
         HBox card = new HBox(18);
         card.getStyleClass().add("ranking-card");
@@ -99,6 +103,7 @@ public class RankingResultsViewStrategy implements ResultsViewStrategy {
         return card;
     }
 
+    // Construye el contenido de la insignia de posición.
     private Node badgeContent(int position) {
         if (position <= 3) {
             SVGPath trophy = new SVGPath();
@@ -112,6 +117,7 @@ public class RankingResultsViewStrategy implements ResultsViewStrategy {
         return badgeLabel;
     }
 
+    // Devuelve la clase CSS de la insignia según la posición.
     private String badgeStyleClass(int position) {
         return switch (position) {
             case 1 -> "ranking-badge-gold";
@@ -121,6 +127,7 @@ public class RankingResultsViewStrategy implements ResultsViewStrategy {
         };
     }
 
+    // Devuelve la clase CSS de la copa según la posición.
     private String badgeCupStyleClass(int position) {
         return switch (position) {
             case 1 -> "ranking-badge-cup-gold";
@@ -130,6 +137,7 @@ public class RankingResultsViewStrategy implements ResultsViewStrategy {
         };
     }
 
+    // Devuelve el color de progreso según la posición.
     private String progressColor(int position) {
         return switch (position) {
             case 1 -> "#4a84f4";
@@ -139,6 +147,7 @@ public class RankingResultsViewStrategy implements ResultsViewStrategy {
         };
     }
 
+    // Construye el estado vacío cuando no hay resultados.
     private Node emptyState() {
         Label label = new Label("No hay resultados para mostrar.");
         label.getStyleClass().add("results-empty");

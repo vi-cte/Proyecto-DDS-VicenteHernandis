@@ -26,6 +26,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+// Controlador de la pantalla donde el usuario selecciona equipos para votar.
 public class VotingFormController {
     private static final int FALLBACK_MAX_TEAMS_TO_VOTE = 3;
 
@@ -50,6 +51,7 @@ public class VotingFormController {
     private Label userNameLabel;
 
     @FXML
+    // Carga participantes, límite de votos y estado inicial de selección.
     private void initialize() {
         if (userNameLabel != null) {
             userNameLabel.setText(apiClient.getCurrentUserEmail());
@@ -104,6 +106,7 @@ public class VotingFormController {
     }
 
     @FXML
+    // Envía las selecciones actuales como voto.
     private void submitVote() {
         List<String> selectedTeams = participantList.getItems().stream()
                 .map(VoteCandidateItem::teamName)
@@ -125,6 +128,7 @@ public class VotingFormController {
     }
 
     @FXML
+    // Vuelve al menú principal.
     private void goBack() {
         try {
             SceneNavigator.showMainMenu(currentStage());
@@ -134,6 +138,7 @@ public class VotingFormController {
     }
 
     @FXML
+    // Cierra la sesión local y vuelve a acceso.
     private void exit() {
         ApiClient.getInstance().logout();
         try {
@@ -148,6 +153,7 @@ public class VotingFormController {
         }
     }
 
+    // Añade o quita un equipo de la selección actual.
     private void toggleSelection(VoteCandidateItem item) {
         if (item == null) {
             return;
@@ -171,6 +177,7 @@ public class VotingFormController {
         participantList.refresh();
     }
 
+    // Actualiza contador, botón y refresco visual de selección.
     private void updateSelectionState() {
         int selectedCount = selectedTeamNames.size();
         selectionCountLabel.setText(selectedCount + " / " + maxTeamsToVote);
@@ -178,6 +185,7 @@ public class VotingFormController {
         submitButton.setDisable(selectedCount == 0);
     }
 
+    // Construye el subtítulo mostrado debajo del nombre del equipo.
     private String buildSubtitle(ParticipantResponse participant) {
         if (participant.getDescription() != null && !participant.getDescription().isBlank()) {
             return participant.getDescription();
@@ -191,10 +199,12 @@ public class VotingFormController {
         return "Equipo participante registrado en Votify";
     }
 
+    // Obtiene el Stage actual desde un nodo de la pantalla.
     private Stage currentStage() {
         return (Stage) submitButton.getScene().getWindow();
     }
 
+    // Muestra un error en la zona superior del formulario.
     private void showError(String message) {
         AlertHelper.showError(message);
     }
@@ -206,6 +216,7 @@ public class VotingFormController {
         private final VBox textBox = new VBox(4.0);
         private final HBox root = new HBox(12.0);
 
+        // Configura la celda visual de un candidato votable.
         private VoteCandidateCell() {
             checkBox.getStyleClass().add("vote-checkbox");
             checkBox.setFocusTraversable(false);
@@ -233,6 +244,7 @@ public class VotingFormController {
         }
 
         @Override
+        // Refresca la celda cuando cambia el candidato mostrado.
         protected void updateItem(VoteCandidateItem item, boolean empty) {
             super.updateItem(item, empty);
             if (empty || item == null) {
@@ -247,6 +259,7 @@ public class VotingFormController {
         }
     }
 
+    // Datos compactos que alimentan una fila de votación.
     private record VoteCandidateItem(String teamName, String subtitle, ParticipantResponse participant) {
     }
 }

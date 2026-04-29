@@ -16,6 +16,7 @@ import java.util.Objects;
  */
 public class VotingApp extends Application {
     @Override
+    // Configura la ventana inicial y muestra la pantalla de acceso.
     public void start(Stage primaryStage) throws IOException {
         primaryStage.setTitle("Votify");
         primaryStage.getIcons().add(new Image(Objects.requireNonNull(
@@ -31,6 +32,7 @@ public class VotingApp extends Application {
         );
     }
 
+    // Punto de entrada que lanza JavaFX.
     public static void main(String[] args) {
         launch(args);
     }
