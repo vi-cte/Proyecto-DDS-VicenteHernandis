@@ -6,6 +6,7 @@ import com.votify.frontend.dto.ParticipantResponse;
 import com.votify.frontend.exception.ApiClientException;
 import com.votify.frontend.navigation.SceneNavigator;
 import com.votify.frontend.ui.AlertHelper;
+import com.votify.frontend.client.FormValidators;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -240,7 +241,7 @@ public class RegistrationFormController {
     private boolean validateTeamField() {
         String team = teamField.getText() == null ? "" : teamField.getText().trim();
         if (team.isEmpty()) {
-            teamErrorLabel.setText("El nombre del equipo es obligatorio.");
+            teamErrorLabel.setText(FormValidators.MSG_TEAM_REQUIRED);
             return false;
         }
         try {
@@ -249,7 +250,7 @@ public class RegistrationFormController {
                 checkExists = false; // No comprobar si el nombre no ha cambiado
             }
             if (checkExists && apiClient.teamNameExists(team)) {
-                teamErrorLabel.setText("El nombre del equipo ya esta registrado.");
+                teamErrorLabel.setText(FormValidators.MSG_TEAM_EXISTS);
                 return false;
             }
         } catch (ApiClientException e) {
@@ -264,20 +265,15 @@ public class RegistrationFormController {
     private boolean validateEmailField() {
         String email = emailField.getText() == null ? "" : emailField.getText().trim();
         if (email.isEmpty()) {
-            emailErrorLabel.setText("El correo es obligatorio.");
+            emailErrorLabel.setText(FormValidators.MSG_EMAIL_REQUIRED);
             return false;
         }
-        if (!validEmail(email)) {
-            emailErrorLabel.setText("Formato de correo no valido.");
+        if (!FormValidators.isValidEmail(email)) {
+            emailErrorLabel.setText(FormValidators.MSG_INVALID_EMAIL);
             return false;
         }
         emailErrorLabel.setText("");
         return true;
-    }
-
-    // Comprueba el formato básico de un correo.
-    private boolean validEmail(String email) {
-        return email != null && email.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
     }
 
     private class MemberCell extends ListCell<String> {

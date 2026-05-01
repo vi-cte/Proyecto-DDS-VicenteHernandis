@@ -21,16 +21,22 @@ import java.util.Optional;
 public class ParticipantService {
     private final ParticipantJpaRepository participantRepository;
     private final UserRepository userRepository;
+    private final EventSettingsService eventSettingsService;
 
     // Inyecta los repositorios de participantes y usuarios.
-    public ParticipantService(ParticipantJpaRepository participantRepository, UserRepository userRepository) {
+    public ParticipantService(ParticipantJpaRepository participantRepository, UserRepository userRepository, EventSettingsService eventSettingsService) {
         this.participantRepository = participantRepository;
         this.userRepository = userRepository;
+        this.eventSettingsService = eventSettingsService;
     }
 
     @Transactional
     // Crea un equipo para el usuario autenticado validando duplicados.
     public ParticipantResponse create(ParticipantRequest request, Long userId) {
+        if (!eventSettingsService.areRegistrationsOpen()) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "El registro de equipos se encuentra cerrado");
+        }
+
         User currentUser = getUser(userId);
         String normalizedTeamName = request.teamName().trim();
         if (participantRepository.existsByTeamNameIgnoreCase(normalizedTeamName)) {

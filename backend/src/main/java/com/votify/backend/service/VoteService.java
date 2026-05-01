@@ -10,6 +10,7 @@ import com.votify.backend.entity.ParticipantEntity;
 import com.votify.backend.entity.VoteEntity;
 import com.votify.backend.exception.ApiException;
 import com.votify.backend.factory.PublicVoteCreator;
+import com.votify.backend.repository.UserRepository;
 import com.votify.backend.repository.VoteJpaRepository;
 import com.votify.backend.repository.VoteTallyProjection;
 import org.springframework.http.HttpStatus;
@@ -28,23 +29,32 @@ public class VoteService {
     private final ParticipantService participantService;
     private final PublicVoteCreator voteCreator;
     private final EventSettingsService eventSettingsService;
+    private final UserRepository userRepository;
 
     // Inyecta repositorios y servicios necesarios para registrar votos.
     public VoteService(
             VoteJpaRepository voteRepository,
             ParticipantService participantService,
             PublicVoteCreator voteCreator,
-            EventSettingsService eventSettingsService
+            EventSettingsService eventSettingsService,
+            UserRepository userRepository
     ) {
         this.voteRepository = voteRepository;
         this.participantService = participantService;
         this.voteCreator = voteCreator;
         this.eventSettingsService = eventSettingsService;
+        this.userRepository = userRepository;
     }
 
     @Transactional
     // Registra los votos de un usuario validando límites, duplicados y equipos existentes.
     public VoteResponse createVotes(VoteRequest request, Long userId) {
+        if (!eventSettingsService.isVotingOpen()) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "Las votaciones estan cerradas actualmente");
+        }
+        if (userId == null || !userRepository.existsById(userId)) {
+            throw new ApiException(HttpStatus.UNAUTHORIZED, "Usuario no registrado");
+        }
         // Comprobamos si el usuario ya ha votado. Necesitarás añadir `existsByUserId` a tu VoteJpaRepository.
         if (voteRepository.existsByUserId(userId)) {
             throw new ApiException(HttpStatus.CONFLICT, "Ya has votado. No puedes votar de nuevo.");
@@ -85,6 +95,9 @@ public class VoteService {
     @Transactional(readOnly = true)
     // Calcula y devuelve el resumen agregado de resultados.
     public ResultsResponse getResults() {
+        if (!eventSettingsService.areResultsVisible()) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "Los resultados estan ocultos actualmente por el administrador");
+        }
         List<VoteTallyProjection> tally = voteRepository.tally();
         List<ResultItemResponse> results = tally.stream()
                 .map(item -> new ResultItemResponse(item.getTeamName(), item.getVotes()))
@@ -101,6 +114,9 @@ public class VoteService {
     @Transactional(readOnly = true)
     // Indica si el usuario ya tiene votos registrados.
     public boolean hasUserVoted(Long userId) {
+        if (userId == null) {
+            return false;
+        }
         // Necesitarás añadir `boolean existsByUserId(Long userId);` a tu interface VoteJpaRepository.
         return voteRepository.existsByUserId(userId);
     }

@@ -6,6 +6,7 @@ import com.votify.frontend.client.ApiClient;
 import com.votify.frontend.exception.ApiClientException;
 import com.votify.frontend.navigation.SceneNavigator;
 import com.votify.frontend.ui.AlertHelper;
+import com.votify.frontend.client.FormValidators;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -52,9 +53,9 @@ public class AccessController {
         emailField.focusedProperty().addListener((observable, oldValue, newValue) -> {
             if (!newValue) { 
                 String email = emailField.getText();
-                if (!email.isBlank() && !isValidEmail(email)) {
-                    showInlineError("Formato de correo no válido.");
-                } else if (errorLabel != null && "Formato de correo no válido.".equals(errorLabel.getText())) {
+                if (!email.isBlank() && !FormValidators.isValidEmail(email)) {
+                    showInlineError(FormValidators.MSG_INVALID_EMAIL);
+                } else if (errorLabel != null && FormValidators.MSG_INVALID_EMAIL.equals(errorLabel.getText())) {
                     errorLabel.setText(""); // Limpia el error si se ha corregido
                 }
             }
@@ -65,8 +66,8 @@ public class AccessController {
             if (!newValue && !isLoginMode) { 
                 String password = passwordField.getText();
                 if (!password.isBlank() && password.length() < 8) {
-                    showInlineError("La contraseña debe tener al menos 8 caracteres.");
-                } else if (errorLabel != null && "La contraseña debe tener al menos 8 caracteres.".equals(errorLabel.getText())) {
+                    showInlineError(FormValidators.MSG_SHORT_PASSWORD);
+                } else if (errorLabel != null && FormValidators.MSG_SHORT_PASSWORD.equals(errorLabel.getText())) {
                     errorLabel.setText(""); // Limpia el error si se ha corregido
                 }
             }
@@ -138,17 +139,17 @@ public class AccessController {
         if (errorLabel != null) errorLabel.setText("");
         String email = emailField.getText(), password = passwordField.getText();
         if (email.isBlank() || password.isBlank()) { 
-            showInlineError("Por favor, rellena todos los campos."); 
+            showInlineError(FormValidators.MSG_REQUIRED_FIELDS); 
             return; 
         }
 
-        if (!isValidEmail(email)) {
-            showInlineError("Formato de correo no válido.");
+        if (!FormValidators.isValidEmail(email)) {
+            showInlineError(FormValidators.MSG_INVALID_EMAIL);
             return;
         }
 
         if (!isLoginMode && password.length() < 8) {
-            showInlineError("La contraseña debe tener al menos 8 caracteres.");
+            showInlineError(FormValidators.MSG_SHORT_PASSWORD);
             return;
         }
 
@@ -172,11 +173,6 @@ public class AccessController {
         } else {
             AlertHelper.showWarning(message); // Fallback si el FXML aún no tiene el Label
         }
-    }
-
-    // Valida el formato básico del correo introducido.
-    private boolean isValidEmail(String email) {
-        return email != null && email.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
     }
 
     @FXML
@@ -221,7 +217,7 @@ public class AccessController {
         dialog.getDialogPane().getButtonTypes().addAll(okButtonType, ButtonType.CANCEL);
 
         PasswordField pwd = new PasswordField();
-        pwd.setPromptText("Contraseña");
+        pwd.setPromptText("admin123");
 
         VBox vbox = new VBox(10);
         vbox.getChildren().addAll(new Label("Introduce la contraseña de administrador:"), pwd);
