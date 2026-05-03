@@ -104,6 +104,20 @@ class VoteServiceTest {
     }
 
     @Test
+    void shouldThrowExceptionWhenUserHasAlreadyVoted() {
+        // Arrange: Votaciones abiertas y usuario registrado, pero el usuario YA ha votado antes
+        when(eventSettingsService.isVotingOpen()).thenReturn(true);
+        when(userRepository.existsById(validUserId)).thenReturn(true);
+        when(voteRepository.existsByUserId(validUserId)).thenReturn(true);
+
+        // Act & Assert: Debe lanzar excepción de conflicto (HTTP 409)
+        ApiException exception = assertThrows(ApiException.class, () -> voteService.createVotes(validRequest, validUserId));
+        assertEquals(HttpStatus.CONFLICT, exception.getStatus());
+        assertTrue(exception.getMessage().contains("Ya has votado"));
+        verify(voteRepository, never()).save(any());
+    }
+
+    @Test
     void shouldThrowExceptionWhenTeamIsNotRegistered() {
         // Arrange: Usuario válido y votaciones abiertas, pero intentamos votar a un equipo inexistente
         when(eventSettingsService.isVotingOpen()).thenReturn(true);
