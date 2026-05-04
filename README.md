@@ -7,7 +7,7 @@ Este repositorio contiene el desarrollo del proyecto para la asignatura de **Dis
 Para facilitar la revisión y evaluación del proyecto, puedes acceder rápidamente a las distintas versiones utilizando los siguientes enlaces:
 
 * **[🔗 Sprint 1 (Rama Main)](https://github.com/vi-cte/Proyecto-DDS-VicenteHernandis/tree/main)**: Contiene la base del proyecto, el análisis inicial y las primeras funcionalidades correspondientes al primer sprint.
-* **[🔗 Sprint 2][(https://github.com/vi-cte/Proyecto-DDS-VicenteHernandis/tree/sprint-2](https://github.com/vi-cte/Proyecto-DDS-VicenteHernandis/tree/Sprint-2)**: Contiene los avances de la segunda etapa, incluyendo nuevas características, mejoras y correcciones. 
+* **[🔗 Sprint 2]([https://github.com/vi-cte/Proyecto-DDS-VicenteHernandis/tree/sprint-2)**: Contiene los avances de la segunda etapa, incluyendo nuevas características, mejoras y correcciones. 
 
 ---
 
