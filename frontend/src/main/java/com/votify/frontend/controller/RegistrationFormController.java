@@ -290,11 +290,11 @@ public class RegistrationFormController {
             HBox.setHgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
             hbox.getChildren().addAll(label, spacer, editButton, removeButton);
             hbox.setAlignment(Pos.CENTER_LEFT);
-            label.setStyle("-fx-text-fill: #162642; -fx-font-size: 14px;");
+            label.getStyleClass().add("member-cell-label");
             hbox.setSpacing(10);
-            editButton.setStyle("-fx-background-color: transparent; -fx-text-fill: #3b88ff; -fx-font-weight: bold; -fx-cursor: hand;");
-            removeButton.setStyle("-fx-background-color: transparent; -fx-text-fill: #e53935; -fx-font-weight: bold; -fx-cursor: hand;");
-            setStyle("-fx-padding: 5; -fx-background-color: transparent; -fx-border-color: transparent transparent #e2e8f2 transparent; -fx-border-width: 0 0 1 0;");
+            editButton.getStyleClass().addAll("member-cell-button", "member-cell-edit-button");
+            removeButton.getStyleClass().addAll("member-cell-button", "member-cell-remove-button");
+            getStyleClass().add("member-list-cell");
 
             editButton.setOnAction(event -> {
                 String item = getItem();

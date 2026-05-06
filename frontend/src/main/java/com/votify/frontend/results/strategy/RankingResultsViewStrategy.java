@@ -63,10 +63,9 @@ public class RankingResultsViewStrategy implements ResultsViewStrategy {
         VBox teamBox = new VBox(4);
         HBox.setHgrow(teamBox, Priority.ALWAYS);
         Label teamName = new Label(item.getTeamName());
-        teamName.getStyleClass().add("ranking-team-name");
+        teamName.getStyleClass().addAll("ranking-team-name", "team-link");
         
-        // Estilo y evento de clic para abrir la vista previa del equipo
-        teamName.setStyle("-fx-text-fill: #2962ff; -fx-cursor: hand;");
+        // Abre la vista previa del equipo.
         teamName.setOnMouseClicked(event -> {
             try {
                 apiClient.getParticipantResponses().stream()
@@ -90,9 +89,8 @@ public class RankingResultsViewStrategy implements ResultsViewStrategy {
 
         double percentage = (item.getVotes() * 100.0) / totalVotes;
         ProgressBar progressBar = new ProgressBar(item.getVotes() / (double) totalVotes);
-        progressBar.getStyleClass().add("ranking-progress");
+        progressBar.getStyleClass().addAll("ranking-progress", progressStyleClass(position));
         HBox.setHgrow(progressBar, Priority.ALWAYS);
-        progressBar.setStyle("-fx-accent: " + progressColor(position) + ";");
 
         Label percent = new Label(String.format(java.util.Locale.US, "%.1f%%", percentage));
         percent.getStyleClass().add("ranking-percent");
@@ -137,13 +135,13 @@ public class RankingResultsViewStrategy implements ResultsViewStrategy {
         };
     }
 
-    // Devuelve el color de progreso según la posición.
-    private String progressColor(int position) {
+    // Devuelve la clase del progreso según la posición.
+    private String progressStyleClass(int position) {
         return switch (position) {
-            case 1 -> "#4a84f4";
-            case 2 -> "#23b785";
-            case 3 -> "#f2a54a";
-            default -> "#8da2c7";
+            case 1 -> "ranking-progress-gold";
+            case 2 -> "ranking-progress-silver";
+            case 3 -> "ranking-progress-bronze";
+            default -> "ranking-progress-default";
         };
     }
 

@@ -7,57 +7,57 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.shape.SVGPath?>
 
-<VBox spacing="20.0" style="-fx-background-color: #f4f7f9; -fx-padding: 25;" prefWidth="420.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.votify.frontend.controller.SettingsFormController">
+<VBox spacing="20.0" styleClass="settings-root" stylesheets="@MainMenu.css" prefWidth="420.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.votify.frontend.controller.SettingsFormController">
     <HBox alignment="TOP_RIGHT">
-        <Button mnemonicParsing="false" onAction="#close" style="-fx-background-color: transparent; -fx-cursor: hand;">
+        <Button mnemonicParsing="false" onAction="#close" styleClass="icon-button">
             <graphic>
-                <SVGPath content="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z" fill="#607d8b"/>
+                <SVGPath styleClass="icon-button-svg" content="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/>
             </graphic>
         </Button>
     </HBox>
 
-    <VBox spacing="5.0" style="-fx-padding: 0 0 15 0;">
-        <Label text="Configuración del evento" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #162642;" />
-        <Label text="Gestiona las opciones de votación y el estado del evento" style="-fx-text-fill: #78879f; -fx-font-size: 14px;" wrapText="true" />
+    <VBox spacing="5.0" styleClass="settings-header">
+        <Label text="Configuración del evento" styleClass="settings-title" />
+        <Label text="Gestiona las opciones de votación y el estado del evento" styleClass="settings-subtitle" wrapText="true" />
     </VBox>
 
     <VBox spacing="18.0">
-        <HBox alignment="CENTER_LEFT" style="-fx-border-color: transparent transparent #e2e8f2 transparent; -fx-border-width: 0 0 1 0; -fx-padding: 0 0 15 0;">
+        <HBox alignment="CENTER_LEFT" styleClass="settings-row">
             <VBox HBox.hgrow="ALWAYS">
-                <Label text="Inscripciones" style="-fx-font-weight: bold; -fx-font-size: 15px; -fx-text-fill: #162642;" />
-                <Label fx:id="registrationStatusLabel" text="Abiertas" style="-fx-text-fill: #78879f; -fx-font-size: 13px;" />
+                <Label text="Inscripciones" styleClass="settings-label" />
+                <Label fx:id="registrationStatusLabel" text="Abiertas" styleClass="settings-status" />
             </VBox>
             <CheckBox fx:id="registrationToggle" styleClass="toggle-switch" onAction="#onRegistrationToggle" />
         </HBox>
 
-        <HBox alignment="CENTER_LEFT" style="-fx-border-color: transparent transparent #e2e8f2 transparent; -fx-border-width: 0 0 1 0; -fx-padding: 0 0 15 0;">
+        <HBox alignment="CENTER_LEFT" styleClass="settings-row">
             <VBox HBox.hgrow="ALWAYS">
-                <Label text="Votaciones" style="-fx-font-weight: bold; -fx-font-size: 15px; -fx-text-fill: #162642;" />
-                <Label fx:id="votingStatusLabel" text="Cerradas" style="-fx-text-fill: #78879f; -fx-font-size: 13px;" />
+                <Label text="Votaciones" styleClass="settings-label" />
+                <Label fx:id="votingStatusLabel" text="Cerradas" styleClass="settings-status" />
             </VBox>
             <CheckBox fx:id="votingToggle" styleClass="toggle-switch" onAction="#onVotingToggle" />
         </HBox>
 
-        <HBox alignment="CENTER_LEFT" style="-fx-border-color: transparent transparent #e2e8f2 transparent; -fx-border-width: 0 0 1 0; -fx-padding: 0 0 15 0;">
+        <HBox alignment="CENTER_LEFT" styleClass="settings-row">
             <VBox HBox.hgrow="ALWAYS">
-                <Label text="Resultados" style="-fx-font-weight: bold; -fx-font-size: 15px; -fx-text-fill: #162642;" />
-                <Label fx:id="resultsStatusLabel" text="Ocultos" style="-fx-text-fill: #78879f; -fx-font-size: 13px;" />
+                <Label text="Resultados" styleClass="settings-label" />
+                <Label fx:id="resultsStatusLabel" text="Ocultos" styleClass="settings-status" />
             </VBox>
             <CheckBox fx:id="resultsToggle" styleClass="toggle-switch" onAction="#onResultsToggle" />
         </HBox>
 
-        <VBox spacing="8.0" style="-fx-border-color: transparent transparent #e2e8f2 transparent; -fx-border-width: 0 0 1 0; -fx-padding: 0 0 20 0;">
-            <Label text="Número de votos por persona" style="-fx-font-weight: bold; -fx-font-size: 15px; -fx-text-fill: #162642;" />
+        <VBox spacing="8.0" styleClass="settings-field-section">
+            <Label text="Número de votos por persona" styleClass="settings-label" />
             <HBox alignment="CENTER_LEFT" spacing="10.0">
-                <TextField fx:id="maxVotesField" text="1" prefWidth="70.0" style="-fx-background-color: white; -fx-background-radius: 6; -fx-padding: 8; -fx-border-color: #e2e8f2; -fx-border-radius: 6;" />
-                <Label text="voto" style="-fx-text-fill: #78879f; -fx-font-size: 14px;" />
+                <TextField fx:id="maxVotesField" text="1" prefWidth="70.0" styleClass="settings-number-field" />
+                <Label text="voto" styleClass="settings-subtitle" />
             </HBox>
         </VBox>
 
-        <VBox spacing="10.0" style="-fx-padding: 5 0 0 0;">
-            <Label text="Reiniciar evento" style="-fx-font-weight: bold; -fx-font-size: 15px; -fx-text-fill: #162642;" />
-            <Label text="Se eliminarán todos los equipos participantes y todos los votos" style="-fx-text-fill: #78879f; -fx-font-size: 13px;" wrapText="true" />
-            <Button mnemonicParsing="false" onAction="#resetEvent" text="Reiniciar evento" style="-fx-background-color: #e53935; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 10; -fx-background-radius: 6; -fx-cursor: hand;" maxWidth="Infinity" />
+        <VBox spacing="10.0" styleClass="settings-reset-section">
+            <Label text="Reiniciar evento" styleClass="settings-label" />
+            <Label text="Se eliminarán todos los equipos participantes y todos los votos" styleClass="settings-status" wrapText="true" />
+            <Button mnemonicParsing="false" onAction="#resetEvent" text="Reiniciar evento" styleClass="danger-button" maxWidth="Infinity" />
         </VBox>
     </VBox>
 </VBox>

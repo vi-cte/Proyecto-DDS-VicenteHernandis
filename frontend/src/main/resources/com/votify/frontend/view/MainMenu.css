@@ -704,6 +704,212 @@
 }
 .action-button:hover { -fx-background-color: #1e4bd8; }
 
+.access-root {
+    -fx-background-color: #f4f7fb;
+}
+
+.access-error-label {
+    -fx-text-fill: #e53935;
+    -fx-font-size: 13px;
+}
+
+.icon-button {
+    -fx-background-color: transparent;
+    -fx-cursor: hand;
+}
+
+.icon-button-svg {
+    -fx-fill: #607d8b;
+}
+
+.settings-root {
+    -fx-background-color: #f4f7f9;
+    -fx-padding: 25;
+}
+
+.settings-header {
+    -fx-padding: 0 0 15 0;
+}
+
+.settings-title {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #162642;
+}
+
+.settings-subtitle {
+    -fx-text-fill: #78879f;
+    -fx-font-size: 14px;
+}
+
+.settings-row {
+    -fx-border-color: transparent transparent #e2e8f2 transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 0 0 15 0;
+}
+
+.settings-label {
+    -fx-font-weight: bold;
+    -fx-font-size: 15px;
+    -fx-text-fill: #162642;
+}
+
+.settings-status {
+    -fx-text-fill: #78879f;
+    -fx-font-size: 13px;
+}
+
+.settings-field-section {
+    -fx-border-color: transparent transparent #e2e8f2 transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 0 0 20 0;
+}
+
+.settings-number-field {
+    -fx-background-color: white;
+    -fx-background-radius: 6;
+    -fx-padding: 8;
+    -fx-border-color: #e2e8f2;
+    -fx-border-radius: 6;
+}
+
+.settings-reset-section {
+    -fx-padding: 5 0 0 0;
+}
+
+.danger-button {
+    -fx-background-color: #e53935;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 10;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+}
+
+.team-link {
+    -fx-text-fill: #2962ff;
+    -fx-cursor: hand;
+}
+
+.member-list-cell {
+    -fx-padding: 5;
+    -fx-background-color: transparent;
+    -fx-border-color: transparent transparent #e2e8f2 transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+.member-cell-label {
+    -fx-text-fill: #162642;
+    -fx-font-size: 14px;
+}
+
+.member-cell-button {
+    -fx-background-color: transparent;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+}
+
+.member-cell-edit-button {
+    -fx-text-fill: #3b88ff;
+}
+
+.member-cell-remove-button {
+    -fx-text-fill: #e53935;
+}
+
+.team-dialog-root {
+    -fx-background-color: #f8fafc;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-border-color: #e2e8f2;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 4);
+}
+
+.team-dialog-title {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #162642;
+}
+
+.team-dialog-icon-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: #162642;
+    -fx-font-size: 16px;
+    -fx-cursor: hand;
+}
+
+.team-dialog-card {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 12;
+    -fx-border-color: #e2e8f2;
+    -fx-border-radius: 12;
+    -fx-border-width: 1;
+}
+
+.team-dialog-avatar {
+    -fx-background-color: linear-gradient(to bottom right, #4a90e2, #9013fe);
+    -fx-background-radius: 45;
+}
+
+.team-dialog-avatar-image {
+    -fx-background-color: transparent;
+}
+
+.team-dialog-default-icon {
+    -fx-fill: white;
+    -fx-scale-x: 1.5;
+    -fx-scale-y: 1.5;
+}
+
+.team-dialog-name {
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #111827;
+}
+
+.team-dialog-description {
+    -fx-font-size: 14px;
+    -fx-text-fill: #6b7280;
+}
+
+.team-dialog-separator {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent transparent #e2e8f2 transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+.team-dialog-members-icon-wrap {
+    -fx-background-color: #f3e8ff;
+    -fx-background-radius: 8;
+}
+
+.team-dialog-members-icon {
+    -fx-fill: #9013fe;
+    -fx-scale-x: 0.9;
+    -fx-scale-y: 0.9;
+}
+
+.team-dialog-members-title {
+    -fx-font-size: 13px;
+    -fx-text-fill: #6b7280;
+}
+
+.team-dialog-members-list {
+    -fx-font-size: 14px;
+    -fx-text-fill: #1f2937;
+}
+
+.team-dialog-close-button {
+    -fx-background-color: #2962ff;
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-padding: 10 20 10 20;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+}
+
 .ranking-badge-cup {
     -fx-scale-x: 1.08;
     -fx-scale-y: 1.08;
@@ -754,6 +960,22 @@
 
 .ranking-progress > .bar {
     -fx-background-radius: 99;
+}
+
+.ranking-progress-gold {
+    -fx-accent: #4a84f4;
+}
+
+.ranking-progress-silver {
+    -fx-accent: #23b785;
+}
+
+.ranking-progress-bronze {
+    -fx-accent: #f2a54a;
+}
+
+.ranking-progress-default {
+    -fx-accent: #8da2c7;
 }
 
 .results-bar-list {
@@ -810,6 +1032,26 @@
     -fx-background-color: -fx-bar-fill;
     -fx-background-radius: 10 10 0 0;
     -fx-border-radius: 10 10 0 0;
+}
+
+.results-bar-color-1 {
+    -fx-bar-fill: #4a84f4;
+}
+
+.results-bar-color-2 {
+    -fx-bar-fill: #23b785;
+}
+
+.results-bar-color-3 {
+    -fx-bar-fill: #f2a54a;
+}
+
+.results-bar-color-4 {
+    -fx-bar-fill: #9b59ff;
+}
+
+.results-bar-color-5 {
+    -fx-bar-fill: #6b8ecf;
 }
 
 .results-bar-chart .chart-series-line {

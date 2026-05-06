@@ -223,8 +223,7 @@ public class VotingFormController {
             checkBox.setMouseTransparent(true);
 
             titleLabel.getStyleClass().add("vote-team-name");
-            // Estilo extra para simular un enlace
-            titleLabel.setStyle("-fx-text-fill: #2962ff; -fx-cursor: hand;");
+            titleLabel.getStyleClass().add("team-link");
             titleLabel.setOnMouseClicked(event -> {
                 event.consume(); // Previene que el CheckBox reaccione
                 com.votify.frontend.ui.TeamInfoDialog.show(getItem().participant());

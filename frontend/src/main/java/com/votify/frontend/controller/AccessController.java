@@ -169,7 +169,9 @@ public class AccessController {
     private void showInlineError(String message) {
         if (errorLabel != null) {
             errorLabel.setText(message);
-            errorLabel.setStyle("-fx-text-fill: #e53935; -fx-font-size: 13px;"); // Color rojo
+            if (!errorLabel.getStyleClass().contains("access-error-label")) {
+                errorLabel.getStyleClass().add("access-error-label");
+            }
         } else {
             AlertHelper.showWarning(message); // Fallback si el FXML aún no tiene el Label
         }

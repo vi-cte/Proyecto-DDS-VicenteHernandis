@@ -12,8 +12,6 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
-import java.util.List;
-
 // Estrategia que muestra los resultados como gráfico de barras.
 public class BarChartResultsViewStrategy implements ResultsViewStrategy {
     @Override
@@ -30,14 +28,6 @@ public class BarChartResultsViewStrategy implements ResultsViewStrategy {
             label.getStyleClass().add("results-empty");
             return new StackPane(label);
         }
-
-        List<String> colors = List.of(
-                "#4a84f4",
-                "#23b785",
-                "#f2a54a",
-                "#9b59ff",
-                "#6b8ecf"
-        );
 
         CategoryAxis xAxis = new CategoryAxis();
         xAxis.setLabel("Equipos");
@@ -70,10 +60,10 @@ public class BarChartResultsViewStrategy implements ResultsViewStrategy {
         for (int i = 0; i < data.ranking().size(); i++) {
             ResultItemResponse item = data.ranking().get(i);
             XYChart.Data<String, Number> point = new XYChart.Data<>(item.getTeamName(), item.getVotes());
-            String color = colors.get(i % colors.size());
+            int colorIndex = (i % 5) + 1;
             point.nodeProperty().addListener((obs, oldNode, newNode) -> {
                 if (newNode != null) {
-                    newNode.setStyle("-fx-bar-fill: " + color + ";");
+                    newNode.getStyleClass().add("results-bar-color-" + colorIndex);
                 }
             });
             series.getData().add(point);

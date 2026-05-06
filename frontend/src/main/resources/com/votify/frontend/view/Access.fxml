@@ -6,7 +6,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.shape.SVGPath?>
 
-<StackPane prefHeight="768.0" prefWidth="1365.0" style="-fx-background-color: #f4f7fb;" stylesheets="@MainMenu.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.votify.frontend.controller.AccessController">
+<StackPane prefHeight="768.0" prefWidth="1365.0" styleClass="access-root" stylesheets="@MainMenu.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.votify.frontend.controller.AccessController">
     <children>
         <VBox alignment="CENTER" fillWidth="false" spacing="40.0">
             <children>
@@ -41,7 +41,7 @@
                                     <PasswordField fx:id="passwordField" promptText="••••••••" styleClass="input-field"/>
                                 </VBox>
                                 <HBox alignment="CENTER_RIGHT" fx:id="forgotPasswordBox"><Label text="¿Olvidaste tu contraseña?" styleClass="link-label" onMouseClicked="#handleForgotPassword"/></HBox>
-                                <Label fx:id="errorLabel" wrapText="true" />
+                                <Label fx:id="errorLabel" wrapText="true" styleClass="access-error-label" />
                                 <Button fx:id="actionButton" text="Iniciar sesión" styleClass="action-button" maxWidth="1.7976931348623157E308" onAction="#handleAction"/>
                                 <Button fx:id="viewResultsButton" text="Ver resultados votación" styleClass="secondary-button" maxWidth="1.7976931348623157E308" onAction="#handleViewResults"/>
                             </children>
@@ -55,9 +55,9 @@
                 <Insets top="20" right="20" />
             </padding>
             <children>
-                <Button fx:id="adminSettingsButton" mnemonicParsing="false" onAction="#handleAdminSettings" style="-fx-background-color: transparent; -fx-cursor: hand;">
+                <Button fx:id="adminSettingsButton" mnemonicParsing="false" onAction="#handleAdminSettings" styleClass="icon-button">
                     <graphic>
-                        <SVGPath content="M19.4 13c0-.3.1-.6.1-.9s0-.6-.1-.9l2.1-1.7c.2-.2.2-.4.1-.6l-2-3.5c-.1-.2-.3-.3-.5-.2l-2.5 1c-.5-.4-1.1-.7-1.7-1l-.4-2.7c0-.2-.2-.4-.5-.4h-4c-.2 0-.4.2-.5.4l-.4 2.7c-.6.3-1.2.6-1.7 1l-2.5-1c-.2-.1-.5 0-.5.2l-2 3.5c-.1.2-.1.5.1.6l2.1 1.7c-.1.3-.1.6-.1.9s0 .6.1.9l-2.1 1.7c-.2.2-.2.4-.1.6l2 3.5c.1.2.3.3.5.2l2.5-1c.5.4 1.1.7 1.7 1l.4 2.7c0 .2.2.4.5.4h4c.2 0 .4-.2.5-.4l.4-2.7c.6-.3 1.2-.6 1.7-1l2.5 1c.2.1.5 0 .5-.2l2-3.5c.1-.2.1-.5-.1-.6l-2.1-1.7zM12 15.5c-1.9 0-3.5-1.6-3.5-3.5s1.6-3.5 3.5-3.5 3.5 1.6 3.5 3.5-1.6 3.5-3.5 3.5z" fill="#607d8b"/>
+                        <SVGPath styleClass="icon-button-svg" content="M19.4 13c0-.3.1-.6.1-.9s0-.6-.1-.9l2.1-1.7c.2-.2.2-.4.1-.6l-2-3.5c-.1-.2-.3-.3-.5-.2l-2.5 1c-.5-.4-1.1-.7-1.7-1l-.4-2.7c0-.2-.2-.4-.5-.4h-4c-.2 0-.4.2-.5.4l-.4 2.7c-.6.3-1.2.6-1.7 1l-2.5-1c-.2-.1-.5 0-.5.2l-2 3.5c-.1.2-.1.5.1.6l2.1 1.7c-.1.3-.1.6-.1.9s0 .6.1.9l-2.1 1.7c-.2.2-.2.4-.1.6l2 3.5c.1.2.3.3.5.2l2.5-1c.5.4 1.1.7 1.7 1l.4 2.7c0 .2.2.4.5.4h4c.2 0 .4-.2.5-.4l.4-2.7c.6-.3 1.2-.6 1.7-1l2.5 1c.2.1.5 0 .5-.2l2-3.5c.1-.2.1-.5-.1-.6l-2.1-1.7zM12 15.5c-1.9 0-3.5-1.6-3.5-3.5s1.6-3.5 3.5-3.5 3.5 1.6 3.5 3.5-1.6 3.5-3.5 3.5z"/>
                     </graphic>
                 </Button>
             </children>
