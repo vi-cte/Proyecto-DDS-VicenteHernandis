@@ -55,7 +55,7 @@ public class VoteService {
         if (userId == null || !userRepository.existsById(userId)) {
             throw new ApiException(HttpStatus.UNAUTHORIZED, "Usuario no registrado");
         }
-        // Comprobamos si el usuario ya ha votado. Necesitarás añadir `existsByUserId` a tu VoteJpaRepository.
+        // Comprobamos si el usuario ya ha votado.
         if (voteRepository.existsByUserId(userId)) {
             throw new ApiException(HttpStatus.CONFLICT, "Ya has votado. No puedes votar de nuevo.");
         }
