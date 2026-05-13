@@ -3,7 +3,9 @@ package com.votify.backend.service;
 import com.votify.backend.dto.ResultItemResponse;
 import com.votify.backend.dto.ResultsResponse;
 import com.votify.backend.exception.ApiException;
+import com.votify.backend.factory.JuryVoteCreator;
 import com.votify.backend.factory.PublicVoteCreator;
+import com.votify.backend.entity.UserRole;
 import com.votify.backend.repository.UserRepository;
 import com.votify.backend.repository.VoteJpaRepository;
 import com.votify.backend.repository.VoteTallyProjection;
@@ -32,6 +34,9 @@ class ResultsServiceTest {
     private PublicVoteCreator voteCreator;
 
     @Mock
+    private JuryVoteCreator juryVoteCreator;
+
+    @Mock
     private EventSettingsService eventSettingsService;
 
     @Mock
@@ -50,14 +55,15 @@ class ResultsServiceTest {
         assertEquals(HttpStatus.FORBIDDEN, exception.getStatus());
         
         // Verificamos que nunca se llama a la base de datos para contar votos
-        verify(voteRepository, never()).tally();
+        verify(voteRepository, never()).tallyByVoterRole(any());
     }
 
     @Test
     void shouldReturnAccurateResultsWhenResultsAreVisible() {
         // Arrange: Resultados visibles y simulamos respuesta de la base de datos
         when(eventSettingsService.areResultsVisible()).thenReturn(true);
-        when(voteRepository.count()).thenReturn(150L);
+        when(voteRepository.countByVoterRole(UserRole.PUBLIC)).thenReturn(150L);
+        when(voteRepository.countByVoterRole(UserRole.JURY)).thenReturn(0L);
 
         VoteTallyProjection p1 = mock(VoteTallyProjection.class);
         when(p1.getTeamName()).thenReturn("Equipo A");
@@ -67,7 +73,8 @@ class ResultsServiceTest {
         when(p2.getTeamName()).thenReturn("Equipo B");
         when(p2.getVotes()).thenReturn(50L);
 
-        when(voteRepository.tally()).thenReturn(List.of(p1, p2));
+        when(voteRepository.tallyByVoterRole(UserRole.PUBLIC)).thenReturn(List.of(p1, p2));
+        when(voteRepository.tallyByVoterRole(UserRole.JURY)).thenReturn(List.of());
 
         // Act: Solicitamos los resultados
         ResultsResponse response = voteService.getResults();

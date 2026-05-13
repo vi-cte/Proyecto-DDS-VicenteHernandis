@@ -16,6 +16,10 @@ public class User {
     @Column(nullable = false)
     private String password;
 
+    @Enumerated(EnumType.STRING)
+    @Column
+    private UserRole role = UserRole.PUBLIC;
+
     // Devuelve el identificador generado del usuario.
     public Long getId() {
         return id;
@@ -39,5 +43,15 @@ public class User {
     // Actualiza la contraseña almacenada del usuario.
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    // Devuelve el rol del usuario.
+    public UserRole getRole() {
+        return role == null ? UserRole.PUBLIC : role;
+    }
+
+    // Actualiza el rol del usuario.
+    public void setRole(UserRole role) {
+        this.role = role == null ? UserRole.PUBLIC : role;
     }
 }

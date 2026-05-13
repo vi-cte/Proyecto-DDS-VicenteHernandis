@@ -692,6 +692,13 @@
     -fx-font-size: 14px;
 }
 .input-field:focused { -fx-border-color: #2962ff; }
+
+.results-section-title {
+    -fx-font-size: 18px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #1f2937;
+    -fx-padding: 8 0 0 0;
+}
 .link-label { -fx-font-size: 13px; -fx-text-fill: #2962ff; }
 .action-button { 
     -fx-background-color: #2962ff; 

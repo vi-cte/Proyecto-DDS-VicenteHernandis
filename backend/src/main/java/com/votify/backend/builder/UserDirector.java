@@ -1,6 +1,7 @@
 package com.votify.backend.builder;
 
 import com.votify.backend.entity.User;
+import com.votify.backend.entity.UserRole;
 import org.springframework.lang.NonNull;
 
 // Director que fija el orden de creación de un usuario.
@@ -14,10 +15,11 @@ public class UserDirector {
 
     // Construye un usuario registrado con correo y contraseña.
     @NonNull
-    public User buildRegisteredUser(String email, String password) {
+    public User buildRegisteredUser(String email, String password, UserRole role) {
         return builder
                 .email(email)
                 .password(password)
+                .role(role)
                 .build();
     }
 }

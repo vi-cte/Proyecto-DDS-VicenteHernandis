@@ -87,8 +87,18 @@ public class ResultsFormController {
                     : response.getResults().stream()
                     .sorted(Comparator.comparingLong(ResultItemResponse::getVotes).reversed())
                     .toList();
+            List<ResultItemResponse> publicRanking = response.getPublicResults() == null || response.getPublicResults().isEmpty()
+                    ? ranking
+                    : response.getPublicResults().stream()
+                    .sorted(Comparator.comparingLong(ResultItemResponse::getVotes).reversed())
+                    .toList();
+            List<ResultItemResponse> juryRanking = response.getJuryResults() == null
+                    ? List.of()
+                    : response.getJuryResults().stream()
+                    .sorted(Comparator.comparingLong(ResultItemResponse::getVotes).reversed())
+                    .toList();
 
-            viewData = new ResultsViewData(response, ranking, participantCount);
+            viewData = new ResultsViewData(response, publicRanking, juryRanking, participantCount);
             bindSummary(viewData);
             selectStrategy("ranking");
         } catch (ApiClientException e) {
@@ -155,9 +165,12 @@ public class ResultsFormController {
 
     // Actualiza los indicadores resumen de la pantalla.
     private void bindSummary(ResultsViewData data) {
-        totalVotesLabel.setText(Long.toString(data.response().getTotalVotes()));
+        totalVotesLabel.setText(data.response().getTotalPublicVotes() + " público · "
+                + data.response().getTotalJuryVotes() + " jurado");
         participantsCountLabel.setText(Integer.toString(data.participantCount()));
-        winnerLabel.setText(data.winner() == null ? "Sin datos" : data.winner().getTeamName());
+        String publicWinner = data.winner() == null ? "Sin público" : data.winner().getTeamName();
+        String juryWinner = data.juryWinner() == null ? "Sin jurado" : data.juryWinner().getTeamName();
+        winnerLabel.setText(publicWinner + " / " + juryWinner);
     }
 
     // Renderiza la estrategia seleccionada y marca su botón.

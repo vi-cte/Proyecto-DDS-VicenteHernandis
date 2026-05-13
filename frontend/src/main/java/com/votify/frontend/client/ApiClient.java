@@ -52,12 +52,17 @@ public class ApiClient implements VotifyApi {
 
     // Inicia sesión contra el backend.
     public AuthResponse login(String email, String password) {
-        return authenticate("/auth/login", email, password);
+        return authenticate("/auth/login", email, password, null);
     }
 
     // Registra un usuario contra el backend.
     public AuthResponse registerUser(String email, String password) {
-        return authenticate("/auth/register", email, password);
+        return registerUser(email, password, "PUBLIC");
+    }
+
+    // Registra un usuario con el rol indicado contra el backend.
+    public AuthResponse registerUser(String email, String password, String role) {
+        return authenticate("/auth/register", email, password, role);
     }
 
     @Override
@@ -97,10 +102,10 @@ public class ApiClient implements VotifyApi {
     }
 
     // Ejecuta una petición de autenticación y guarda la sesión local si es correcta.
-    private AuthResponse authenticate(String endpoint, String email, String password) {
+    private AuthResponse authenticate(String endpoint, String email, String password, String role) {
         String json;
         try {
-            json = MAPPER.writeValueAsString(new AuthRequest(email, password));
+            json = MAPPER.writeValueAsString(new AuthRequest(email, password, role));
         } catch (JsonProcessingException e) {
             throw new ApiClientException("No se pudo preparar la solicitud de autenticación");
         }
@@ -122,7 +127,7 @@ public class ApiClient implements VotifyApi {
 
         try {
             AuthResponse authResponse = MAPPER.readValue(response.body(), AuthResponse.class);
-            sessionManager.startUserSession(authResponse.token(), authResponse.email());
+            sessionManager.startUserSession(authResponse.token(), authResponse.email(), authResponse.role());
             return authResponse;
         } catch (Exception e) {
             throw new ApiClientException("No se procesó correctamente la sesión");
@@ -288,6 +293,39 @@ public class ApiClient implements VotifyApi {
         return getEventSettings().getMaxTeamsToVote();
     }
 
+    @Override
+    // Crea los dos votos de un usuario jurado.
+    public VoteResponse createJuryVotes(String winnerSelection, String technicalSelection) {
+        if (!sessionManager.hasUserToken()) {
+            throw new ApiClientException("No has iniciado sesión para poder votar.");
+        }
+
+        String json;
+        try {
+            json = MAPPER.writeValueAsString(new VoteRequest(winnerSelection, technicalSelection));
+        } catch (JsonProcessingException e) {
+            throw new ApiClientException("No se pudo preparar la solicitud al servidor");
+        }
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(baseUrl + "/votes"))
+                .header("Content-Type", "application/json")
+                .header("X-User-ID", sessionManager.userIdHeaderValue())
+                .POST(HttpRequest.BodyPublishers.ofString(json))
+                .build();
+
+        HttpResponse<String> response = send(request);
+        if (response.statusCode() != 201 && response.statusCode() != 200) {
+            throw new ApiClientException(extractErrorMessage(response.body(), response.statusCode()));
+        }
+
+        try {
+            return MAPPER.readValue(response.body(), VoteResponse.class);
+        } catch (Exception e) {
+            throw new ApiClientException("No se pudo procesar la respuesta del voto");
+        }
+    }
+
     // Obtiene los resultados agregados desde el backend.
     public ResultsResponse getResults() {
         HttpRequest request = HttpRequest.newBuilder()
@@ -348,6 +386,13 @@ public class ApiClient implements VotifyApi {
             ErrorResponse errorResponse = MAPPER.readValue(body, ErrorResponse.class);
             if (errorResponse.getMessage() != null && !errorResponse.getMessage().isBlank()) {
                 return errorResponse.getMessage();
+            }
+        } catch (Exception ignored) {
+        }
+        try {
+            AuthResponse authResponse = MAPPER.readValue(body, AuthResponse.class);
+            if (authResponse.message() != null && !authResponse.message().isBlank()) {
+                return authResponse.message();
             }
         } catch (Exception ignored) {
         }
@@ -450,6 +495,18 @@ public class ApiClient implements VotifyApi {
     // Devuelve el correo del usuario actualmente autenticado.
     public String getCurrentUserEmail() {
         return sessionManager.getCurrentUserEmail();
+    }
+
+    @Override
+    // Devuelve el rol del usuario actualmente autenticado.
+    public String getCurrentUserRole() {
+        return sessionManager.getCurrentUserRole();
+    }
+
+    @Override
+    // Indica si el usuario actualmente autenticado pertenece al jurado.
+    public boolean isCurrentUserJury() {
+        return sessionManager.isCurrentUserJury();
     }
 
     // Limpia los datos de sesión local.

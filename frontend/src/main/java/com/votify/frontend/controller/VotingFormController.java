@@ -12,6 +12,7 @@ import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
@@ -51,11 +52,24 @@ public class VotingFormController {
     private Label userNameLabel;
 
     @FXML
+    private VBox juryVotingBox;
+
+    @FXML
+    private ComboBox<String> juryWinnerComboBox;
+
+    @FXML
+    private ComboBox<String> juryTechnicalComboBox;
+
+    private boolean juryMode;
+
+    @FXML
     // Carga participantes, límite de votos y estado inicial de selección.
     private void initialize() {
         if (userNameLabel != null) {
-            userNameLabel.setText(apiClient.getCurrentUserEmail());
+            userNameLabel.setText(apiClient.getCurrentUserEmail()
+                    + (apiClient.isCurrentUserJury() ? " · Jurado" : ""));
         }
+        juryMode = apiClient.isCurrentUserJury();
 
         participantList.setCellFactory(listView -> new VoteCandidateCell());
 
@@ -88,7 +102,7 @@ public class VotingFormController {
                     .toList();
 
             participantList.setItems(FXCollections.observableArrayList(items));
-            hintLabel.setText("Selecciona hasta " + maxTeamsToVote + " equipos para votar");
+            configureVotingMode(items);
 
             if (items.isEmpty()) {
                 hintLabel.setText("Todavía no hay equipos registrados para votar.");
@@ -108,6 +122,11 @@ public class VotingFormController {
     @FXML
     // Envía las selecciones actuales como voto.
     private void submitVote() {
+        if (juryMode) {
+            submitJuryVote();
+            return;
+        }
+
         List<String> selectedTeams = participantList.getItems().stream()
                 .map(VoteCandidateItem::teamName)
                 .filter(selectedTeamNames::contains)
@@ -121,6 +140,26 @@ public class VotingFormController {
         try {
             VoteResponse response = apiClient.createVotes(selectedTeams);
             AlertHelper.showInfo("Votos registrados: " + response.getRecordedVotes());
+            goBack();
+        } catch (ApiClientException e) {
+            showError(e.getMessage());
+        }
+    }
+
+    // Envía las dos categorías del voto de jurado.
+    private void submitJuryVote() {
+        String winnerSelection = juryWinnerComboBox.getValue();
+        String technicalSelection = juryTechnicalComboBox.getValue();
+
+        if (winnerSelection == null || winnerSelection.isBlank()
+                || technicalSelection == null || technicalSelection.isBlank()) {
+            showError("Selecciona un equipo en cada categoría del jurado.");
+            return;
+        }
+
+        try {
+            VoteResponse response = apiClient.createJuryVotes(winnerSelection, technicalSelection);
+            AlertHelper.showInfo("Votos del jurado registrados: " + response.getRecordedVotes());
             goBack();
         } catch (ApiClientException e) {
             showError(e.getMessage());
@@ -179,6 +218,13 @@ public class VotingFormController {
 
     // Actualiza contador, botón y refresco visual de selección.
     private void updateSelectionState() {
+        if (juryMode) {
+            boolean ready = juryWinnerComboBox.getValue() != null && juryTechnicalComboBox.getValue() != null;
+            selectionCountLabel.setText(ready ? "2 / 2" : "0 / 2");
+            submitButton.setText("Enviar valoración del jurado");
+            submitButton.setDisable(!ready);
+            return;
+        }
         int selectedCount = selectedTeamNames.size();
         selectionCountLabel.setText(selectedCount + " / " + maxTeamsToVote);
         submitButton.setText("Enviar Votos (" + selectedCount + ")");
@@ -197,6 +243,28 @@ public class VotingFormController {
             return participant.getEmail();
         }
         return "Equipo participante registrado en Votify";
+    }
+
+    // Prepara la pantalla pública o la interfaz especial del jurado.
+    private void configureVotingMode(List<VoteCandidateItem> items) {
+        if (!juryMode) {
+            hintLabel.setText("Selecciona hasta " + maxTeamsToVote + " equipos para votar");
+            return;
+        }
+
+        hintLabel.setText("Selecciona el ganador del jurado y la mención técnica");
+        participantList.setVisible(false);
+        participantList.setManaged(false);
+        juryVotingBox.setVisible(true);
+        juryVotingBox.setManaged(true);
+        selectionCountLabel.setText("0 / 2");
+        submitButton.setText("Enviar valoración del jurado");
+
+        List<String> teamNames = items.stream().map(VoteCandidateItem::teamName).toList();
+        juryWinnerComboBox.setItems(FXCollections.observableArrayList(teamNames));
+        juryTechnicalComboBox.setItems(FXCollections.observableArrayList(teamNames));
+        juryWinnerComboBox.valueProperty().addListener((observable, oldValue, newValue) -> updateSelectionState());
+        juryTechnicalComboBox.valueProperty().addListener((observable, oldValue, newValue) -> updateSelectionState());
     }
 
     // Obtiene el Stage actual desde un nodo de la pantalla.

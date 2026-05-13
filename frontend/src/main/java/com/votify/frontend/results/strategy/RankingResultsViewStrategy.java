@@ -33,13 +33,22 @@ public class RankingResultsViewStrategy implements ResultsViewStrategy {
 
         if (data.ranking().isEmpty()) {
             container.getChildren().add(emptyState());
-            return container;
+        } else {
+            container.getChildren().add(sectionTitle("Ganadores del público"));
+            long totalVotes = Math.max(1, data.response().getTotalPublicVotes());
+            for (int i = 0; i < data.ranking().size(); i++) {
+                ResultItemResponse item = data.ranking().get(i);
+                container.getChildren().add(rankCard(item, i + 1, totalVotes));
+            }
         }
 
-        long totalVotes = Math.max(1, data.response().getTotalVotes());
-        for (int i = 0; i < data.ranking().size(); i++) {
-            ResultItemResponse item = data.ranking().get(i);
-            container.getChildren().add(rankCard(item, i + 1, totalVotes));
+        if (!data.juryRanking().isEmpty()) {
+            container.getChildren().add(sectionTitle("Ganadores del jurado"));
+            long totalJuryVotes = Math.max(1, data.response().getTotalJuryVotes());
+            for (int i = 0; i < data.juryRanking().size(); i++) {
+                ResultItemResponse item = data.juryRanking().get(i);
+                container.getChildren().add(rankCard(item, i + 1, totalJuryVotes));
+            }
         }
         return container;
     }
@@ -149,6 +158,13 @@ public class RankingResultsViewStrategy implements ResultsViewStrategy {
     private Node emptyState() {
         Label label = new Label("No hay resultados para mostrar.");
         label.getStyleClass().add("results-empty");
+        return label;
+    }
+
+    // Construye un título para separar rankings.
+    private Node sectionTitle(String text) {
+        Label label = new Label(text);
+        label.getStyleClass().add("results-section-title");
         return label;
     }
 }

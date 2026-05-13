@@ -20,13 +20,13 @@ public class AuthController {
     // Registra un usuario nuevo y responde con sus datos de sesión.
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody AuthRequest request) {
         try { return ResponseEntity.ok(authService.register(request)); } 
-        catch (RuntimeException e) { return ResponseEntity.badRequest().body(new AuthResponse(null, null, e.getMessage())); }
+        catch (RuntimeException e) { return ResponseEntity.badRequest().body(new AuthResponse(null, null, null, e.getMessage())); }
     }
 
     @PostMapping("/login")
     // Valida credenciales y responde con los datos de sesión.
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody AuthRequest request) {
         try { return ResponseEntity.ok(authService.login(request)); } 
-        catch (RuntimeException e) { return ResponseEntity.status(401).body(new AuthResponse(null, null, e.getMessage())); }
+        catch (RuntimeException e) { return ResponseEntity.status(401).body(new AuthResponse(null, null, null, e.getMessage())); }
     }
 }

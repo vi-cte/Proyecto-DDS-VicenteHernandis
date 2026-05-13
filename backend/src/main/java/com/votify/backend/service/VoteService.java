@@ -7,8 +7,12 @@ import com.votify.backend.dto.VoteRequest;
 import com.votify.backend.dto.VoteResponse;
 import com.votify.backend.dto.VoteSettingsResponse;
 import com.votify.backend.entity.ParticipantEntity;
+import com.votify.backend.entity.User;
+import com.votify.backend.entity.UserRole;
+import com.votify.backend.entity.VoteCategory;
 import com.votify.backend.entity.VoteEntity;
 import com.votify.backend.exception.ApiException;
+import com.votify.backend.factory.JuryVoteCreator;
 import com.votify.backend.factory.PublicVoteCreator;
 import com.votify.backend.repository.UserRepository;
 import com.votify.backend.repository.VoteJpaRepository;
@@ -28,6 +32,7 @@ public class VoteService {
     private final VoteJpaRepository voteRepository;
     private final ParticipantService participantService;
     private final PublicVoteCreator voteCreator;
+    private final JuryVoteCreator juryVoteCreator;
     private final EventSettingsService eventSettingsService;
     private final UserRepository userRepository;
 
@@ -36,12 +41,14 @@ public class VoteService {
             VoteJpaRepository voteRepository,
             ParticipantService participantService,
             PublicVoteCreator voteCreator,
+            JuryVoteCreator juryVoteCreator,
             EventSettingsService eventSettingsService,
             UserRepository userRepository
     ) {
         this.voteRepository = voteRepository;
         this.participantService = participantService;
         this.voteCreator = voteCreator;
+        this.juryVoteCreator = juryVoteCreator;
         this.eventSettingsService = eventSettingsService;
         this.userRepository = userRepository;
     }
@@ -52,7 +59,8 @@ public class VoteService {
         if (!eventSettingsService.isVotingOpen()) {
             throw new ApiException(HttpStatus.FORBIDDEN, "Las votaciones estan cerradas actualmente");
         }
-        if (userId == null || !userRepository.existsById(userId)) {
+        User user = userId == null ? null : userRepository.findById(userId).orElse(null);
+        if (user == null) {
             throw new ApiException(HttpStatus.UNAUTHORIZED, "Usuario no registrado");
         }
         // Comprobamos si el usuario ya ha votado.
@@ -60,6 +68,14 @@ public class VoteService {
             throw new ApiException(HttpStatus.CONFLICT, "Ya has votado. No puedes votar de nuevo.");
         }
 
+        if (user.getRole() == UserRole.JURY) {
+            return createJuryVotes(request, userId);
+        }
+        return createPublicVotes(request, userId);
+    }
+
+    // Registra votos públicos con el límite configurado por el administrador.
+    private VoteResponse createPublicVotes(VoteRequest request, Long userId) {
         List<String> normalizedSelections = normalizeSelections(request.selections());
         int maxTeamsToVote = eventSettingsService.getMaxTeamsToVote();
         if (normalizedSelections.isEmpty()) {
@@ -83,13 +99,37 @@ public class VoteService {
         for (String teamName : orderedSelections) {
             Vote vote = voteCreator.orderVote(teamName);
             ParticipantEntity participant = participantService.getByTeamName(vote.getOption());
-            VoteEntity entity = new VoteEntity();
-            entity.setParticipant(participant);
-            entity.setUserId(userId);
-            voteRepository.save(entity);
+            voteRepository.save(buildVoteEntity(participant, userId, UserRole.PUBLIC, VoteCategory.PUBLIC_WINNER));
         }
 
         return new VoteResponse(orderedSelections.size(), orderedSelections);
+    }
+
+    // Registra los dos votos diferenciados del jurado.
+    private VoteResponse createJuryVotes(VoteRequest request, Long userId) {
+        List<String> jurySelections = normalizeSelections(List.of(
+                nullToEmpty(request.juryWinnerSelection()),
+                nullToEmpty(request.juryTechnicalSelection())
+        ));
+        if (jurySelections.size() != 2) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "El jurado debe seleccionar un ganador y una mención técnica");
+        }
+
+        for (String teamName : jurySelections) {
+            if (!participantService.existsByTeamName(teamName)) {
+                throw new ApiException(HttpStatus.BAD_REQUEST, "El equipo no existe: " + teamName);
+            }
+        }
+
+        Vote winnerVote = juryVoteCreator.orderVote(jurySelections.get(0));
+        ParticipantEntity winner = participantService.getByTeamName(winnerVote.getOption());
+        voteRepository.save(buildVoteEntity(winner, userId, UserRole.JURY, VoteCategory.JURY_WINNER));
+
+        Vote technicalVote = juryVoteCreator.orderVote(jurySelections.get(1));
+        ParticipantEntity technical = participantService.getByTeamName(technicalVote.getOption());
+        voteRepository.save(buildVoteEntity(technical, userId, UserRole.JURY, VoteCategory.JURY_TECHNICAL));
+
+        return new VoteResponse(jurySelections.size(), jurySelections);
     }
 
     @Transactional(readOnly = true)
@@ -98,11 +138,18 @@ public class VoteService {
         if (!eventSettingsService.areResultsVisible()) {
             throw new ApiException(HttpStatus.FORBIDDEN, "Los resultados estan ocultos actualmente por el administrador");
         }
-        List<VoteTallyProjection> tally = voteRepository.tally();
-        List<ResultItemResponse> results = tally.stream()
-                .map(item -> new ResultItemResponse(item.getTeamName(), item.getVotes()))
-                .toList();
-        return new ResultsResponse(voteRepository.count(), results);
+        List<ResultItemResponse> publicResults = toResultItems(voteRepository.tallyByVoterRole(UserRole.PUBLIC));
+        List<ResultItemResponse> juryResults = toResultItems(voteRepository.tallyByVoterRole(UserRole.JURY));
+        long totalPublicVotes = voteRepository.countByVoterRole(UserRole.PUBLIC);
+        long totalJuryVotes = voteRepository.countByVoterRole(UserRole.JURY);
+        return new ResultsResponse(
+                totalPublicVotes + totalJuryVotes,
+                publicResults,
+                totalPublicVotes,
+                publicResults,
+                totalJuryVotes,
+                juryResults
+        );
     }
 
     @Transactional(readOnly = true)
@@ -137,5 +184,27 @@ public class VoteService {
             }
         }
         return normalizedSelections;
+    }
+
+    // Construye la entidad de voto común para público y jurado.
+    private VoteEntity buildVoteEntity(ParticipantEntity participant, Long userId, UserRole voterRole, VoteCategory voteCategory) {
+        VoteEntity entity = new VoteEntity();
+        entity.setParticipant(participant);
+        entity.setUserId(userId);
+        entity.setVoterRole(voterRole);
+        entity.setVoteCategory(voteCategory);
+        return entity;
+    }
+
+    // Convierte proyecciones del repositorio en DTOs de salida.
+    private List<ResultItemResponse> toResultItems(List<VoteTallyProjection> tally) {
+        return tally.stream()
+                .map(item -> new ResultItemResponse(item.getTeamName(), item.getVotes()))
+                .toList();
+    }
+
+    // Evita valores nulos en colecciones inmutables.
+    private String nullToEmpty(String value) {
+        return value == null ? "" : value;
     }
 }

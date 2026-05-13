@@ -50,7 +50,8 @@ public class MainMenuController {
     @FXML
     // Inicializa saludo, estado de conexión y acciones del menú.
     private void initialize() {
-        userNameLabel.setText(apiClient.getCurrentUserEmail());
+        userNameLabel.setText(apiClient.getCurrentUserEmail()
+                + ("JURY".equalsIgnoreCase(apiClient.getCurrentUserRole()) ? " · Jurado" : ""));
         try {
             AccessDecision votingAccess = apiClient.checkAccess(AccessTarget.VOTING);
             if (!votingAccess.allowed()) {
@@ -59,7 +60,10 @@ public class MainMenuController {
             }
 
             AccessDecision registrationAccess = apiClient.checkAccess(AccessTarget.REGISTRATION);
-            if (registerButton != null && !registrationAccess.allowed()) {
+            if (apiClient.isCurrentUserJury()) {
+                registerButton.setDisable(true);
+                if (registerSubtitle != null) registerSubtitle.setText("El jurado solo emite valoraciones");
+            } else if (registerButton != null && !registrationAccess.allowed()) {
                 registerButton.setDisable(true);
                 if (registerSubtitle != null) registerSubtitle.setText(registrationAccess.message());
             }

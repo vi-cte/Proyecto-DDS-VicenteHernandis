@@ -2,6 +2,7 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
 <?import javafx.scene.image.Image?>
@@ -103,6 +104,25 @@
                   <Insets bottom="18.0" left="18.0" right="18.0" top="18.0" />
                </padding>
             </StackPane>
+            <VBox fx:id="juryVotingBox" managed="false" spacing="16.0" styleClass="summary-card" visible="false">
+               <children>
+                  <VBox spacing="6.0">
+                     <children>
+                        <Label styleClass="summary-caption" text="Ganador del jurado" />
+                        <ComboBox fx:id="juryWinnerComboBox" maxWidth="1.7976931348623157E308" styleClass="input-field" />
+                     </children>
+                  </VBox>
+                  <VBox spacing="6.0">
+                     <children>
+                        <Label styleClass="summary-caption" text="Mención técnica del jurado" />
+                        <ComboBox fx:id="juryTechnicalComboBox" maxWidth="1.7976931348623157E308" styleClass="input-field" />
+                     </children>
+                  </VBox>
+               </children>
+               <padding>
+                  <Insets bottom="18.0" left="18.0" right="18.0" top="18.0" />
+               </padding>
+            </VBox>
             <ListView fx:id="participantList" VBox.vgrow="ALWAYS" styleClass="vote-list" />
             <HBox alignment="CENTER">
                <children>

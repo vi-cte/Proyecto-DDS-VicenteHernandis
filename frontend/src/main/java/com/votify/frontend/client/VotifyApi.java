@@ -24,6 +24,8 @@ public interface VotifyApi {
     boolean teamNameExists(String teamName);
     // Envía las selecciones de voto al backend.
     VoteResponse createVotes(List<String> selections);
+    // Envía las selecciones de voto del jurado al backend.
+    VoteResponse createJuryVotes(String winnerSelection, String technicalSelection);
     // Devuelve el límite máximo de equipos votables.
     int getVotingLimit();
     // Descarga los resultados agregados.
@@ -32,6 +34,10 @@ public interface VotifyApi {
     boolean hasVoted();
     // Devuelve el correo del usuario de la sesión actual.
     String getCurrentUserEmail();
+    // Devuelve el rol del usuario de la sesión actual.
+    String getCurrentUserRole();
+    // Indica si el usuario actual es jurado.
+    boolean isCurrentUserJury();
     // Valida la contraseña de administrador.
     boolean authenticateAdmin(String password);
     // Obtiene los ajustes desde el endpoint administrativo.

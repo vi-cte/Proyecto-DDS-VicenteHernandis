@@ -9,6 +9,7 @@ import com.votify.frontend.ui.AlertHelper;
 import com.votify.frontend.client.FormValidators;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
@@ -34,6 +35,8 @@ public class AccessController {
     @FXML private Label registerTab;
     @FXML private TextField emailField;
     @FXML private PasswordField passwordField;
+    @FXML private VBox roleBox;
+    @FXML private ComboBox<String> roleComboBox;
     @FXML private HBox forgotPasswordBox;
     @FXML private Button actionButton;
     @FXML private Button viewResultsButton;
@@ -48,6 +51,10 @@ public class AccessController {
     public void initialize() {
         showLogin(); 
         checkBackendConnection();
+        if (roleComboBox != null) {
+            roleComboBox.getItems().setAll("Público", "Jurado");
+            roleComboBox.getSelectionModel().selectFirst();
+        }
 
         // Listener para validar el correo al salir de la casilla (perder el foco)
         emailField.focusedProperty().addListener((observable, oldValue, newValue) -> {
@@ -111,6 +118,8 @@ public class AccessController {
         
         forgotPasswordBox.setVisible(true);
         forgotPasswordBox.setManaged(true);
+        roleBox.setVisible(false);
+        roleBox.setManaged(false);
         actionButton.setText("Iniciar sesión");
     }
 
@@ -124,6 +133,8 @@ public class AccessController {
         
         forgotPasswordBox.setVisible(false);
         forgotPasswordBox.setManaged(false);
+        roleBox.setVisible(true);
+        roleBox.setManaged(true);
         actionButton.setText("Registrarse");
     }
 
@@ -154,8 +165,12 @@ public class AccessController {
         }
 
         try {
-            if (isLoginMode) { authProxy.login(email, password); }
-            else { authProxy.registerUser(email, password); AlertHelper.showInfo("Registro exitoso."); }
+            if (isLoginMode) {
+                authProxy.login(email, password);
+            } else {
+                authProxy.registerUser(email, password, selectedRole());
+                AlertHelper.showInfo("Registro exitoso.");
+            }
             
             Stage stage = (Stage) actionButton.getScene().getWindow();
             SceneNavigator.showMainMenu(stage);
@@ -175,6 +190,14 @@ public class AccessController {
         } else {
             AlertHelper.showWarning(message); // Fallback si el FXML aún no tiene el Label
         }
+    }
+
+    // Devuelve el rol seleccionado para el registro.
+    private String selectedRole() {
+        if (roleComboBox == null || roleComboBox.getValue() == null) {
+            return "PUBLIC";
+        }
+        return "Jurado".equals(roleComboBox.getValue()) ? "JURY" : "PUBLIC";
     }
 
     @FXML

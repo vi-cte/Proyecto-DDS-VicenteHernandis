@@ -4,12 +4,14 @@ package com.votify.frontend.client;
 public class SessionManager {
     private String sessionToken;
     private String sessionEmail;
+    private String sessionRole;
     private String adminPassword;
 
     // Guarda la sesión de usuario devuelta por el backend.
-    public void startUserSession(String token, String email) {
+    public void startUserSession(String token, String email, String role) {
         this.sessionToken = token;
         this.sessionEmail = email;
+        this.sessionRole = role == null || role.isBlank() ? "PUBLIC" : role;
     }
 
     // Guarda la contraseña admin validada para llamadas administrativas.
@@ -21,6 +23,7 @@ public class SessionManager {
     public void clearUserSession() {
         sessionToken = null;
         sessionEmail = null;
+        sessionRole = null;
     }
 
     // Devuelve el valor seguro para la cabecera de usuario.
@@ -47,5 +50,15 @@ public class SessionManager {
     // Devuelve el correo del usuario actualmente autenticado.
     public String getCurrentUserEmail() {
         return sessionEmail;
+    }
+
+    // Devuelve el rol del usuario actualmente autenticado.
+    public String getCurrentUserRole() {
+        return sessionRole == null || sessionRole.isBlank() ? "PUBLIC" : sessionRole;
+    }
+
+    // Indica si el usuario actual es jurado.
+    public boolean isCurrentUserJury() {
+        return "JURY".equalsIgnoreCase(getCurrentUserRole());
     }
 }

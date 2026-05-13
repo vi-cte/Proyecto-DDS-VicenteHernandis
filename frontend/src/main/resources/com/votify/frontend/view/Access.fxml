@@ -40,6 +40,10 @@
                                     <Label text="Contraseña" styleClass="field-label"/>
                                     <PasswordField fx:id="passwordField" promptText="••••••••" styleClass="input-field"/>
                                 </VBox>
+                                <VBox fx:id="roleBox" managed="false" spacing="6" visible="false">
+                                    <Label text="Tipo de cuenta" styleClass="field-label"/>
+                                    <ComboBox fx:id="roleComboBox" maxWidth="1.7976931348623157E308" styleClass="input-field"/>
+                                </VBox>
                                 <HBox alignment="CENTER_RIGHT" fx:id="forgotPasswordBox"><Label text="¿Olvidaste tu contraseña?" styleClass="link-label" onMouseClicked="#handleForgotPassword"/></HBox>
                                 <Label fx:id="errorLabel" wrapText="true" styleClass="access-error-label" />
                                 <Button fx:id="actionButton" text="Iniciar sesión" styleClass="action-button" maxWidth="1.7976931348623157E308" onAction="#handleAction"/>

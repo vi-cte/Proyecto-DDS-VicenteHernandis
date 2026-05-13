@@ -9,5 +9,6 @@ public record AuthRequest(
         @Email(message = "Formato de correo no válido")
         String email,
         @NotBlank(message = "La contraseña es obligatoria")
-        String password
+        String password,
+        String role
 ) {}

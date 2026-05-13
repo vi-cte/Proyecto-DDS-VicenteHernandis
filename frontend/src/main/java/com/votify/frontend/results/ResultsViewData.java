@@ -9,10 +9,16 @@ import java.util.List;
 public record ResultsViewData(
         ResultsResponse response,
         List<ResultItemResponse> ranking,
+        List<ResultItemResponse> juryRanking,
         int participantCount
 ) {
     // Devuelve el primer clasificado o null si no hay resultados.
     public ResultItemResponse winner() {
         return ranking.isEmpty() ? null : ranking.getFirst();
+    }
+
+    // Devuelve el primer clasificado del jurado o null si no hay resultados.
+    public ResultItemResponse juryWinner() {
+        return juryRanking.isEmpty() ? null : juryRanking.getFirst();
     }
 }

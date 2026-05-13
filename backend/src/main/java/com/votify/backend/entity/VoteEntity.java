@@ -10,6 +10,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.EnumType;
 
 import java.time.Instant;
 
@@ -28,6 +30,14 @@ public class VoteEntity {
 
     @Column(name = "user_id", nullable = false)
     private Long userId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "voter_role")
+    private UserRole voterRole = UserRole.PUBLIC;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "vote_category")
+    private VoteCategory voteCategory = VoteCategory.PUBLIC_WINNER;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -61,6 +71,26 @@ public class VoteEntity {
     // Asigna el identificador del usuario que votó.
     public void setUserId(Long userId) {
         this.userId = userId;
+    }
+
+    // Devuelve el rol del usuario que emitió el voto.
+    public UserRole getVoterRole() {
+        return voterRole == null ? UserRole.PUBLIC : voterRole;
+    }
+
+    // Asigna el rol del usuario que emitió el voto.
+    public void setVoterRole(UserRole voterRole) {
+        this.voterRole = voterRole == null ? UserRole.PUBLIC : voterRole;
+    }
+
+    // Devuelve la categoría del voto.
+    public VoteCategory getVoteCategory() {
+        return voteCategory == null ? VoteCategory.PUBLIC_WINNER : voteCategory;
+    }
+
+    // Asigna la categoría del voto.
+    public void setVoteCategory(VoteCategory voteCategory) {
+        this.voteCategory = voteCategory == null ? VoteCategory.PUBLIC_WINNER : voteCategory;
     }
 
     // Devuelve la fecha de creación del voto.
