@@ -19,20 +19,20 @@ cd backend
 mvn spring-boot:run
 ```
 
-## Configuracion BD (H2 por defecto)
+## Configuracion BD (PostgreSQL por defecto)
 Variables opcionales:
-- `DB_URL` (default `jdbc:h2:file:./data/votify;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH`)
-- `DB_USER` (default `sa`)
-- `DB_PASSWORD` (default vacio)
-- `DB_DRIVER` (default `org.h2.Driver`)
+- `DB_URL` (default `jdbc:postgresql://localhost:5432/votify`)
+- `DB_USER` (default `postgres`)
+- `DB_PASSWORD` (default `admin`)
+- `DB_DRIVER` (default `org.postgresql.Driver`)
 - `SERVER_PORT` (default `8080`)
 
-## Cambiar a PostgreSQL
+## Ejecutar con PostgreSQL
 Ejemplo:
 ```powershell
 $env:DB_URL="jdbc:postgresql://localhost:5432/votify"
 $env:DB_USER="postgres"
-$env:DB_PASSWORD="postgres"
+$env:DB_PASSWORD="admin"
 $env:DB_DRIVER="org.postgresql.Driver"
 mvn spring-boot:run
 ```
