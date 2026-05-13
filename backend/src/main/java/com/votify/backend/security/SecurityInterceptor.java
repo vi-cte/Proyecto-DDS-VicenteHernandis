@@ -57,13 +57,10 @@ public class SecurityInterceptor implements HandlerInterceptor {
             return validateAuthenticatedUser(request, response);
         }
         if (requiresRegistrationAccess(path, method)) {
-            return validateRegistrationAccess(request, response);
+            return validateAuthenticatedUser(request, response);
         }
         if (requiresVotingAccess(path, method)) {
-            return validateVotingAccess(request, response);
-        }
-        if (requiresVisibleResults(path, method)) {
-            return validateVisibleResults(request, response);
+            return validateAuthenticatedUser(request, response);
         }
         return true;
     }
@@ -113,48 +110,9 @@ public class SecurityInterceptor implements HandlerInterceptor {
         return true;
     }
 
-    // Valida usuario y apertura de inscripciones.
-    private boolean validateRegistrationAccess(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        Long userId = extractUserId(request, response);
-        if (userId == null) {
-            return false;
-        }
-        if (!eventSettingsService.allowsTeamRegistration()) {
-            writeError(response, request, HttpStatus.FORBIDDEN, "Las inscripciones están cerradas actualmente");
-            return false;
-        }
-        return true;
-    }
-
     // Valida que exista un usuario autenticado por cabecera.
     private boolean validateAuthenticatedUser(HttpServletRequest request, HttpServletResponse response) throws IOException {
         return extractUserId(request, response) != null;
-    }
-
-    // Valida usuario, apertura de votación y ausencia de voto previo.
-    private boolean validateVotingAccess(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        Long userId = extractUserId(request, response);
-        if (userId == null) {
-            return false;
-        }
-        if (!eventSettingsService.allowsVoting()) {
-            writeError(response, request, HttpStatus.FORBIDDEN, "Las votaciones están cerradas actualmente");
-            return false;
-        }
-        if ("POST".equalsIgnoreCase(request.getMethod()) && voteService.hasUserVoted(userId)) {
-            writeError(response, request, HttpStatus.CONFLICT, "Ya has votado en este evento");
-            return false;
-        }
-        return true;
-    }
-
-    // Valida que los resultados estén visibles para el público.
-    private boolean validateVisibleResults(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        if (!eventSettingsService.allowsResultsVisibility()) {
-            writeError(response, request, HttpStatus.FORBIDDEN, "Los resultados están ocultos actualmente por el administrador");
-            return false;
-        }
-        return true;
     }
 
     // Extrae y valida el identificador de usuario de la cabecera X-User-ID.

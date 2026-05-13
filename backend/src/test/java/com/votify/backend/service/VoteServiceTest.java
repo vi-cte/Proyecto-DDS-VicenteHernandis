@@ -4,6 +4,7 @@ import com.votify.backend.domain.vote.PublicVote;
 import com.votify.backend.dto.VoteRequest;
 import com.votify.backend.dto.VoteResponse;
 import com.votify.backend.entity.ParticipantEntity;
+import com.votify.backend.entity.EventEntity;
 import com.votify.backend.entity.User;
 import com.votify.backend.entity.UserRole;
 import com.votify.backend.entity.VoteEntity;
@@ -56,6 +57,7 @@ class VoteServiceTest {
     private final Long validUserId = 1L;
     private final String teamName = "Equipo Alpha";
     private User publicUser;
+    private EventEntity activeEvent;
 
     @BeforeEach
     void setUp() {
@@ -64,23 +66,27 @@ class VoteServiceTest {
         publicUser.setEmail("publico@test.com");
         publicUser.setPassword("secret");
         publicUser.setRole(UserRole.PUBLIC);
+        activeEvent = new EventEntity();
+        activeEvent.setName("Evento test");
+        activeEvent.setActive(true);
+        activeEvent.setVotingOpen(true);
+        activeEvent.setMaxTeamsToVote(3);
+        lenient().when(eventSettingsService.getEventOrActive(null)).thenReturn(activeEvent);
     }
 
     @Test
     void shouldRegisterVoteSuccessfullyWhenAllConditionsAreMet() {
         // Arrange: Todas las precondiciones para el caso de éxito
-        when(eventSettingsService.isVotingOpen()).thenReturn(true);
         when(userRepository.findById(validUserId)).thenReturn(Optional.of(publicUser));
-        when(voteRepository.existsByUserId(validUserId)).thenReturn(false);
-        when(eventSettingsService.getMaxTeamsToVote()).thenReturn(3);
-        when(participantService.existsByTeamName(teamName)).thenReturn(true);
+        when(voteRepository.existsByEventAndUserId(activeEvent, validUserId)).thenReturn(false);
+        when(participantService.existsByTeamName(teamName, null)).thenReturn(true);
 
         PublicVote dummyVote = new PublicVote(teamName);
         when(voteCreator.orderVote(teamName)).thenReturn(dummyVote);
         
         ParticipantEntity dummyParticipant = new ParticipantEntity();
         dummyParticipant.setTeamName(teamName);
-        when(participantService.getByTeamName(teamName)).thenReturn(dummyParticipant);
+        when(participantService.getByTeamName(teamName, null)).thenReturn(dummyParticipant);
 
         // Act: Emitimos el voto
         VoteResponse response = voteService.createVotes(validRequest, validUserId);
@@ -95,7 +101,7 @@ class VoteServiceTest {
     @Test
     void shouldThrowExceptionWhenVotingIsClosed() {
         // Arrange: Votaciones cerradas
-        when(eventSettingsService.isVotingOpen()).thenReturn(false);
+        activeEvent.setVotingOpen(false);
 
         // Act & Assert
         ApiException exception = assertThrows(ApiException.class, () -> voteService.createVotes(validRequest, validUserId));
@@ -106,7 +112,6 @@ class VoteServiceTest {
     @Test
     void shouldThrowExceptionWhenUserIsNotRegistered() {
         // Arrange: Votaciones abiertas, pero el usuario no existe en la base de datos
-        when(eventSettingsService.isVotingOpen()).thenReturn(true);
         when(userRepository.findById(validUserId)).thenReturn(Optional.empty());
 
         // Act & Assert
@@ -118,9 +123,8 @@ class VoteServiceTest {
     @Test
     void shouldThrowExceptionWhenUserHasAlreadyVoted() {
         // Arrange: Votaciones abiertas y usuario registrado, pero el usuario YA ha votado antes
-        when(eventSettingsService.isVotingOpen()).thenReturn(true);
         when(userRepository.findById(validUserId)).thenReturn(Optional.of(publicUser));
-        when(voteRepository.existsByUserId(validUserId)).thenReturn(true);
+        when(voteRepository.existsByEventAndUserId(activeEvent, validUserId)).thenReturn(true);
 
         // Act & Assert: Debe lanzar excepción de conflicto (HTTP 409)
         ApiException exception = assertThrows(ApiException.class, () -> voteService.createVotes(validRequest, validUserId));
@@ -132,13 +136,11 @@ class VoteServiceTest {
     @Test
     void shouldThrowExceptionWhenTeamIsNotRegistered() {
         // Arrange: Usuario válido y votaciones abiertas, pero intentamos votar a un equipo inexistente
-        when(eventSettingsService.isVotingOpen()).thenReturn(true);
         when(userRepository.findById(validUserId)).thenReturn(Optional.of(publicUser));
-        when(voteRepository.existsByUserId(validUserId)).thenReturn(false);
-        when(eventSettingsService.getMaxTeamsToVote()).thenReturn(3);
+        when(voteRepository.existsByEventAndUserId(activeEvent, validUserId)).thenReturn(false);
         
         // Simulamos explícitamente que el equipo no existe
-        when(participantService.existsByTeamName(teamName)).thenReturn(false);
+        when(participantService.existsByTeamName(teamName, null)).thenReturn(false);
 
         // Act & Assert
         ApiException exception = assertThrows(ApiException.class, () -> voteService.createVotes(validRequest, validUserId));

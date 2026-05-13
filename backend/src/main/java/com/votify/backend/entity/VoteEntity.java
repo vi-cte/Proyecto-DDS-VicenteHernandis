@@ -28,6 +28,10 @@ public class VoteEntity {
     @JoinColumn(name = "participant_id", nullable = false)
     private ParticipantEntity participant;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "event_id")
+    private EventEntity event;
+
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
@@ -61,6 +65,16 @@ public class VoteEntity {
     // Asigna el participante votado.
     public void setParticipant(ParticipantEntity participant) {
         this.participant = participant;
+    }
+
+    // Devuelve el evento asociado al voto.
+    public EventEntity getEvent() {
+        return event;
+    }
+
+    // Asigna el evento asociado al voto.
+    public void setEvent(EventEntity event) {
+        this.event = event;
     }
 
     // Devuelve el identificador del usuario que votó.

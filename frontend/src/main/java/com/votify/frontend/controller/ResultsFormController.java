@@ -2,6 +2,7 @@ package com.votify.frontend.controller;
 
 import com.votify.frontend.client.ApiClient;
 import com.votify.frontend.client.VotifyApi;
+import com.votify.frontend.dto.EventResponse;
 import com.votify.frontend.dto.ResultItemResponse;
 import com.votify.frontend.dto.ResultsResponse;
 import com.votify.frontend.exception.ApiClientException;
@@ -12,9 +13,11 @@ import com.votify.frontend.results.strategy.PieChartResultsViewStrategy;
 import com.votify.frontend.results.strategy.RankingResultsViewStrategy;
 import com.votify.frontend.results.strategy.ResultsViewStrategy;
 import com.votify.frontend.ui.AlertHelper;
+import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
@@ -63,6 +66,9 @@ public class ResultsFormController {
     private Label userNameLabel;
 
     @FXML
+    private ComboBox<EventResponse> eventComboBox;
+
+    @FXML
     // Carga resultados y prepara las estrategias de visualización.
     private void initialize() {
         String currentUserEmail = apiClient.getCurrentUserEmail();
@@ -79,9 +85,40 @@ public class ResultsFormController {
             userNameLabel.setText(currentUserEmail);
         }
 
+        if (eventComboBox != null) {
+            eventComboBox.valueProperty().addListener((observable, oldValue, newValue) -> loadResultsData());
+            loadResultEvents();
+        } else {
+            loadResultsData();
+        }
+    }
+
+    // Carga eventos con resultados visibles para consultar.
+    private void loadResultEvents() {
         try {
-            ResultsResponse response = apiClient.getResults();
-            int participantCount = apiClient.getParticipantResponses().size();
+            List<EventResponse> events = apiClient.getEvents().stream()
+                    .filter(EventResponse::isResultsVisible)
+                    .toList();
+            eventComboBox.setItems(FXCollections.observableArrayList(events));
+            if (!events.isEmpty()) {
+                eventComboBox.getSelectionModel().selectFirst();
+            } else {
+                totalVotesLabel.setText("0");
+                participantsCountLabel.setText("0");
+                winnerLabel.setText("Sin datos");
+                resultsContent.getChildren().setAll(errorLabel("No hay eventos con resultados visibles."));
+            }
+        } catch (ApiClientException e) {
+            resultsContent.getChildren().setAll(errorLabel(e.getMessage()));
+        }
+    }
+
+    // Recarga resultados y participantes del evento seleccionado.
+    private void loadResultsData() {
+        Long eventId = selectedEventId();
+        try {
+            ResultsResponse response = apiClient.getResults(eventId);
+            int participantCount = apiClient.getParticipantResponses(eventId).size();
             List<ResultItemResponse> ranking = response.getResults() == null
                     ? List.of()
                     : response.getResults().stream()
@@ -201,5 +238,11 @@ public class ResultsFormController {
         Label label = new Label(message);
         label.getStyleClass().add("results-empty");
         return label;
+    }
+
+    // Devuelve el evento seleccionado.
+    private Long selectedEventId() {
+        EventResponse event = eventComboBox == null ? null : eventComboBox.getValue();
+        return event == null ? null : event.getId();
     }
 }

@@ -10,6 +10,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Lob;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +25,11 @@ public class ParticipantEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "team_name", nullable = false, length = 120, unique = true)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "event_id")
+    private EventEntity event;
+
+    @Column(name = "team_name", nullable = false, length = 120)
     private String teamName;
 
     @Column(nullable = false, length = 180)
@@ -51,6 +56,16 @@ public class ParticipantEntity {
     // Devuelve el identificador generado del participante.
     public Long getId() {
         return id;
+    }
+
+    // Devuelve el evento al que pertenece el equipo.
+    public EventEntity getEvent() {
+        return event;
+    }
+
+    // Asigna el evento al que pertenece el equipo.
+    public void setEvent(EventEntity event) {
+        this.event = event;
     }
 
     // Devuelve el nombre del equipo participante.

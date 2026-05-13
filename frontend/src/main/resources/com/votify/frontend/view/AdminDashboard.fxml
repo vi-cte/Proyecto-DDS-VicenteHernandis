@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane prefHeight="768.0" prefWidth="1365.0" styleClass="admin-root" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.votify.frontend.controller.AdminDashboardController">
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="18.0" styleClass="admin-top">
+            <children>
+                <VBox spacing="10.0">
+                    <children>
+                        <Label styleClass="admin-title" text="Panel de Administración" />
+                        <Label styleClass="admin-subtitle" text="Monitorea votaciones en tiempo real y gestiona la configuración de eventos activos" />
+                    </children>
+                </VBox>
+                <Region HBox.hgrow="ALWAYS" />
+                <Button mnemonicParsing="false" onAction="#showHistory" styleClass="admin-secondary-button" text="Histórico de Eventos" />
+                <Button mnemonicParsing="false" onAction="#openCreateEvent" styleClass="admin-primary-button" text="+  Nuevo Evento" />
+                <Button mnemonicParsing="false" onAction="#exit" styleClass="logout-button" text="Salir" />
+            </children>
+            <padding>
+                <Insets bottom="26.0" left="22.0" right="22.0" top="26.0" />
+            </padding>
+        </HBox>
+    </top>
+    <center>
+        <ScrollPane fitToWidth="true" hbarPolicy="NEVER" styleClass="screen-scroll">
+            <content>
+                <VBox spacing="28.0" styleClass="admin-content">
+                    <children>
+                        <HBox alignment="CENTER_LEFT">
+                            <children>
+                                <Label fx:id="eventsTitleLabel" styleClass="admin-section-title" text="Eventos Activos" />
+                                <Region HBox.hgrow="ALWAYS" />
+                                <Label styleClass="admin-live-label" text="●  Actualizando en tiempo real" />
+                            </children>
+                        </HBox>
+                        <FlowPane fx:id="eventsContainer" hgap="30.0" vgap="30.0" />
+                    </children>
+                    <padding>
+                        <Insets bottom="30.0" left="22.0" right="22.0" top="20.0" />
+                    </padding>
+                </VBox>
+            </content>
+        </ScrollPane>
+    </center>
+</BorderPane>

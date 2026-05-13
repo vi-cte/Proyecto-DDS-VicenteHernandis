@@ -95,6 +95,8 @@
                <children>
                   <VBox alignment="CENTER_LEFT" spacing="6.0">
                      <children>
+                        <Label styleClass="summary-caption" text="Evento" />
+                        <ComboBox fx:id="eventComboBox" maxWidth="1.7976931348623157E308" styleClass="input-field" />
                         <Label styleClass="summary-caption" text="Votos seleccionados" />
                         <Label fx:id="selectionCountLabel" styleClass="summary-value" text="0 / 3" />
                      </children>

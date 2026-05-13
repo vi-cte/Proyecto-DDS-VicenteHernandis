@@ -2,14 +2,18 @@ package com.votify.frontend.client;
 
 import com.votify.frontend.dto.AuthRequest;
 import com.votify.frontend.dto.AuthResponse;
+import com.votify.frontend.dto.AdminEventRequest;
+import com.votify.frontend.dto.AdminEventResponse;
 import com.votify.frontend.dto.ParticipantRequest;
 import com.votify.frontend.dto.ParticipantResponse;
 import com.votify.frontend.dto.ResultsResponse;
 import com.votify.frontend.dto.VoteRequest;
 import com.votify.frontend.dto.VoteResponse;
+import com.votify.frontend.dto.VoteSettingsResponse;
 import com.votify.frontend.exception.ErrorResponse;
 import com.votify.frontend.exception.ApiClientException;
 import com.votify.frontend.dto.EventSettingsResponse;
+import com.votify.frontend.dto.EventResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -136,6 +140,12 @@ public class ApiClient implements VotifyApi {
 
     // Envía al backend la creación de un nuevo equipo participante.
     public void createParticipant(String teamName, String email, String phone, String description, String logoBase64, List<String> members) {
+        createParticipant(null, teamName, email, phone, description, logoBase64, members);
+    }
+
+    @Override
+    // Envía al backend la creación de un nuevo equipo participante para un evento.
+    public void createParticipant(Long eventId, String teamName, String email, String phone, String description, String logoBase64, List<String> members) {
         ParticipantRequest requestBody = new ParticipantRequest(teamName, email, phone, description, logoBase64, members);
         String json;
         try {
@@ -162,6 +172,12 @@ public class ApiClient implements VotifyApi {
     @Override
     // Envía al backend la actualización de un equipo participante.
     public void updateParticipant(Long id, String teamName, String email, String phone, String description, String logoBase64, List<String> members) {
+        updateParticipant(null, id, teamName, email, phone, description, logoBase64, members);
+    }
+
+    @Override
+    // Envía al backend la actualización de un equipo participante para un evento.
+    public void updateParticipant(Long eventId, Long id, String teamName, String email, String phone, String description, String logoBase64, List<String> members) {
         ParticipantRequest requestBody = new ParticipantRequest(teamName, email, phone, description, logoBase64, members);
         String json;
         try {
@@ -171,7 +187,7 @@ public class ApiClient implements VotifyApi {
         }
 
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(baseUrl + "/participants/" + id))
+                .uri(URI.create(withEventId(baseUrl + "/participants/" + id, eventId)))
                 .header("Content-Type", "application/json")
                 .header("X-User-ID", sessionManager.userIdHeaderValue())
                 .PUT(HttpRequest.BodyPublishers.ofString(json))
@@ -199,8 +215,14 @@ public class ApiClient implements VotifyApi {
 
     // Obtiene todos los participantes como DTOs completos.
     public List<ParticipantResponse> getParticipantResponses() {
+        return getParticipantResponses(null);
+    }
+
+    @Override
+    // Obtiene todos los participantes del evento indicado como DTOs completos.
+    public List<ParticipantResponse> getParticipantResponses(Long eventId) {
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(baseUrl + "/participants"))
+                .uri(URI.create(withEventId(baseUrl + "/participants", eventId)))
                 .GET()
                 .build();
 
@@ -220,8 +242,14 @@ public class ApiClient implements VotifyApi {
     @Override
     // Obtiene el equipo del usuario actual si existe.
     public ParticipantResponse getCurrentParticipant() {
+        return getCurrentParticipant(null);
+    }
+
+    @Override
+    // Obtiene el equipo del usuario actual en el evento indicado si existe.
+    public ParticipantResponse getCurrentParticipant(Long eventId) {
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(baseUrl + "/participants/mine"))
+                .uri(URI.create(withEventId(baseUrl + "/participants/mine", eventId)))
                 .header("X-User-ID", sessionManager.userIdHeaderValue())
                 .GET()
                 .build();
@@ -243,8 +271,14 @@ public class ApiClient implements VotifyApi {
 
     // Consulta si el nombre de equipo ya está registrado.
     public boolean teamNameExists(String teamName) {
+        return teamNameExists(null, teamName);
+    }
+
+    @Override
+    // Consulta si el nombre de equipo ya está registrado en un evento.
+    public boolean teamNameExists(Long eventId, String teamName) {
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(baseUrl + "/participants/exists?teamName=" + encode(teamName)))
+                .uri(URI.create(baseUrl + "/participants/exists?teamName=" + encode(teamName) + eventIdParam(eventId, true)))
                 .GET()
                 .build();
 
@@ -258,6 +292,12 @@ public class ApiClient implements VotifyApi {
 
     // Crea votos para las selecciones indicadas.
     public VoteResponse createVotes(List<String> selections) {
+        return createVotes(null, selections);
+    }
+
+    @Override
+    // Crea votos para las selecciones indicadas en un evento.
+    public VoteResponse createVotes(Long eventId, List<String> selections) {
         if (!sessionManager.hasUserToken()) {
             throw new ApiClientException("No has iniciado sesión para poder votar.");
         }
@@ -290,12 +330,37 @@ public class ApiClient implements VotifyApi {
 
     // Obtiene el límite de votos por usuario.
     public int getVotingLimit() {
-        return getEventSettings().getMaxTeamsToVote();
+        return getVotingLimit(null);
+    }
+
+    @Override
+    // Obtiene el límite de votos por usuario en un evento.
+    public int getVotingLimit(Long eventId) {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(withEventId(baseUrl + "/votes/settings", eventId)))
+                .GET()
+                .build();
+
+        HttpResponse<String> response = send(request);
+        if (response.statusCode() != 200) {
+            throw new ApiClientException(extractErrorMessage(response.body(), response.statusCode()));
+        }
+        try {
+            return MAPPER.readValue(response.body(), VoteSettingsResponse.class).getMaxTeamsToVote();
+        } catch (Exception e) {
+            throw new ApiClientException("No se pudo procesar la configuración de votación");
+        }
     }
 
     @Override
     // Crea los dos votos de un usuario jurado.
     public VoteResponse createJuryVotes(String winnerSelection, String technicalSelection) {
+        return createJuryVotes(null, winnerSelection, technicalSelection);
+    }
+
+    @Override
+    // Crea los dos votos de un usuario jurado en un evento.
+    public VoteResponse createJuryVotes(Long eventId, String winnerSelection, String technicalSelection) {
         if (!sessionManager.hasUserToken()) {
             throw new ApiClientException("No has iniciado sesión para poder votar.");
         }
@@ -308,7 +373,7 @@ public class ApiClient implements VotifyApi {
         }
 
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(baseUrl + "/votes"))
+                .uri(URI.create(withEventId(baseUrl + "/votes", eventId)))
                 .header("Content-Type", "application/json")
                 .header("X-User-ID", sessionManager.userIdHeaderValue())
                 .POST(HttpRequest.BodyPublishers.ofString(json))
@@ -328,8 +393,14 @@ public class ApiClient implements VotifyApi {
 
     // Obtiene los resultados agregados desde el backend.
     public ResultsResponse getResults() {
+        return getResults(null);
+    }
+
+    @Override
+    // Obtiene los resultados agregados desde el backend para un evento.
+    public ResultsResponse getResults(Long eventId) {
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(baseUrl + "/results"))
+                .uri(URI.create(withEventId(baseUrl + "/results", eventId)))
                 .GET()
                 .build();
 
@@ -346,12 +417,18 @@ public class ApiClient implements VotifyApi {
 
     // Consulta si el usuario actual ya ha votado.
     public boolean hasVoted() {
+        return hasVoted(null);
+    }
+
+    @Override
+    // Consulta si el usuario actual ya ha votado en un evento.
+    public boolean hasVoted(Long eventId) {
         if (!sessionManager.hasUserToken()) {
             return false; // Si no ha iniciado sesión, no puede haber votado.
         }
 
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(baseUrl + "/votes/has-voted"))
+                .uri(URI.create(withEventId(baseUrl + "/votes/has-voted", eventId)))
                 .header("X-User-ID", sessionManager.userIdHeaderValue())
                 .GET()
                 .build();
@@ -402,6 +479,19 @@ public class ApiClient implements VotifyApi {
     // Codifica valores para incluirlos de forma segura en una URL.
     private String encode(String value) {
         return java.net.URLEncoder.encode(value == null ? "" : value, java.nio.charset.StandardCharsets.UTF_8);
+    }
+
+    // Añade eventId a una URL cuando la pantalla trabaja sobre un evento seleccionado.
+    private String withEventId(String url, Long eventId) {
+        return eventId == null ? url : url + "?eventId=" + eventId;
+    }
+
+    // Añade eventId a una URL que ya tiene otros parametros.
+    private String eventIdParam(Long eventId, boolean alreadyHasQuery) {
+        if (eventId == null) {
+            return "";
+        }
+        return (alreadyHasQuery ? "&" : "?") + "eventId=" + eventId;
     }
 
     @Override
@@ -462,6 +552,27 @@ public class ApiClient implements VotifyApi {
     }
 
     @Override
+    // Obtiene eventos seleccionables.
+    public List<EventResponse> getEvents() {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(baseUrl + "/event"))
+                .GET()
+                .build();
+
+        HttpResponse<String> response = send(request);
+        if (response.statusCode() != 200) {
+            throw new ApiClientException(extractErrorMessage(response.body(), response.statusCode()));
+        }
+
+        try {
+            EventResponse[] events = MAPPER.readValue(response.body(), EventResponse[].class);
+            return List.of(events);
+        } catch (Exception e) {
+            throw new ApiClientException("No se pudo procesar la lista de eventos");
+        }
+    }
+
+    @Override
     // Actualiza los ajustes administrativos del evento.
     public void updateAdminSettings(boolean registrationsOpen, boolean votingOpen, boolean resultsVisible, int maxTeamsToVote) {
         String json = String.format("{\"registrationsOpen\":%b, \"votingOpen\":%b, \"resultsVisible\":%b, \"maxTeamsToVote\":%d}", registrationsOpen, votingOpen, resultsVisible, maxTeamsToVote);
@@ -488,6 +599,78 @@ public class ApiClient implements VotifyApi {
         HttpResponse<String> response = send(request);
         if (response.statusCode() != 200) {
             throw new ApiClientException(extractErrorMessage(response.body(), response.statusCode()));
+        }
+    }
+
+    @Override
+    // Obtiene los eventos del dashboard administrativo.
+    public List<AdminEventResponse> getAdminEvents() {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(baseUrl + "/admin/events"))
+                .header("X-Admin-Password", sessionManager.adminPasswordHeaderValue())
+                .GET()
+                .build();
+        HttpResponse<String> response = send(request);
+        if (response.statusCode() != 200) {
+            throw new ApiClientException(extractErrorMessage(response.body(), response.statusCode()));
+        }
+        try {
+            AdminEventResponse[] events = MAPPER.readValue(response.body(), AdminEventResponse[].class);
+            return List.of(events);
+        } catch (Exception e) {
+            throw new ApiClientException("No se pudo procesar la lista de eventos");
+        }
+    }
+
+    @Override
+    // Crea un nuevo evento desde administración.
+    public AdminEventResponse createAdminEvent(String name, String eventDate, String description, boolean registrationsOpen, boolean votingOpen, boolean resultsVisible, int maxTeamsToVote, boolean juryEnabled) {
+        String json;
+        try {
+            json = MAPPER.writeValueAsString(new AdminEventRequest(name, eventDate, description, registrationsOpen, votingOpen, resultsVisible, maxTeamsToVote, juryEnabled));
+        } catch (JsonProcessingException e) {
+            throw new ApiClientException("No se pudo preparar el evento");
+        }
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(baseUrl + "/admin/events"))
+                .header("Content-Type", "application/json")
+                .header("X-Admin-Password", sessionManager.adminPasswordHeaderValue())
+                .POST(HttpRequest.BodyPublishers.ofString(json))
+                .build();
+        HttpResponse<String> response = send(request);
+        if (response.statusCode() != 201 && response.statusCode() != 200) {
+            throw new ApiClientException(extractErrorMessage(response.body(), response.statusCode()));
+        }
+        try {
+            return MAPPER.readValue(response.body(), AdminEventResponse.class);
+        } catch (Exception e) {
+            throw new ApiClientException("No se pudo procesar el evento creado");
+        }
+    }
+
+    @Override
+    // Actualiza un evento desde administración.
+    public AdminEventResponse updateAdminEvent(Long id, String name, String eventDate, String description, boolean registrationsOpen, boolean votingOpen, boolean resultsVisible, int maxTeamsToVote, boolean juryEnabled) {
+        String json;
+        try {
+            json = MAPPER.writeValueAsString(new AdminEventRequest(name, eventDate, description, registrationsOpen, votingOpen, resultsVisible, maxTeamsToVote, juryEnabled));
+        } catch (JsonProcessingException e) {
+            throw new ApiClientException("No se pudo preparar el evento");
+        }
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(baseUrl + "/admin/events/" + id))
+                .header("Content-Type", "application/json")
+                .header("X-Admin-Password", sessionManager.adminPasswordHeaderValue())
+                .PUT(HttpRequest.BodyPublishers.ofString(json))
+                .build();
+        HttpResponse<String> response = send(request);
+        if (response.statusCode() != 200) {
+            throw new ApiClientException(extractErrorMessage(response.body(), response.statusCode()));
+        }
+        try {
+            return MAPPER.readValue(response.body(), AdminEventResponse.class);
+        } catch (Exception e) {
+            throw new ApiClientException("No se pudo procesar el evento actualizado");
         }
     }
 

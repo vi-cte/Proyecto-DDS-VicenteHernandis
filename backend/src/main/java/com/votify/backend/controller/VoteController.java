@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -31,26 +32,30 @@ public class VoteController {
     @ResponseStatus(HttpStatus.CREATED)
     public VoteResponse createVotes(
             @Valid @RequestBody VoteRequest request,
-            @RequestHeader("X-User-ID") Long userId
+            @RequestHeader("X-User-ID") Long userId,
+            @RequestParam(required = false) Long eventId
     ) {
-        return voteService.createVotes(request, userId);
+        return voteService.createVotes(request, userId, eventId);
     }
 
     // GET /api/results: devuelve resultados agregados.
     @GetMapping("/results")
-    public ResultsResponse getResults() {
-        return voteService.getResults();
+    public ResultsResponse getResults(@RequestParam(required = false) Long eventId) {
+        return voteService.getResults(eventId);
     }
 
     @GetMapping("/votes/settings")
     // GET /api/votes/settings: devuelve el límite de equipos votables.
-    public VoteSettingsResponse getVoteSettings() {
-        return voteService.getVoteSettings();
+    public VoteSettingsResponse getVoteSettings(@RequestParam(required = false) Long eventId) {
+        return voteService.getVoteSettings(eventId);
     }
 
     // GET /api/votes/has-voted: comprueba si un usuario ya ha votado.
     @GetMapping("/votes/has-voted")
-    public boolean hasVoted(@RequestHeader("X-User-ID") Long userId) {
-        return voteService.hasUserVoted(userId);
+    public boolean hasVoted(
+            @RequestHeader("X-User-ID") Long userId,
+            @RequestParam(required = false) Long eventId
+    ) {
+        return voteService.hasUserVoted(userId, eventId);
     }
 }

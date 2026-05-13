@@ -9,6 +9,7 @@ import com.votify.frontend.ui.AlertHelper;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 import java.io.IOException;
 import com.votify.frontend.navigation.SceneNavigator;
@@ -48,10 +49,20 @@ public class MainMenuController {
     private Label userNameLabel;
 
     @FXML
+    private Label pageTitleLabel;
+
+    @FXML
+    private Label pageSubtitleLabel;
+
+    @FXML
+    private HBox actionCardsBox;
+
+    @FXML
     // Inicializa saludo, estado de conexión y acciones del menú.
     private void initialize() {
-        userNameLabel.setText(apiClient.getCurrentUserEmail()
-                + ("JURY".equalsIgnoreCase(apiClient.getCurrentUserRole()) ? " · Jurado" : ""));
+        boolean juryUser = apiClient.isCurrentUserJury();
+        userNameLabel.setText(apiClient.getCurrentUserEmail());
+        configureDashboardForRole(juryUser);
         try {
             AccessDecision votingAccess = apiClient.checkAccess(AccessTarget.VOTING);
             if (!votingAccess.allowed()) {
@@ -60,7 +71,7 @@ public class MainMenuController {
             }
 
             AccessDecision registrationAccess = apiClient.checkAccess(AccessTarget.REGISTRATION);
-            if (apiClient.isCurrentUserJury()) {
+            if (juryUser) {
                 registerButton.setDisable(true);
                 if (registerSubtitle != null) registerSubtitle.setText("El jurado solo emite valoraciones");
             } else if (registerButton != null && !registrationAccess.allowed()) {
@@ -158,6 +169,33 @@ public class MainMenuController {
         } catch (ApiClientException e) {
             AlertHelper.showError(e.getMessage());
             return false;
+        }
+    }
+
+    // Ajusta la pantalla principal al perfil público o jurado.
+    private void configureDashboardForRole(boolean juryUser) {
+        if (!juryUser) {
+            return;
+        }
+        if (pageTitleLabel != null) {
+            pageTitleLabel.setText("Panel de Jurado");
+        }
+        if (pageSubtitleLabel != null) {
+            pageSubtitleLabel.setText("Evalúa proyectos participantes y consulta resultados en tiempo real");
+        }
+        if (registerButton != null) {
+            registerButton.setVisible(false);
+            registerButton.setManaged(false);
+        }
+        if (voteSubtitle != null) {
+            voteSubtitle.setText("Evalúa proyectos participantes");
+        }
+        if (resultsSubtitle != null) {
+            resultsSubtitle.setText("Visualiza el ranking");
+        }
+        if (actionCardsBox != null) {
+            voteButton.setPrefWidth(544);
+            viewResultsButton.setPrefWidth(544);
         }
     }
 }

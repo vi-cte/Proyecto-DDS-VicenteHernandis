@@ -2,6 +2,7 @@ package com.votify.backend.service;
 
 import com.votify.backend.dto.ParticipantRequest;
 import com.votify.backend.dto.ParticipantResponse;
+import com.votify.backend.entity.EventEntity;
 import com.votify.backend.entity.ParticipantEntity;
 import com.votify.backend.entity.User;
 import com.votify.backend.exception.ApiException;
@@ -40,6 +41,7 @@ class ParticipantServiceTest {
 
     private ParticipantRequest request;
     private User user;
+    private EventEntity activeEvent;
 
     @BeforeEach
     void setUp() {
@@ -55,15 +57,18 @@ class ParticipantServiceTest {
 
         user = new User();
         user.setEmail("user@test.com");
+        activeEvent = new EventEntity();
+        activeEvent.setName("Evento test");
+        activeEvent.setRegistrationsOpen(true);
+        lenient().when(eventSettingsService.getEventOrActive(null)).thenReturn(activeEvent);
     }
 
     @Test
     void shouldPersistParticipantWhenRegistrationsAreOpen() {
         // Arrange: Simulamos que la fase de registro está ABIERTA
-        when(eventSettingsService.areRegistrationsOpen()).thenReturn(true);
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(participantRepository.existsByTeamNameIgnoreCase("Equipo Alpha")).thenReturn(false);
-        when(participantRepository.findByOwnerEmailIgnoreCase("user@test.com")).thenReturn(Optional.empty());
+        when(participantRepository.existsByEventAndTeamNameIgnoreCase(activeEvent, "Equipo Alpha")).thenReturn(false);
+        when(participantRepository.findByEventAndOwnerEmailIgnoreCase(activeEvent, "user@test.com")).thenReturn(Optional.empty());
 
         ParticipantEntity savedEntity = new ParticipantEntity();
         savedEntity.setTeamName("Equipo Alpha");
@@ -81,7 +86,7 @@ class ParticipantServiceTest {
     @Test
     void shouldThrowExceptionAndNotPersistWhenRegistrationsAreClosed() {
         // Arrange: Simulamos que la fase de registro está CERRADA
-        when(eventSettingsService.areRegistrationsOpen()).thenReturn(false);
+        activeEvent.setRegistrationsOpen(false);
 
         // Act & Assert: Al intentar crear, debe lanzar excepción
         ApiException exception = assertThrows(ApiException.class, () -> participantService.create(request, 1L));
@@ -94,9 +99,8 @@ class ParticipantServiceTest {
     @Test
     void shouldThrowExceptionWhenTeamNameAlreadyExists() {
         // Arrange: Simulamos que el registro está abierto y el usuario existe, pero el nombre del equipo ya existe
-        when(eventSettingsService.areRegistrationsOpen()).thenReturn(true);
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(participantRepository.existsByTeamNameIgnoreCase("Equipo Alpha")).thenReturn(true);
+        when(participantRepository.existsByEventAndTeamNameIgnoreCase(activeEvent, "Equipo Alpha")).thenReturn(true);
 
         // Act & Assert: Al intentar crear, debe lanzar excepción de conflicto
         ApiException exception = assertThrows(ApiException.class, () -> participantService.create(request, 1L));

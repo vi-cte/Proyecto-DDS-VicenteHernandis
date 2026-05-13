@@ -2,6 +2,7 @@ package com.votify.frontend.controller;
 
 import com.votify.frontend.client.ApiClient;
 import com.votify.frontend.client.VotifyApi;
+import com.votify.frontend.dto.EventResponse;
 import com.votify.frontend.dto.ParticipantResponse;
 import com.votify.frontend.dto.VoteResponse;
 import com.votify.frontend.exception.ApiClientException;
@@ -52,6 +53,9 @@ public class VotingFormController {
     private Label userNameLabel;
 
     @FXML
+    private ComboBox<EventResponse> eventComboBox;
+
+    @FXML
     private VBox juryVotingBox;
 
     @FXML
@@ -72,9 +76,51 @@ public class VotingFormController {
         juryMode = apiClient.isCurrentUserJury();
 
         participantList.setCellFactory(listView -> new VoteCandidateCell());
+        if (eventComboBox != null) {
+            eventComboBox.valueProperty().addListener((observable, oldValue, newValue) -> loadVotingData());
+            loadVotingEvents();
+        } else {
+            loadVotingData();
+        }
+    }
+
+    // Carga eventos con votacion abierta para que el usuario elija donde votar.
+    private void loadVotingEvents() {
+        try {
+            List<EventResponse> events = apiClient.getEvents().stream()
+                    .filter(EventResponse::isVotingOpen)
+                    .toList();
+            eventComboBox.setItems(FXCollections.observableArrayList(events));
+            if (!events.isEmpty()) {
+                eventComboBox.getSelectionModel().selectFirst();
+            } else {
+                hintLabel.setText("No hay eventos con votación abierta.");
+                submitButton.setDisable(true);
+                participantList.setDisable(true);
+            }
+        } catch (ApiClientException e) {
+            hintLabel.setText("No se pudo cargar la lista de eventos.");
+            submitButton.setDisable(true);
+            participantList.setDisable(true);
+            showError(e.getMessage());
+        }
+    }
+
+    // Recarga limite, candidatos y estado de voto para el evento seleccionado.
+    private void loadVotingData() {
+        Long eventId = selectedEventId();
+        selectedTeamNames.clear();
+        participantList.setDisable(false);
+        submitButton.setDisable(false);
+        if (juryVotingBox != null) {
+            juryVotingBox.setVisible(false);
+            juryVotingBox.setManaged(false);
+        }
+        participantList.setVisible(true);
+        participantList.setManaged(true);
 
         try {
-            if (apiClient.hasVoted()) {
+            if (apiClient.hasVoted(eventId)) {
                 hintLabel.setText("Ya has emitido tu voto para este evento.");
                 submitButton.setDisable(true);
                 participantList.setDisable(true);
@@ -86,13 +132,13 @@ public class VotingFormController {
         }
 
         try {
-            maxTeamsToVote = apiClient.getVotingLimit();
+            maxTeamsToVote = apiClient.getVotingLimit(eventId);
         } catch (ApiClientException ignored) {
             maxTeamsToVote = FALLBACK_MAX_TEAMS_TO_VOTE;
         }
 
         try {
-            List<VoteCandidateItem> items = apiClient.getParticipantResponses().stream()
+            List<VoteCandidateItem> items = apiClient.getParticipantResponses(eventId).stream()
                     .filter(participant -> participant.getTeamName() != null && !participant.getTeamName().isBlank())
                     .map(participant -> new VoteCandidateItem(
                             participant.getTeamName(),
@@ -138,7 +184,7 @@ public class VotingFormController {
         }
 
         try {
-            VoteResponse response = apiClient.createVotes(selectedTeams);
+            VoteResponse response = apiClient.createVotes(selectedEventId(), selectedTeams);
             AlertHelper.showInfo("Votos registrados: " + response.getRecordedVotes());
             goBack();
         } catch (ApiClientException e) {
@@ -158,7 +204,7 @@ public class VotingFormController {
         }
 
         try {
-            VoteResponse response = apiClient.createJuryVotes(winnerSelection, technicalSelection);
+            VoteResponse response = apiClient.createJuryVotes(selectedEventId(), winnerSelection, technicalSelection);
             AlertHelper.showInfo("Votos del jurado registrados: " + response.getRecordedVotes());
             goBack();
         } catch (ApiClientException e) {
@@ -275,6 +321,12 @@ public class VotingFormController {
     // Muestra un error en la zona superior del formulario.
     private void showError(String message) {
         AlertHelper.showError(message);
+    }
+
+    // Devuelve el evento seleccionado en la pantalla.
+    private Long selectedEventId() {
+        EventResponse event = eventComboBox == null ? null : eventComboBox.getValue();
+        return event == null ? null : event.getId();
     }
 
     private final class VoteCandidateCell extends ListCell<VoteCandidateItem> {

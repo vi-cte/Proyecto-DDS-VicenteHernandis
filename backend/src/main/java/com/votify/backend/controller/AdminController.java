@@ -1,6 +1,9 @@
 package com.votify.backend.controller;
 
+import com.votify.backend.dto.AdminEventRequest;
+import com.votify.backend.dto.AdminEventResponse;
 import com.votify.backend.dto.EventSettingsDto;
+import com.votify.backend.service.EventAdminService;
 import com.votify.backend.service.EventSettingsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -14,10 +17,12 @@ public class AdminController {
     @Autowired
     private JdbcTemplate jdbcTemplate;
     private final EventSettingsService eventSettingsService;
+    private final EventAdminService eventAdminService;
 
     // Inyecta el servicio de ajustes usado por el panel de administración.
-    public AdminController(EventSettingsService eventSettingsService) {
+    public AdminController(EventSettingsService eventSettingsService, EventAdminService eventAdminService) {
         this.eventSettingsService = eventSettingsService;
+        this.eventAdminService = eventAdminService;
     }
 
     // Endpoint para que el cliente compruebe sus credenciales admin
@@ -40,14 +45,34 @@ public class AdminController {
         return ResponseEntity.ok().build();
     }
 
+    @GetMapping("/events")
+    // Devuelve eventos para el dashboard administrativo.
+    public ResponseEntity<java.util.List<AdminEventResponse>> getEvents() {
+        return ResponseEntity.ok(eventAdminService.findAll());
+    }
+
+    @PostMapping("/events")
+    // Crea un nuevo evento y lo deja activo.
+    public ResponseEntity<AdminEventResponse> createEvent(@RequestBody AdminEventRequest request) {
+        return ResponseEntity.status(201).body(eventAdminService.create(request));
+    }
+
+    @PutMapping("/events/{id}")
+    // Actualiza los ajustes de un evento existente.
+    public ResponseEntity<AdminEventResponse> updateEvent(@PathVariable Long id, @RequestBody AdminEventRequest request) {
+        return ResponseEntity.ok(eventAdminService.update(id, request));
+    }
+
     @PostMapping("/reset")
     // Borra votos y participantes manteniendo usuarios y configuración.
     public ResponseEntity<Void> resetEvent() {
-        // Se eliminan todos los datos relacionados con la votación, pero 
-        // se mantienen las configuraciones del evento. y los usuarios de la aplicacion.
-        jdbcTemplate.execute("DELETE FROM votes");
-        jdbcTemplate.execute("DELETE FROM participant_members");
-        jdbcTemplate.execute("DELETE FROM participants");
+        Long eventId = eventSettingsService.getActiveEvent().getId();
+        jdbcTemplate.update("DELETE FROM votes WHERE event_id = ?", eventId);
+        jdbcTemplate.update("""
+                DELETE FROM participant_members
+                WHERE participant_id IN (SELECT id FROM participants WHERE event_id = ?)
+                """, eventId);
+        jdbcTemplate.update("DELETE FROM participants WHERE event_id = ?", eventId);
         
         return ResponseEntity.ok().build();
     }

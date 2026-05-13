@@ -641,7 +641,7 @@
    ======================================================== */
 .logout-button, .action-card, .back-button, .secondary-button, 
 .primary-button, .app-alert .button, .submit-votes-button, 
-.view-tab-button, .tab-label, .link-label, .action-button {
+.view-tab-button, .tab-label, .link-label, .action-button, .access-profile-button {
     -fx-cursor: hand;
 }
 
@@ -650,20 +650,39 @@
    ======================================================== */
 .access-card {
     -fx-background-color: #ffffff;
-    -fx-background-radius: 12;
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 15, 0, 0, 4);
-    -fx-border-color: #e5e7eb;
-    -fx-border-radius: 12;
+    -fx-background-radius: 18;
+    -fx-effect: dropshadow(gaussian, rgba(29, 54, 95, 0.14), 14, 0.12, 0, 3);
+    -fx-border-color: #cbd5e1;
+    -fx-border-radius: 18;
     -fx-border-width: 1;
 }
 .title-label {
-    -fx-font-size: 26px;
-    -fx-font-weight: bold;
+    -fx-font-size: 28px;
+    -fx-font-weight: 800;
     -fx-text-fill: #162642;
 }
-.tab-container { -fx-padding: 0 0 10 0; }
+.access-profile-switch {
+    -fx-background-color: #e4ebf4;
+    -fx-background-radius: 22;
+    -fx-padding: 4;
+}
+.access-profile-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: #14305a;
+    -fx-font-size: 16px;
+    -fx-font-weight: 800;
+    -fx-padding: 9 28 9 28;
+    -fx-background-radius: 19;
+    -fx-border-color: transparent;
+}
+.access-profile-button-active {
+    -fx-background-color: #ffffff;
+    -fx-effect: dropshadow(gaussian, rgba(29, 54, 95, 0.08), 8, 0.10, 0, 1);
+}
+.tab-container { -fx-padding: 10 0 8 0; }
 .tab-label {
-    -fx-font-size: 15px;
+    -fx-font-size: 18px;
+    -fx-font-weight: 700;
     -fx-text-fill: #6b7280;
     -fx-padding: 4 8 4 8;
 }
@@ -674,22 +693,23 @@
 }
 .active-tab-register {
     -fx-text-fill: #2962ff;
-    -fx-border-color: #111827;
-    -fx-border-radius: 6;
-    -fx-border-width: 1;
+    -fx-border-color: transparent transparent #2962ff transparent;
+    -fx-border-width: 0 0 2 0;
 }
 .field-label {
-    -fx-font-size: 13px;
-    -fx-font-weight: bold;
-    -fx-text-fill: #111827;
+    -fx-font-size: 17px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #0f2a51;
 }
 .input-field {
-    -fx-background-color: #f9fafb;
-    -fx-border-color: #f3f4f6;
-    -fx-border-radius: 8;
-    -fx-background-radius: 8;
-    -fx-padding: 10 12 10 12;
-    -fx-font-size: 14px;
+    -fx-background-color: #f7f9fc;
+    -fx-border-color: transparent;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-padding: 12 14 12 14;
+    -fx-font-size: 16px;
+    -fx-text-fill: #10284c;
+    -fx-prompt-text-fill: #6b7c94;
 }
 .input-field:focused { -fx-border-color: #2962ff; }
 
@@ -699,14 +719,14 @@
     -fx-text-fill: #1f2937;
     -fx-padding: 8 0 0 0;
 }
-.link-label { -fx-font-size: 13px; -fx-text-fill: #2962ff; }
+.link-label { -fx-font-size: 17px; -fx-text-fill: #1458ff; }
 .action-button { 
-    -fx-background-color: #2962ff; 
+    -fx-background-color: #2f66ea; 
     -fx-text-fill: white; 
-    -fx-font-size: 15px; 
-    -fx-font-weight: bold; 
-    -fx-padding: 12; 
-    -fx-background-radius: 6; 
+    -fx-font-size: 16px; 
+    -fx-font-weight: 800; 
+    -fx-padding: 13; 
+    -fx-background-radius: 9; 
     -fx-margin-top: 10px; 
 }
 .action-button:hover { -fx-background-color: #1e4bd8; }
@@ -1121,4 +1141,157 @@
     -fx-text-fill: #11274b;
     -fx-font-size: 18px;
     -fx-font-weight: 800;
+}
+
+.admin-root {
+    -fx-background-color: #f8fafc;
+}
+
+.admin-top {
+    -fx-background-color: #f8fafc;
+}
+
+.admin-content {
+    -fx-background-color: #f8fafc;
+}
+
+.admin-title {
+    -fx-text-fill: #111827;
+    -fx-font-size: 30px;
+    -fx-font-weight: 800;
+}
+
+.admin-subtitle {
+    -fx-text-fill: #6b7280;
+    -fx-font-size: 20px;
+}
+
+.admin-primary-button {
+    -fx-background-color: #2f7df6;
+    -fx-text-fill: white;
+    -fx-font-size: 18px;
+    -fx-font-weight: 800;
+    -fx-background-radius: 10;
+    -fx-padding: 16 24;
+    -fx-cursor: hand;
+}
+
+.admin-secondary-button {
+    -fx-background-color: white;
+    -fx-text-fill: #111827;
+    -fx-font-size: 16px;
+    -fx-font-weight: 800;
+    -fx-background-radius: 10;
+    -fx-border-color: #e5e7eb;
+    -fx-border-radius: 10;
+    -fx-padding: 15 22;
+    -fx-cursor: hand;
+}
+
+.admin-section-title {
+    -fx-text-fill: #111827;
+    -fx-font-size: 25px;
+    -fx-font-weight: 800;
+}
+
+.admin-live-label {
+    -fx-text-fill: #6b7280;
+    -fx-font-size: 14px;
+}
+
+.admin-event-card {
+    -fx-background-color: white;
+    -fx-background-radius: 16;
+    -fx-border-color: #e5e7eb;
+    -fx-border-radius: 16;
+}
+
+.admin-event-header {
+    -fx-background-color: #2876f6;
+    -fx-background-radius: 16 16 0 0;
+    -fx-padding: 30;
+}
+
+.admin-event-title {
+    -fx-text-fill: white;
+    -fx-font-size: 23px;
+    -fx-font-weight: 800;
+}
+
+.admin-event-date {
+    -fx-text-fill: #e7f0ff;
+    -fx-font-size: 17px;
+}
+
+.admin-event-settings-button {
+    -fx-background-color: rgba(255, 255, 255, 0.18);
+    -fx-background-radius: 999;
+    -fx-min-width: 38;
+    -fx-min-height: 38;
+    -fx-pref-width: 38;
+    -fx-pref-height: 38;
+    -fx-cursor: hand;
+}
+
+.admin-event-settings-button:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.28);
+}
+
+.admin-event-settings-icon {
+    -fx-fill: white;
+    -fx-scale-x: 0.78;
+    -fx-scale-y: 0.78;
+}
+
+.admin-event-settings-grid {
+    -fx-padding: 12 0 0 0;
+}
+
+.admin-stat-box {
+    -fx-background-color: rgba(255, 255, 255, 0.12);
+    -fx-background-radius: 12;
+    -fx-padding: 16;
+}
+
+.admin-stat-caption {
+    -fx-text-fill: #e7f0ff;
+    -fx-font-size: 16px;
+}
+
+.admin-stat-value {
+    -fx-text-fill: white;
+    -fx-font-size: 30px;
+    -fx-font-weight: 800;
+}
+
+.admin-event-body {
+    -fx-padding: 30;
+}
+
+.admin-ranking-title {
+    -fx-text-fill: #111827;
+    -fx-font-size: 19px;
+    -fx-font-weight: 800;
+}
+
+.admin-rank-row {
+    -fx-background-color: #f8fafc;
+    -fx-background-radius: 14;
+    -fx-padding: 18;
+}
+
+.admin-rank-name {
+    -fx-text-fill: #111827;
+    -fx-font-size: 18px;
+    -fx-font-weight: 800;
+}
+
+.admin-rank-votes {
+    -fx-text-fill: #2563eb;
+    -fx-font-size: 30px;
+    -fx-font-weight: 800;
+}
+
+.create-event-root {
+    -fx-background-color: white;
 }

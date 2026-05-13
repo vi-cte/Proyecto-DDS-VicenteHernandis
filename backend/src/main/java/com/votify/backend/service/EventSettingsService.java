@@ -1,27 +1,44 @@
 package com.votify.backend.service;
 
 import com.votify.backend.dto.EventSettingsDto;
+import com.votify.backend.entity.EventEntity;
 import com.votify.backend.entity.EventSettingsEntity;
 import com.votify.backend.exception.ApiException;
+import com.votify.backend.repository.EventJpaRepository;
 import com.votify.backend.repository.EventSettingsRepository;
+import com.votify.backend.repository.ParticipantJpaRepository;
+import com.votify.backend.repository.VoteJpaRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 // Gestiona la configuración global del evento.
 public class EventSettingsService {
     private final EventSettingsRepository eventSettingsRepository;
+    private final EventJpaRepository eventRepository;
+    private final ParticipantJpaRepository participantRepository;
+    private final VoteJpaRepository voteRepository;
 
     // Inyecta el repositorio de configuración del evento.
-    public EventSettingsService(EventSettingsRepository eventSettingsRepository) {
+    public EventSettingsService(
+            EventSettingsRepository eventSettingsRepository,
+            EventJpaRepository eventRepository,
+            ParticipantJpaRepository participantRepository,
+            VoteJpaRepository voteRepository
+    ) {
         this.eventSettingsRepository = eventSettingsRepository;
+        this.eventRepository = eventRepository;
+        this.participantRepository = participantRepository;
+        this.voteRepository = voteRepository;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     // Devuelve la configuración actual creando valores por defecto si faltan.
     public EventSettingsDto getSettings() {
-        EventSettingsEntity entity = getOrCreateSettings();
+        EventEntity entity = getOrCreateActiveEvent();
         return new EventSettingsDto(
                 entity.isRegistrationsOpen(),
                 entity.isVotingOpen(),
@@ -37,54 +54,76 @@ public class EventSettingsService {
             throw new ApiException(HttpStatus.BAD_REQUEST, "El número de votos debe ser al menos 1");
         }
 
-        EventSettingsEntity entity = getOrCreateSettings();
+        EventEntity entity = getOrCreateActiveEvent();
         entity.setRegistrationsOpen(settings.registrationsOpen());
         entity.setVotingOpen(settings.votingOpen() && !settings.registrationsOpen());
         entity.setResultsVisible(settings.resultsVisible());
         entity.setMaxTeamsToVote(settings.maxTeamsToVote());
-        eventSettingsRepository.save(entity);
+        eventRepository.save(entity);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     // Indica si el registro de equipos está abierto.
     public boolean areRegistrationsOpen() {
-        return getOrCreateSettings().isRegistrationsOpen();
+        return getOrCreateActiveEvent().isRegistrationsOpen();
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     // Indica si la votación está abierta.
     public boolean isVotingOpen() {
-        return getOrCreateSettings().isVotingOpen();
+        return getOrCreateActiveEvent().isVotingOpen();
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     // Indica si los resultados pueden mostrarse.
     public boolean areResultsVisible() {
-        return getOrCreateSettings().isResultsVisible();
+        return getOrCreateActiveEvent().isResultsVisible();
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     // Devuelve el número máximo de equipos que puede votar un usuario.
     public int getMaxTeamsToVote() {
-        return getOrCreateSettings().getMaxTeamsToVote();
+        return getOrCreateActiveEvent().getMaxTeamsToVote();
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     // Alias de lectura usado por las reglas de acceso a inscripción.
     public boolean allowsTeamRegistration() {
         return areRegistrationsOpen();
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     // Alias de lectura usado por las reglas de acceso a votación.
     public boolean allowsVoting() {
         return isVotingOpen();
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     // Alias de lectura usado por las reglas de visibilidad de resultados.
     public boolean allowsResultsVisibility() {
         return areResultsVisible();
+    }
+
+    @Transactional
+    // Devuelve el evento activo actual.
+    public EventEntity getActiveEvent() {
+        return getOrCreateActiveEvent();
+    }
+
+    @Transactional
+    // Devuelve el evento indicado o el activo por defecto si no se especifica.
+    public EventEntity getEventOrActive(Long eventId) {
+        if (eventId == null) {
+            return getOrCreateActiveEvent();
+        }
+        return eventRepository.findById(eventId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "El evento no existe"));
+    }
+
+    @Transactional(readOnly = true)
+    // Devuelve los eventos activos disponibles para pantallas publicas.
+    public List<EventEntity> getPublicEvents() {
+        return eventRepository.findAllByActiveTrueOrderByEventDateDescIdDesc();
     }
 
     // Busca la configuración singleton o la crea si aún no existe.
@@ -102,5 +141,40 @@ public class EventSettingsService {
         entity.setResultsVisible(false);
         entity.setMaxTeamsToVote(1);
         return eventSettingsRepository.save(entity);
+    }
+
+    // Busca el evento activo o crea uno inicial compatible con el flujo actual.
+    private EventEntity getOrCreateActiveEvent() {
+        EventEntity event = eventRepository.findFirstByActiveTrueOrderByIdDesc()
+                .orElseGet(this::createDefaultEvent);
+        migrateLegacyData(event);
+        return event;
+    }
+
+    // Crea el evento inicial si la instalación aún no tiene eventos.
+    private EventEntity createDefaultEvent() {
+        EventSettingsEntity legacy = getOrCreateSettings();
+        EventEntity event = new EventEntity();
+        event.setName("Evento principal");
+        event.setDescription("Evento activo de Votify");
+        event.setRegistrationsOpen(legacy.isRegistrationsOpen());
+        event.setVotingOpen(legacy.isVotingOpen());
+        event.setResultsVisible(legacy.isResultsVisible());
+        event.setMaxTeamsToVote(Math.max(1, legacy.getMaxTeamsToVote()));
+        event.setJuryEnabled(true);
+        event.setActive(true);
+        return eventRepository.save(event);
+    }
+
+    // Asocia datos antiguos sin event_id al evento activo para no perder equipos ni votos.
+    private void migrateLegacyData(EventEntity event) {
+        participantRepository.findAllByEventIsNull().forEach(participant -> {
+            participant.setEvent(event);
+            participantRepository.save(participant);
+        });
+        voteRepository.findAllByEventIsNull().forEach(vote -> {
+            vote.setEvent(event);
+            voteRepository.save(vote);
+        });
     }
 }

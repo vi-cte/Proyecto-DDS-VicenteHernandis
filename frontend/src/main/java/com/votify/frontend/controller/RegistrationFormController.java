@@ -2,6 +2,7 @@ package com.votify.frontend.controller;
 
 import com.votify.frontend.client.ApiClient;
 import com.votify.frontend.client.VotifyApi;
+import com.votify.frontend.dto.EventResponse;
 import com.votify.frontend.dto.ParticipantResponse;
 import com.votify.frontend.exception.ApiClientException;
 import com.votify.frontend.navigation.SceneNavigator;
@@ -14,6 +15,7 @@ import javafx.geometry.Pos;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
@@ -39,6 +41,9 @@ public class RegistrationFormController {
 
     @FXML
     private TextField teamField;
+
+    @FXML
+    private ComboBox<EventResponse> eventComboBox;
 
     @FXML
     private TextField emailField;
@@ -101,14 +106,39 @@ public class RegistrationFormController {
 
         membersListView.setItems(membersList);
         membersListView.setCellFactory(lv -> new MemberCell());
-        
-        loadExistingParticipant();
+
+        if (eventComboBox != null) {
+            eventComboBox.valueProperty().addListener((obs, oldValue, newValue) -> loadExistingParticipant());
+            loadRegistrationEvents();
+        } else {
+            loadExistingParticipant();
+        }
+    }
+
+    // Carga eventos que aceptan inscripciones.
+    private void loadRegistrationEvents() {
+        try {
+            List<EventResponse> events = apiClient.getEvents().stream()
+                    .filter(EventResponse::isRegistrationsOpen)
+                    .toList();
+            eventComboBox.setItems(FXCollections.observableArrayList(events));
+            if (!events.isEmpty()) {
+                eventComboBox.getSelectionModel().selectFirst();
+            } else {
+                submitButton.setDisable(true);
+                showError("No hay eventos con inscripciones abiertas.");
+            }
+        } catch (ApiClientException e) {
+            submitButton.setDisable(true);
+            showError(e.getMessage());
+        }
     }
 
     // Carga el equipo del usuario si ya tenía uno registrado.
     private void loadExistingParticipant() {
         try {
-            ParticipantResponse p = apiClient.getCurrentParticipant();
+            clearParticipantForm();
+            ParticipantResponse p = apiClient.getCurrentParticipant(selectedEventId());
             if (p == null) {
                 return;
             }
@@ -176,10 +206,10 @@ public class RegistrationFormController {
 
         try {
             if (editingParticipantId != null) {
-                apiClient.updateParticipant(editingParticipantId, team, email, phone, description, logoBase64, members);
+                apiClient.updateParticipant(selectedEventId(), editingParticipantId, team, email, phone, description, logoBase64, members);
                 AlertHelper.showInfo("Participante actualizado: " + team);
             } else {
-                apiClient.createParticipant(team, email, phone, description, logoBase64, members);
+                apiClient.createParticipant(selectedEventId(), team, email, phone, description, logoBase64, members);
                 AlertHelper.showInfo("Participante registrado: " + team);
             }
             goBack();
@@ -249,7 +279,7 @@ public class RegistrationFormController {
             if (editingParticipantId != null && team.equalsIgnoreCase(originalTeamName)) {
                 checkExists = false; // No comprobar si el nombre no ha cambiado
             }
-            if (checkExists && apiClient.teamNameExists(team)) {
+            if (checkExists && apiClient.teamNameExists(selectedEventId(), team)) {
                 teamErrorLabel.setText(FormValidators.MSG_TEAM_EXISTS);
                 return false;
             }
@@ -274,6 +304,35 @@ public class RegistrationFormController {
         }
         emailErrorLabel.setText("");
         return true;
+    }
+
+    // Devuelve el evento seleccionado en el formulario.
+    private Long selectedEventId() {
+        EventResponse event = eventComboBox == null ? null : eventComboBox.getValue();
+        return event == null ? null : event.getId();
+    }
+
+    // Limpia datos de edición al cambiar de evento.
+    private void clearParticipantForm() {
+        editingParticipantId = null;
+        originalTeamName = null;
+        teamField.clear();
+        emailField.clear();
+        phoneField.clear();
+        if (descriptionArea != null) {
+            descriptionArea.clear();
+        }
+        membersList.clear();
+        logoBase64 = null;
+        if (logoImageView != null) {
+            logoImageView.setImage(null);
+        }
+        if (logoLabel != null) {
+            logoLabel.setText("Ningún archivo seleccionado");
+        }
+        if (submitButton != null) {
+            submitButton.setText("Registrar Equipo");
+        }
     }
 
     private class MemberCell extends ListCell<String> {

@@ -9,9 +9,9 @@ import com.votify.frontend.ui.AlertHelper;
 import com.votify.frontend.client.FormValidators;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
+import javafx.scene.control.Separator;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.ButtonType;
@@ -33,17 +33,20 @@ public class AccessController {
 
     @FXML private Label loginTab;
     @FXML private Label registerTab;
+    @FXML private Separator authModeSeparator;
     @FXML private TextField emailField;
     @FXML private PasswordField passwordField;
-    @FXML private VBox roleBox;
-    @FXML private ComboBox<String> roleComboBox;
     @FXML private HBox forgotPasswordBox;
     @FXML private Button actionButton;
     @FXML private Button viewResultsButton;
     @FXML private Button adminSettingsButton;
+    @FXML private Button adminProfileButton;
+    @FXML private Button juryProfileButton;
+    @FXML private Button userProfileButton;
     @FXML private Label errorLabel;
 
     private boolean isLoginMode = true;
+    private AccessProfile selectedProfile = AccessProfile.USER;
     private final ApiClient authProxy = ApiClient.getInstance();
 
     @FXML
@@ -51,10 +54,7 @@ public class AccessController {
     public void initialize() {
         showLogin(); 
         checkBackendConnection();
-        if (roleComboBox != null) {
-            roleComboBox.getItems().setAll("Público", "Jurado");
-            roleComboBox.getSelectionModel().selectFirst();
-        }
+        updateProfileButtons();
 
         // Listener para validar el correo al salir de la casilla (perder el foco)
         emailField.focusedProperty().addListener((observable, oldValue, newValue) -> {
@@ -84,10 +84,12 @@ public class AccessController {
     // Valida si el backend está disponible al abrir la pantalla.
     private void checkBackendConnection() {
         try {
-            // Obtenemos los ajustes del evento para comprobar la conexión y configurar la vista
-            var settings = authProxy.getEventSettings();
+            // Obtenemos eventos para comprobar la conexión y configurar resultados públicos.
+            boolean hasVisibleResults = authProxy.getEvents().stream().anyMatch(event -> event.isResultsVisible());
             if (viewResultsButton != null) {
-                if (!settings.isResultsVisible()) {
+                viewResultsButton.setVisible(true);
+                viewResultsButton.setManaged(true);
+                if (!hasVisibleResults) {
                     viewResultsButton.setDisable(true);
                     viewResultsButton.setText("Resultados aun no publicados");
                 } else {
@@ -118,24 +120,51 @@ public class AccessController {
         
         forgotPasswordBox.setVisible(true);
         forgotPasswordBox.setManaged(true);
-        roleBox.setVisible(false);
-        roleBox.setManaged(false);
-        actionButton.setText("Iniciar sesión");
+        actionButton.setText(selectedProfile == AccessProfile.ADMIN ? "Acceder" : "Iniciar sesión");
     }
 
     @FXML
     // Cambia el formulario al modo de registro.
     private void showRegister() {
         if (errorLabel != null) errorLabel.setText("");
+        if (selectedProfile != AccessProfile.USER) {
+            showInlineError(selectedProfile == AccessProfile.JURY
+                    ? "El jurado no puede registrarse desde esta pantalla."
+                    : "El acceso de administrador se implementará más adelante.");
+            showLogin();
+            return;
+        }
         isLoginMode = false;
         registerTab.getStyleClass().addAll("active-tab-register");
         loginTab.getStyleClass().removeAll("active-tab-login");
         
         forgotPasswordBox.setVisible(false);
         forgotPasswordBox.setManaged(false);
-        roleBox.setVisible(true);
-        roleBox.setManaged(true);
         actionButton.setText("Registrarse");
+    }
+
+    @FXML
+    // Selecciona el acceso visual de administrador.
+    private void showAdminAccess() {
+        selectedProfile = AccessProfile.ADMIN;
+        updateProfileButtons();
+        showLogin();
+    }
+
+    @FXML
+    // Selecciona el acceso visual de jurado.
+    private void showJuryAccess() {
+        selectedProfile = AccessProfile.JURY;
+        updateProfileButtons();
+        showLogin();
+    }
+
+    @FXML
+    // Selecciona el acceso visual de usuario público.
+    private void showUserAccess() {
+        selectedProfile = AccessProfile.USER;
+        updateProfileButtons();
+        showLogin();
     }
 
     @FXML
@@ -149,6 +178,24 @@ public class AccessController {
     private void handleAction() {
         if (errorLabel != null) errorLabel.setText("");
         String email = emailField.getText(), password = passwordField.getText();
+        if (selectedProfile == AccessProfile.ADMIN) {
+            try {
+                if (!authProxy.authenticateAdmin(password)) {
+                    showInlineError("Contraseña de administrador incorrecta.");
+                    return;
+                }
+                Stage stage = (Stage) actionButton.getScene().getWindow();
+                SceneNavigator.showScene(
+                        stage,
+                        "/com/votify/frontend/view/AdminDashboard.fxml",
+                        "/com/votify/frontend/view/MainMenu.css",
+                        "Votify - Administración"
+                );
+            } catch (IOException e) {
+                AlertHelper.showError("Error abriendo administración: " + e.getMessage());
+            }
+            return;
+        }
         if (email.isBlank() || password.isBlank()) { 
             showInlineError(FormValidators.MSG_REQUIRED_FIELDS); 
             return; 
@@ -166,7 +213,14 @@ public class AccessController {
 
         try {
             if (isLoginMode) {
-                authProxy.login(email, password);
+                var response = authProxy.login(email, password);
+                if (!selectedRole().equalsIgnoreCase(response.role())) {
+                    authProxy.logout();
+                    showInlineError(selectedProfile == AccessProfile.JURY
+                            ? "Esta cuenta no está registrada como jurado."
+                            : "Esta cuenta no está registrada como usuario.");
+                    return;
+                }
             } else {
                 authProxy.registerUser(email, password, selectedRole());
                 AlertHelper.showInfo("Registro exitoso.");
@@ -194,10 +248,41 @@ public class AccessController {
 
     // Devuelve el rol seleccionado para el registro.
     private String selectedRole() {
-        if (roleComboBox == null || roleComboBox.getValue() == null) {
-            return "PUBLIC";
+        return selectedProfile == AccessProfile.JURY ? "JURY" : "PUBLIC";
+    }
+
+    // Actualiza el estado visual del selector Admin/Jurado/Usuario.
+    private void updateProfileButtons() {
+        markProfileButton(adminProfileButton, selectedProfile == AccessProfile.ADMIN);
+        markProfileButton(juryProfileButton, selectedProfile == AccessProfile.JURY);
+        markProfileButton(userProfileButton, selectedProfile == AccessProfile.USER);
+        if (registerTab != null) {
+            boolean canRegister = selectedProfile == AccessProfile.USER;
+            registerTab.setDisable(!canRegister);
+            registerTab.setVisible(canRegister);
+            registerTab.setManaged(canRegister);
+            if (authModeSeparator != null) {
+                authModeSeparator.setVisible(canRegister);
+                authModeSeparator.setManaged(canRegister);
+            }
         }
-        return "Jurado".equals(roleComboBox.getValue()) ? "JURY" : "PUBLIC";
+    }
+
+    // Marca un botón de perfil como activo o inactivo.
+    private void markProfileButton(Button button, boolean active) {
+        if (button == null) {
+            return;
+        }
+        button.getStyleClass().remove("access-profile-button-active");
+        if (active) {
+            button.getStyleClass().add("access-profile-button-active");
+        }
+    }
+
+    private enum AccessProfile {
+        ADMIN,
+        JURY,
+        USER
     }
 
     @FXML
@@ -208,9 +293,9 @@ public class AccessController {
             return;
         }
         try {
-            AccessDecision access = authProxy.checkAccess(AccessTarget.RESULTS);
-            if (!access.allowed()) {
-                AlertHelper.showWarning(access.message());
+            boolean hasVisibleResults = authProxy.getEvents().stream().anyMatch(event -> event.isResultsVisible());
+            if (!hasVisibleResults) {
+                AlertHelper.showWarning("Los resultados están ocultos actualmente por el administrador.");
                 return;
             }
             Stage stage = (Stage) actionButton.getScene().getWindow();

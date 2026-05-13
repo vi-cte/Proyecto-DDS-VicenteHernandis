@@ -72,11 +72,11 @@
          <children>
             <VBox spacing="13.0">
                <children>
-                  <Label styleClass="page-title" text="Panel de Control" />
-                  <Label styleClass="page-subtitle" text="Evalúa proyectos, registra tu participación y consulta resultados en tiempo real" wrapText="true" />
+                  <Label fx:id="pageTitleLabel" styleClass="page-title" text="Panel de Control" />
+                  <Label fx:id="pageSubtitleLabel" styleClass="page-subtitle" text="Evalúa proyectos, registra tu participación y consulta resultados en tiempo real" wrapText="true" />
                </children>
             </VBox>
-            <HBox spacing="30.0">
+            <HBox fx:id="actionCardsBox" spacing="30.0">
                <children>
                   <Button fx:id="voteButton" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#vote" prefHeight="228.0" prefWidth="392.0" text="" HBox.hgrow="ALWAYS">
                      <styleClass>

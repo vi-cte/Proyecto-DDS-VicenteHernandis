@@ -33,24 +33,30 @@ public class ParticipantController {
 
     // GET /api/participants: devuelve la lista de participantes.
     @GetMapping
-    public List<ParticipantResponse> getParticipants() {
-        return participantService.findAll();
+    public List<ParticipantResponse> getParticipants(
+            @RequestParam(required = false) Long eventId
+    ) {
+        return participantService.findAll(eventId);
     }
 
     @GetMapping("/mine")
     // GET /api/participants/mine: devuelve el equipo del usuario autenticado.
     public ResponseEntity<ParticipantResponse> getCurrentParticipant(
-            @RequestHeader("X-User-ID") Long userId
+            @RequestHeader("X-User-ID") Long userId,
+            @RequestParam(required = false) Long eventId
     ) {
-        Optional<ParticipantResponse> participant = participantService.findMine(userId);
+        Optional<ParticipantResponse> participant = participantService.findMine(userId, eventId);
         return participant.map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.noContent().build());
     }
 
     // GET /api/participants/exists?teamName=...: indica si existe el equipo.
     @GetMapping("/exists")
-    public boolean existsByTeamName(@RequestParam String teamName) {
-        return participantService.existsByTeamName(teamName == null ? "" : teamName.trim());
+    public boolean existsByTeamName(
+            @RequestParam String teamName,
+            @RequestParam(required = false) Long eventId
+    ) {
+        return participantService.existsByTeamName(teamName == null ? "" : teamName.trim(), eventId);
     }
 
     // POST /api/participants: crea un participante y devuelve 201 Created.
@@ -58,9 +64,10 @@ public class ParticipantController {
     @ResponseStatus(HttpStatus.CREATED)
     public ParticipantResponse createParticipant(
             @Valid @RequestBody ParticipantRequest request,
-            @RequestHeader("X-User-ID") Long userId
+            @RequestHeader("X-User-ID") Long userId,
+            @RequestParam(required = false) Long eventId
     ) {
-        return participantService.create(request, userId);
+        return participantService.create(request, userId, eventId);
     }
 
     // PUT /api/participants/{id}: actualiza un participante existente.
@@ -68,8 +75,9 @@ public class ParticipantController {
     public ParticipantResponse updateParticipant(
             @PathVariable Long id,
             @Valid @RequestBody ParticipantRequest request,
-            @RequestHeader("X-User-ID") Long userId
+            @RequestHeader("X-User-ID") Long userId,
+            @RequestParam(required = false) Long eventId
     ) {
-        return participantService.update(id, request, userId);
+        return participantService.update(id, request, userId, eventId);
     }
 }
