@@ -4,11 +4,13 @@ import com.votify.frontend.dto.AuthRequest;
 import com.votify.frontend.dto.AuthResponse;
 import com.votify.frontend.dto.AdminEventRequest;
 import com.votify.frontend.dto.AdminEventResponse;
+import com.votify.frontend.dto.JuryCriterionScoreRequest;
 import com.votify.frontend.dto.ParticipantRequest;
 import com.votify.frontend.dto.ParticipantResponse;
 import com.votify.frontend.dto.ResultsResponse;
 import com.votify.frontend.dto.VoteRequest;
 import com.votify.frontend.dto.VoteResponse;
+import com.votify.frontend.dto.VoteSelectionRequest;
 import com.votify.frontend.dto.VoteSettingsResponse;
 import com.votify.frontend.exception.ErrorResponse;
 import com.votify.frontend.exception.ApiClientException;
@@ -298,19 +300,27 @@ public class ApiClient implements VotifyApi {
     @Override
     // Crea votos para las selecciones indicadas en un evento.
     public VoteResponse createVotes(Long eventId, List<String> selections) {
+        return createVotes(eventId, selections == null ? List.of() : selections.stream()
+                .map(selection -> new VoteSelectionRequest(selection, null))
+                .toList(), true);
+    }
+
+    @Override
+    // Crea votos públicos incluyendo comentarios opcionales por equipo.
+    public VoteResponse createVotes(Long eventId, List<VoteSelectionRequest> selections, boolean withComments) {
         if (!sessionManager.hasUserToken()) {
             throw new ApiClientException("No has iniciado sesión para poder votar.");
         }
 
         String json;
         try {
-            json = MAPPER.writeValueAsString(new VoteRequest(selections));
+            json = MAPPER.writeValueAsString(new VoteRequest(selections, true));
         } catch (JsonProcessingException e) {
             throw new ApiClientException("No se pudo preparar la solicitud al servidor");
         }
 
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(baseUrl + "/votes"))
+                .uri(URI.create(withEventId(baseUrl + "/votes", eventId)))
                 .header("Content-Type", "application/json")
                 .header("X-User-ID", sessionManager.userIdHeaderValue())
                 .POST(HttpRequest.BodyPublishers.ofString(json))
@@ -336,6 +346,18 @@ public class ApiClient implements VotifyApi {
     @Override
     // Obtiene el límite de votos por usuario en un evento.
     public int getVotingLimit(Long eventId) {
+        return getVoteSettings(eventId).getMaxTeamsToVote();
+    }
+
+    @Override
+    // Obtiene la configuracion completa de la votacion.
+    public VoteSettingsResponse getVoteSettings() {
+        return getVoteSettings(null);
+    }
+
+    @Override
+    // Obtiene la configuracion completa de la votacion en un evento.
+    public VoteSettingsResponse getVoteSettings(Long eventId) {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(withEventId(baseUrl + "/votes/settings", eventId)))
                 .GET()
@@ -346,7 +368,7 @@ public class ApiClient implements VotifyApi {
             throw new ApiClientException(extractErrorMessage(response.body(), response.statusCode()));
         }
         try {
-            return MAPPER.readValue(response.body(), VoteSettingsResponse.class).getMaxTeamsToVote();
+            return MAPPER.readValue(response.body(), VoteSettingsResponse.class);
         } catch (Exception e) {
             throw new ApiClientException("No se pudo procesar la configuración de votación");
         }
@@ -361,13 +383,61 @@ public class ApiClient implements VotifyApi {
     @Override
     // Crea los dos votos de un usuario jurado en un evento.
     public VoteResponse createJuryVotes(Long eventId, String winnerSelection, String technicalSelection) {
+        return createJuryVotes(eventId, winnerSelection, null, technicalSelection, null);
+    }
+
+    @Override
+    // Crea los dos votos simples del jurado con comentarios opcionales.
+    public VoteResponse createJuryVotes(Long eventId, String winnerSelection, String winnerComment, String technicalSelection, String technicalComment) {
         if (!sessionManager.hasUserToken()) {
             throw new ApiClientException("No has iniciado sesión para poder votar.");
         }
 
         String json;
         try {
-            json = MAPPER.writeValueAsString(new VoteRequest(winnerSelection, technicalSelection));
+            VoteRequest request = new VoteRequest(winnerSelection, technicalSelection);
+            request.setJuryWinnerComment(winnerComment);
+            request.setJuryTechnicalComment(technicalComment);
+            json = MAPPER.writeValueAsString(request);
+        } catch (JsonProcessingException e) {
+            throw new ApiClientException("No se pudo preparar la solicitud al servidor");
+        }
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(withEventId(baseUrl + "/votes", eventId)))
+                .header("Content-Type", "application/json")
+                .header("X-User-ID", sessionManager.userIdHeaderValue())
+                .POST(HttpRequest.BodyPublishers.ofString(json))
+                .build();
+
+        HttpResponse<String> response = send(request);
+        if (response.statusCode() != 201 && response.statusCode() != 200) {
+            throw new ApiClientException(extractErrorMessage(response.body(), response.statusCode()));
+        }
+
+        try {
+            return MAPPER.readValue(response.body(), VoteResponse.class);
+        } catch (Exception e) {
+            throw new ApiClientException("No se pudo procesar la respuesta del voto");
+        }
+    }
+
+    @Override
+    // Crea una evaluacion multicriterio del jurado.
+    public VoteResponse createJuryMulticriteriaVotes(Long eventId, String teamSelection, List<JuryCriterionScoreRequest> criteriaScores) {
+        return createJuryMulticriteriaVotes(eventId, teamSelection, criteriaScores, null);
+    }
+
+    @Override
+    // Crea una evaluacion multicriterio del jurado con comentario opcional.
+    public VoteResponse createJuryMulticriteriaVotes(Long eventId, String teamSelection, List<JuryCriterionScoreRequest> criteriaScores, String comment) {
+        if (!sessionManager.hasUserToken()) {
+            throw new ApiClientException("No has iniciado sesión para poder votar.");
+        }
+
+        String json;
+        try {
+            json = MAPPER.writeValueAsString(new VoteRequest(teamSelection, criteriaScores, comment));
         } catch (JsonProcessingException e) {
             throw new ApiClientException("No se pudo preparar la solicitud al servidor");
         }
@@ -399,10 +469,13 @@ public class ApiClient implements VotifyApi {
     @Override
     // Obtiene los resultados agregados desde el backend para un evento.
     public ResultsResponse getResults(Long eventId) {
-        HttpRequest request = HttpRequest.newBuilder()
+        HttpRequest.Builder builder = HttpRequest.newBuilder()
                 .uri(URI.create(withEventId(baseUrl + "/results", eventId)))
-                .GET()
-                .build();
+                .GET();
+        if (sessionManager.hasUserToken()) {
+            builder.header("X-User-ID", sessionManager.userIdHeaderValue());
+        }
+        HttpRequest request = builder.build();
 
         HttpResponse<String> response = send(request);
         if (response.statusCode() != 200) {
@@ -440,6 +513,32 @@ public class ApiClient implements VotifyApi {
 
         String body = response.body() == null ? "" : response.body().trim();
         return "true".equalsIgnoreCase(body);
+    }
+
+    @Override
+    // Devuelve los equipos que el jurado ya evaluó en el evento seleccionado.
+    public List<String> getEvaluatedJuryTeams(Long eventId) {
+        if (!sessionManager.hasUserToken()) {
+            return List.of();
+        }
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(withEventId(baseUrl + "/votes/evaluated-teams", eventId)))
+                .header("X-User-ID", sessionManager.userIdHeaderValue())
+                .GET()
+                .build();
+
+        HttpResponse<String> response = send(request);
+        if (response.statusCode() != 200) {
+            throw new ApiClientException(extractErrorMessage(response.body(), response.statusCode()));
+        }
+
+        try {
+            String[] teamNames = MAPPER.readValue(response.body(), String[].class);
+            return List.of(teamNames);
+        } catch (Exception e) {
+            throw new ApiClientException("No se pudo procesar la lista de equipos evaluados");
+        }
     }
 
     // Envía una petición HTTP y convierte errores en ApiClientException.
@@ -574,8 +673,9 @@ public class ApiClient implements VotifyApi {
 
     @Override
     // Actualiza los ajustes administrativos del evento.
-    public void updateAdminSettings(boolean registrationsOpen, boolean votingOpen, boolean resultsVisible, int maxTeamsToVote) {
-        String json = String.format("{\"registrationsOpen\":%b, \"votingOpen\":%b, \"resultsVisible\":%b, \"maxTeamsToVote\":%d}", registrationsOpen, votingOpen, resultsVisible, maxTeamsToVote);
+    public void updateAdminSettings(boolean registrationsOpen, boolean votingOpen, boolean resultsVisible, int maxTeamsToVote, String juryVotingMode) {
+        String mode = juryVotingMode == null || juryVotingMode.isBlank() ? "SIMPLE" : juryVotingMode;
+        String json = String.format("{\"registrationsOpen\":%b, \"votingOpen\":%b, \"resultsVisible\":%b, \"maxTeamsToVote\":%d, \"juryVotingMode\":\"%s\"}", registrationsOpen, votingOpen, resultsVisible, maxTeamsToVote, mode);
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(baseUrl + "/admin/settings"))
                 .header("Content-Type", "application/json")
@@ -624,10 +724,10 @@ public class ApiClient implements VotifyApi {
 
     @Override
     // Crea un nuevo evento desde administración.
-    public AdminEventResponse createAdminEvent(String name, String eventDate, String description, boolean registrationsOpen, boolean votingOpen, boolean resultsVisible, int maxTeamsToVote, boolean juryEnabled) {
+    public AdminEventResponse createAdminEvent(String name, String eventDate, String description, boolean registrationsOpen, boolean votingOpen, boolean resultsVisible, int maxTeamsToVote, boolean juryEnabled, String juryVotingMode) {
         String json;
         try {
-            json = MAPPER.writeValueAsString(new AdminEventRequest(name, eventDate, description, registrationsOpen, votingOpen, resultsVisible, maxTeamsToVote, juryEnabled));
+            json = MAPPER.writeValueAsString(new AdminEventRequest(name, eventDate, description, registrationsOpen, votingOpen, resultsVisible, maxTeamsToVote, juryEnabled, juryVotingMode));
         } catch (JsonProcessingException e) {
             throw new ApiClientException("No se pudo preparar el evento");
         }
@@ -650,10 +750,10 @@ public class ApiClient implements VotifyApi {
 
     @Override
     // Actualiza un evento desde administración.
-    public AdminEventResponse updateAdminEvent(Long id, String name, String eventDate, String description, boolean registrationsOpen, boolean votingOpen, boolean resultsVisible, int maxTeamsToVote, boolean juryEnabled) {
+    public AdminEventResponse updateAdminEvent(Long id, String name, String eventDate, String description, boolean registrationsOpen, boolean votingOpen, boolean resultsVisible, int maxTeamsToVote, boolean juryEnabled, String juryVotingMode) {
         String json;
         try {
-            json = MAPPER.writeValueAsString(new AdminEventRequest(name, eventDate, description, registrationsOpen, votingOpen, resultsVisible, maxTeamsToVote, juryEnabled));
+            json = MAPPER.writeValueAsString(new AdminEventRequest(name, eventDate, description, registrationsOpen, votingOpen, resultsVisible, maxTeamsToVote, juryEnabled, juryVotingMode));
         } catch (JsonProcessingException e) {
             throw new ApiClientException("No se pudo preparar el evento");
         }

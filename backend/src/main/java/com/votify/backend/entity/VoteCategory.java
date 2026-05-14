@@ -4,5 +4,6 @@ package com.votify.backend.entity;
 public enum VoteCategory {
     PUBLIC_WINNER,
     JURY_WINNER,
-    JURY_TECHNICAL
+    JURY_TECHNICAL,
+    JURY_MULTICRITERIA
 }

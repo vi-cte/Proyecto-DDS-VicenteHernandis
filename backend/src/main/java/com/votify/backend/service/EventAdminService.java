@@ -4,6 +4,8 @@ import com.votify.backend.dto.AdminEventRequest;
 import com.votify.backend.dto.AdminEventResponse;
 import com.votify.backend.dto.ResultItemResponse;
 import com.votify.backend.entity.EventEntity;
+import com.votify.backend.entity.JuryVotingMode;
+import com.votify.backend.entity.UserRole;
 import com.votify.backend.exception.ApiException;
 import com.votify.backend.repository.EventJpaRepository;
 import com.votify.backend.repository.ParticipantJpaRepository;
@@ -55,6 +57,7 @@ public class EventAdminService {
         event.setResultsVisible(request.resultsVisible());
         event.setMaxTeamsToVote(request.maxTeamsToVote());
         event.setJuryEnabled(request.juryEnabled());
+        event.setJuryVotingMode(request.juryVotingMode() == null ? JuryVotingMode.SIMPLE : request.juryVotingMode());
         event.setActive(true);
         return toResponse(eventRepository.save(event));
     }
@@ -74,6 +77,11 @@ public class EventAdminService {
         if (request.name() != null && !request.name().isBlank()) {
             event.setName(request.name().trim());
         }
+        JuryVotingMode requestedMode = request.juryVotingMode() == null ? JuryVotingMode.SIMPLE : request.juryVotingMode();
+        if (event.getJuryVotingMode() != requestedMode
+                && voteRepository.existsByEventAndVoterRole(event, UserRole.JURY)) {
+            throw new ApiException(HttpStatus.CONFLICT, "No puedes cambiar el modo del jurado cuando ya hay votos del jurado registrados");
+        }
         event.setEventDate(request.eventDate());
         event.setDescription(trimToNull(request.description()));
         event.setRegistrationsOpen(request.registrationsOpen());
@@ -81,6 +89,7 @@ public class EventAdminService {
         event.setResultsVisible(request.resultsVisible());
         event.setMaxTeamsToVote(request.maxTeamsToVote());
         event.setJuryEnabled(request.juryEnabled());
+        event.setJuryVotingMode(requestedMode);
         return toResponse(eventRepository.save(event));
     }
 
@@ -99,6 +108,7 @@ public class EventAdminService {
                 event.isResultsVisible(),
                 event.getMaxTeamsToVote(),
                 event.isJuryEnabled(),
+                event.getJuryVotingMode(),
                 event.isActive(),
                 voteRepository.countByEvent(event),
                 participantRepository.countByEvent(event),

@@ -13,6 +13,7 @@ public class AdminEventResponse {
     private boolean resultsVisible;
     private int maxTeamsToVote;
     private boolean juryEnabled;
+    private String juryVotingMode;
     private boolean active;
     private long totalVotes;
     private long participants;
@@ -36,6 +37,8 @@ public class AdminEventResponse {
     public void setMaxTeamsToVote(int maxTeamsToVote) { this.maxTeamsToVote = maxTeamsToVote; }
     public boolean isJuryEnabled() { return juryEnabled; }
     public void setJuryEnabled(boolean juryEnabled) { this.juryEnabled = juryEnabled; }
+    public String getJuryVotingMode() { return juryVotingMode; }
+    public void setJuryVotingMode(String juryVotingMode) { this.juryVotingMode = juryVotingMode; }
     public boolean isActive() { return active; }
     public void setActive(boolean active) { this.active = active; }
     public long getTotalVotes() { return totalVotes; }

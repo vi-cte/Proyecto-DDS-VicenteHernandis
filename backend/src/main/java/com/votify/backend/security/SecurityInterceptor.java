@@ -3,8 +3,6 @@ package com.votify.backend.security;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.votify.backend.exception.ErrorResponse;
 import com.votify.backend.repository.UserRepository;
-import com.votify.backend.service.EventSettingsService;
-import com.votify.backend.service.VoteService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,20 +21,14 @@ public class SecurityInterceptor implements HandlerInterceptor {
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private final UserRepository userRepository;
-    private final EventSettingsService eventSettingsService;
-    private final VoteService voteService;
     private final String adminPassword;
 
     // Inyecta dependencias para validar usuarios, ajustes del evento y contraseña admin.
     public SecurityInterceptor(
             UserRepository userRepository,
-            EventSettingsService eventSettingsService,
-            VoteService voteService,
             @Value("${votify.admin.password:admin123}") String adminPassword
     ) {
         this.userRepository = userRepository;
-        this.eventSettingsService = eventSettingsService;
-        this.voteService = voteService;
         this.adminPassword = adminPassword;
     }
 
@@ -89,11 +81,6 @@ public class SecurityInterceptor implements HandlerInterceptor {
             return false;
         }
         return "POST".equalsIgnoreCase(method) || "GET".equalsIgnoreCase(method);
-    }
-
-    // Indica si la ruta de resultados requiere visibilidad habilitada.
-    private boolean requiresVisibleResults(String path, String method) {
-        return "/api/results".equals(path) && "GET".equalsIgnoreCase(method);
     }
 
     // Valida la contraseña administrativa recibida por cabecera.

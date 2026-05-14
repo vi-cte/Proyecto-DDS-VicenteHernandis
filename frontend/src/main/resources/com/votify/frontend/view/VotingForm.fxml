@@ -5,6 +5,8 @@
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.TextArea?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.BorderPane?>
@@ -108,16 +110,27 @@
             </StackPane>
             <VBox fx:id="juryVotingBox" managed="false" spacing="16.0" styleClass="summary-card" visible="false">
                <children>
-                  <VBox spacing="6.0">
+                  <VBox fx:id="jurySimpleBox" managed="false" spacing="6.0" visible="false">
                      <children>
                         <Label styleClass="summary-caption" text="Ganador del jurado" />
                         <ComboBox fx:id="juryWinnerComboBox" maxWidth="1.7976931348623157E308" styleClass="input-field" />
-                     </children>
-                  </VBox>
-                  <VBox spacing="6.0">
-                     <children>
+                        <TextArea fx:id="juryWinnerCommentArea" prefRowCount="3" promptText="Añade un comentario para este equipo..." styleClass="vote-comment-area" wrapText="true" />
                         <Label styleClass="summary-caption" text="Mención técnica del jurado" />
                         <ComboBox fx:id="juryTechnicalComboBox" maxWidth="1.7976931348623157E308" styleClass="input-field" />
+                        <TextArea fx:id="juryTechnicalCommentArea" prefRowCount="3" promptText="Añade un comentario para este equipo..." styleClass="vote-comment-area" wrapText="true" />
+                     </children>
+                  </VBox>
+                  <VBox fx:id="juryMulticriteriaBox" managed="false" spacing="14.0" visible="false">
+                     <children>
+                        <VBox spacing="6.0">
+                           <children>
+                              <Label styleClass="summary-caption" text="Selecciona el equipo a evaluar" />
+                              <ComboBox fx:id="juryTeamComboBox" maxWidth="1.7976931348623157E308" styleClass="input-field" />
+                           </children>
+                        </VBox>
+                        <Separator />
+                        <VBox fx:id="juryCriteriaContainer" spacing="12.0" />
+                        <TextArea fx:id="juryMulticriteriaCommentArea" prefRowCount="4" promptText="Añade un comentario para este equipo..." styleClass="vote-comment-area" wrapText="true" />
                      </children>
                   </VBox>
                </children>

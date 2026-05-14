@@ -1,5 +1,10 @@
 package com.votify.backend.dto;
 
-// Configuración necesaria para limitar el número de equipos votables.
-public record VoteSettingsResponse(int maxTeamsToVote) {
+import com.votify.backend.entity.JuryVotingMode;
+
+// Configuración necesaria para renderizar la experiencia de votación.
+public record VoteSettingsResponse(
+        int maxTeamsToVote,
+        JuryVotingMode juryVotingMode
+) {
 }

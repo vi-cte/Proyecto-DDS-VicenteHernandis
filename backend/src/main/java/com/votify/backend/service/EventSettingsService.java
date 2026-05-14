@@ -3,6 +3,8 @@ package com.votify.backend.service;
 import com.votify.backend.dto.EventSettingsDto;
 import com.votify.backend.entity.EventEntity;
 import com.votify.backend.entity.EventSettingsEntity;
+import com.votify.backend.entity.JuryVotingMode;
+import com.votify.backend.entity.UserRole;
 import com.votify.backend.exception.ApiException;
 import com.votify.backend.repository.EventJpaRepository;
 import com.votify.backend.repository.EventSettingsRepository;
@@ -43,7 +45,8 @@ public class EventSettingsService {
                 entity.isRegistrationsOpen(),
                 entity.isVotingOpen(),
                 entity.isResultsVisible(),
-                entity.getMaxTeamsToVote()
+                entity.getMaxTeamsToVote(),
+                entity.getJuryVotingMode()
         );
     }
 
@@ -55,10 +58,16 @@ public class EventSettingsService {
         }
 
         EventEntity entity = getOrCreateActiveEvent();
+        JuryVotingMode requestedMode = settings.juryVotingMode() == null ? JuryVotingMode.SIMPLE : settings.juryVotingMode();
+        if (entity.getJuryVotingMode() != requestedMode
+                && voteRepository.existsByEventAndVoterRole(entity, UserRole.JURY)) {
+            throw new ApiException(HttpStatus.CONFLICT, "No puedes cambiar el modo del jurado cuando ya hay votos del jurado registrados");
+        }
         entity.setRegistrationsOpen(settings.registrationsOpen());
         entity.setVotingOpen(settings.votingOpen() && !settings.registrationsOpen());
         entity.setResultsVisible(settings.resultsVisible());
         entity.setMaxTeamsToVote(settings.maxTeamsToVote());
+        entity.setJuryVotingMode(requestedMode);
         eventRepository.save(entity);
     }
 
@@ -162,6 +171,7 @@ public class EventSettingsService {
         event.setResultsVisible(legacy.isResultsVisible());
         event.setMaxTeamsToVote(Math.max(1, legacy.getMaxTeamsToVote()));
         event.setJuryEnabled(true);
+        event.setJuryVotingMode(JuryVotingMode.SIMPLE);
         event.setActive(true);
         return eventRepository.save(event);
     }
@@ -173,6 +183,9 @@ public class EventSettingsService {
             participantRepository.save(participant);
         });
         voteRepository.findAllByEventIsNull().forEach(vote -> {
+            if (vote == null) {
+                return;
+            }
             vote.setEvent(event);
             voteRepository.save(vote);
         });

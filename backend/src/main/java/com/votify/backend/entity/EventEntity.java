@@ -2,6 +2,8 @@ package com.votify.backend.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -41,6 +43,10 @@ public class EventEntity {
     @Column(name = "jury_enabled", nullable = false)
     private boolean juryEnabled;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "jury_voting_mode", nullable = false, length = 40)
+    private JuryVotingMode juryVotingMode = JuryVotingMode.SIMPLE;
+
     @Column(name = "active", nullable = false)
     private boolean active;
 
@@ -61,6 +67,8 @@ public class EventEntity {
     public void setMaxTeamsToVote(int maxTeamsToVote) { this.maxTeamsToVote = maxTeamsToVote; }
     public boolean isJuryEnabled() { return juryEnabled; }
     public void setJuryEnabled(boolean juryEnabled) { this.juryEnabled = juryEnabled; }
+    public JuryVotingMode getJuryVotingMode() { return juryVotingMode == null ? JuryVotingMode.SIMPLE : juryVotingMode; }
+    public void setJuryVotingMode(JuryVotingMode juryVotingMode) { this.juryVotingMode = juryVotingMode == null ? JuryVotingMode.SIMPLE : juryVotingMode; }
     public boolean isActive() { return active; }
     public void setActive(boolean active) { this.active = active; }
 }

@@ -43,6 +43,15 @@ public class VoteEntity {
     @Column(name = "vote_category")
     private VoteCategory voteCategory = VoteCategory.PUBLIC_WINNER;
 
+    @Column(name = "criterion_key", length = 120)
+    private String criterionKey;
+
+    @Column(name = "score_value")
+    private Integer scoreValue;
+
+    @Column(name = "comment_text", columnDefinition = "TEXT")
+    private String commentText;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -105,6 +114,36 @@ public class VoteEntity {
     // Asigna la categoría del voto.
     public void setVoteCategory(VoteCategory voteCategory) {
         this.voteCategory = voteCategory == null ? VoteCategory.PUBLIC_WINNER : voteCategory;
+    }
+
+    // Devuelve el criterio puntuado, si existe.
+    public String getCriterionKey() {
+        return criterionKey;
+    }
+
+    // Asigna el criterio puntuado.
+    public void setCriterionKey(String criterionKey) {
+        this.criterionKey = criterionKey;
+    }
+
+    // Devuelve la puntuacion asociada al voto, si existe.
+    public Integer getScoreValue() {
+        return scoreValue;
+    }
+
+    // Asigna la puntuacion asociada al voto.
+    public void setScoreValue(Integer scoreValue) {
+        this.scoreValue = scoreValue;
+    }
+
+    // Devuelve el comentario opcional asociado al voto.
+    public String getCommentText() {
+        return commentText;
+    }
+
+    // Asigna el comentario opcional asociado al voto.
+    public void setCommentText(String commentText) {
+        this.commentText = commentText;
     }
 
     // Devuelve la fecha de creación del voto.

@@ -5,6 +5,7 @@ import com.votify.frontend.exception.ApiClientException;
 import com.votify.frontend.ui.AlertHelper;
 import javafx.fxml.FXML;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
@@ -19,6 +20,7 @@ public class CreateEventDialogController {
     @FXML private CheckBox registrationsToggle;
     @FXML private CheckBox votingToggle;
     @FXML private CheckBox juryToggle;
+    @FXML private ComboBox<String> juryVotingModeComboBox;
     @FXML private TextField maxVotesField;
     @FXML private Label registrationsLabel;
     @FXML private Label votingLabel;
@@ -35,6 +37,12 @@ public class CreateEventDialogController {
     }
 
     @FXML
+    private void initialize() {
+        juryVotingModeComboBox.getItems().setAll("SIMPLE", "MULTICRITERIA");
+        juryVotingModeComboBox.setValue("SIMPLE");
+    }
+
+    @FXML
     private void createEvent() {
         try {
             int maxVotes = Integer.parseInt(maxVotesField.getText().trim());
@@ -47,7 +55,8 @@ public class CreateEventDialogController {
                     votingToggle.isSelected(),
                     false,
                     maxVotes,
-                    juryToggle.isSelected()
+                    juryToggle.isSelected(),
+                    normalizeMode(juryVotingModeComboBox.getValue())
             );
             ((Stage) nameField.getScene().getWindow()).close();
         } catch (NumberFormatException e) {
@@ -55,5 +64,12 @@ public class CreateEventDialogController {
         } catch (ApiClientException e) {
             AlertHelper.showError(e.getMessage());
         }
+    }
+
+    private String normalizeMode(String mode) {
+        if (mode == null || mode.isBlank()) {
+            return "SIMPLE";
+        }
+        return mode.trim().toUpperCase(java.util.Locale.ROOT);
     }
 }

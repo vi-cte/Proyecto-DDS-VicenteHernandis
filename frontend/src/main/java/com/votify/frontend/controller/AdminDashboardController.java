@@ -15,6 +15,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
@@ -95,7 +96,7 @@ public class AdminDashboardController {
             empty.getStyleClass().add("results-empty");
             body.getChildren().add(empty);
         } else {
-            long total = Math.max(1, event.getTotalVotes());
+            long total = Math.max(1, ranking.stream().mapToLong(ResultItemResponse::getVotes).sum());
             for (ResultItemResponse item : ranking) {
                 body.getChildren().add(rankRow(item, total));
             }
@@ -134,6 +135,9 @@ public class AdminDashboardController {
         results.setSelected(event.isResultsVisible());
         CheckBox jury = new CheckBox("Jurado habilitado");
         jury.setSelected(event.isJuryEnabled());
+        ComboBox<String> juryMode = new ComboBox<>();
+        juryMode.getItems().setAll("SIMPLE", "MULTICRITERIA");
+        juryMode.setValue(normalizeMode(event.getJuryVotingMode()));
         TextField maxVotes = new TextField(Integer.toString(event.getMaxTeamsToVote()));
         maxVotes.setPrefWidth(90);
 
@@ -156,8 +160,10 @@ public class AdminDashboardController {
         grid.add(voting, 0, 1, 2, 1);
         grid.add(results, 0, 2, 2, 1);
         grid.add(jury, 0, 3, 2, 1);
-        grid.add(new Label("Votos por persona"), 0, 4);
-        grid.add(maxVotes, 1, 4);
+        grid.add(new Label("Modo del jurado"), 0, 4);
+        grid.add(juryMode, 1, 4);
+        grid.add(new Label("Votos por persona"), 0, 5);
+        grid.add(maxVotes, 1, 5);
         dialog.getDialogPane().setContent(grid);
 
         dialog.setResultConverter(button -> {
@@ -175,7 +181,8 @@ public class AdminDashboardController {
                         voting.isSelected(),
                         results.isSelected(),
                         max,
-                        jury.isSelected()
+                        jury.isSelected(),
+                        normalizeMode(juryMode.getValue())
                 );
                 return true;
             } catch (NumberFormatException e) {
@@ -250,5 +257,12 @@ public class AdminDashboardController {
         } catch (IOException e) {
             AlertHelper.showError(e.getMessage());
         }
+    }
+
+    private String normalizeMode(String mode) {
+        if (mode == null || mode.isBlank()) {
+            return "SIMPLE";
+        }
+        return mode.trim().toUpperCase(java.util.Locale.ROOT);
     }
 }

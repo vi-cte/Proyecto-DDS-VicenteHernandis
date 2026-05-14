@@ -1,5 +1,7 @@
 package com.votify.backend.dto;
 
+import com.votify.backend.entity.JuryVotingMode;
+
 import java.time.LocalDate;
 
 // Petición para crear un evento desde administración.
@@ -11,6 +13,7 @@ public record AdminEventRequest(
         boolean votingOpen,
         boolean resultsVisible,
         int maxTeamsToVote,
-        boolean juryEnabled
+        boolean juryEnabled,
+        JuryVotingMode juryVotingMode
 ) {
 }

@@ -10,6 +10,7 @@ public class ResultsResponse {
     private List<ResultItemResponse> publicResults;
     private long totalJuryVotes;
     private List<ResultItemResponse> juryResults;
+    private MyTeamResultsResponse myTeam;
 
     // Constructor vacío requerido por Jackson.
     public ResultsResponse() {
@@ -73,5 +74,13 @@ public class ResultsResponse {
     // Actualiza el ranking de ganadores del jurado.
     public void setJuryResults(List<ResultItemResponse> juryResults) {
         this.juryResults = juryResults;
+    }
+
+    public MyTeamResultsResponse getMyTeam() {
+        return myTeam;
+    }
+
+    public void setMyTeam(MyTeamResultsResponse myTeam) {
+        this.myTeam = myTeam;
     }
 }

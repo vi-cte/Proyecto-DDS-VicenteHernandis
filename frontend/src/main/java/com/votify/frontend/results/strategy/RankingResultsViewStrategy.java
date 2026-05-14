@@ -44,7 +44,7 @@ public class RankingResultsViewStrategy implements ResultsViewStrategy {
 
         if (!data.juryRanking().isEmpty()) {
             container.getChildren().add(sectionTitle("Ganadores del jurado"));
-            long totalJuryVotes = Math.max(1, data.response().getTotalJuryVotes());
+            long totalJuryVotes = Math.max(1, data.juryRanking().stream().mapToLong(ResultItemResponse::getVotes).sum());
             for (int i = 0; i < data.juryRanking().size(); i++) {
                 ResultItemResponse item = data.juryRanking().get(i);
                 container.getChildren().add(rankCard(item, i + 1, totalJuryVotes));

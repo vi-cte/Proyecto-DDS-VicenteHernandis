@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.VBox?>
@@ -52,6 +53,11 @@
                 <TextField fx:id="maxVotesField" text="1" prefWidth="70.0" styleClass="settings-number-field" />
                 <Label text="voto" styleClass="settings-subtitle" />
             </HBox>
+        </VBox>
+
+        <VBox spacing="8.0" styleClass="settings-field-section">
+            <Label text="Modo de votación del jurado" styleClass="settings-label" />
+            <ComboBox fx:id="juryVotingModeComboBox" maxWidth="1.7976931348623157E308" styleClass="input-field" />
         </VBox>
 
         <VBox spacing="10.0" styleClass="settings-reset-section">

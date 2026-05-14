@@ -8,6 +8,7 @@ import com.votify.frontend.ui.AlertHelper;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Alert;
@@ -28,6 +29,7 @@ public class SettingsFormController {
     @FXML private Label votingStatusLabel;
     @FXML private Label resultsStatusLabel;
     @FXML private TextField maxVotesField;
+    @FXML private ComboBox<String> juryVotingModeComboBox;
     @FXML private Button resetButton;
 
     @FXML
@@ -35,11 +37,13 @@ public class SettingsFormController {
     private void initialize() {
         loadingSettings = true;
         try {
+            juryVotingModeComboBox.getItems().setAll("SIMPLE", "MULTICRITERIA");
             EventSettingsResponse settings = apiClient.getAdminSettings();
             registrationToggle.setSelected(settings.isRegistrationsOpen());
             votingToggle.setSelected(settings.isVotingOpen());
             if (resultsToggle != null) resultsToggle.setSelected(settings.isResultsVisible());
             maxVotesField.setText(String.valueOf(settings.getMaxTeamsToVote()));
+            juryVotingModeComboBox.setValue(normalizeMode(settings.getJuryVotingMode()));
             updateLabels();
         } catch (ApiClientException e) {
             AlertHelper.showWarning("Aviso: " + e.getMessage());
@@ -49,6 +53,11 @@ public class SettingsFormController {
 
         maxVotesField.focusedProperty().addListener((obs, wasFocused, isFocused) -> {
             if (!isFocused) {
+                saveSettings();
+            }
+        });
+        juryVotingModeComboBox.valueProperty().addListener((obs, oldValue, newValue) -> {
+            if (!loadingSettings) {
                 saveSettings();
             }
         });
@@ -107,7 +116,13 @@ public class SettingsFormController {
         try {
             int maxVotes = Integer.parseInt(maxVotesField.getText());
             boolean resVisible = resultsToggle != null && resultsToggle.isSelected();
-            apiClient.updateAdminSettings(registrationToggle.isSelected(), votingToggle.isSelected(), resVisible, maxVotes);
+            apiClient.updateAdminSettings(
+                    registrationToggle.isSelected(),
+                    votingToggle.isSelected(),
+                    resVisible,
+                    maxVotes,
+                    normalizeMode(juryVotingModeComboBox.getValue())
+            );
         } catch (NumberFormatException e) {
             AlertHelper.showError("El número de votos debe ser numérico.");
         } catch (ApiClientException e) {
@@ -138,5 +153,12 @@ public class SettingsFormController {
     // Cierra la pantalla de ajustes.
     private void close() {
         ((Stage) registrationToggle.getScene().getWindow()).close();
+    }
+
+    private String normalizeMode(String mode) {
+        if (mode == null || mode.isBlank()) {
+            return "SIMPLE";
+        }
+        return mode.trim().toUpperCase(java.util.Locale.ROOT);
     }
 }

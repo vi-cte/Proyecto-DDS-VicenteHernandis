@@ -1,7 +1,5 @@
 package com.votify.frontend.controller;
 
-import com.votify.frontend.client.AccessDecision;
-import com.votify.frontend.client.AccessTarget;
 import com.votify.frontend.client.ApiClient;
 import com.votify.frontend.exception.ApiClientException;
 import com.votify.frontend.navigation.SceneNavigator;
@@ -130,7 +128,7 @@ public class AccessController {
         if (selectedProfile != AccessProfile.USER) {
             showInlineError(selectedProfile == AccessProfile.JURY
                     ? "El jurado no puede registrarse desde esta pantalla."
-                    : "El acceso de administrador se implementará más adelante.");
+                    : "El administrador accede con contraseña, no mediante registro.");
             showLogin();
             return;
         }
@@ -327,7 +325,7 @@ public class AccessController {
         dialog.getDialogPane().getButtonTypes().addAll(okButtonType, ButtonType.CANCEL);
 
         PasswordField pwd = new PasswordField();
-        pwd.setPromptText("admin123");
+        pwd.setPromptText("Contraseña de administrador");
 
         VBox vbox = new VBox(10);
         vbox.getChildren().addAll(new Label("Introduce la contraseña de administrador:"), pwd);

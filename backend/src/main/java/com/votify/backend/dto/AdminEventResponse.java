@@ -1,5 +1,7 @@
 package com.votify.backend.dto;
 
+import com.votify.backend.entity.JuryVotingMode;
+
 import java.time.LocalDate;
 import java.util.List;
 
@@ -14,6 +16,7 @@ public record AdminEventResponse(
         boolean resultsVisible,
         int maxTeamsToVote,
         boolean juryEnabled,
+        JuryVotingMode juryVotingMode,
         boolean active,
         long totalVotes,
         long participants,

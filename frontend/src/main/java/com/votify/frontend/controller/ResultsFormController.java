@@ -19,10 +19,14 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -49,6 +53,24 @@ public class ResultsFormController {
 
     @FXML
     private StackPane resultsContent;
+
+    @FXML
+    private HBox myTeamCardBox;
+
+    @FXML
+    private Label myTeamNameLabel;
+
+    @FXML
+    private Label myTeamPositionLabel;
+
+    @FXML
+    private Label myTeamVotesLabel;
+
+    @FXML
+    private Label myTeamCommentsLabel;
+
+    @FXML
+    private Button viewCommentsButton;
 
     @FXML
     private Button rankingButton;
@@ -165,6 +187,16 @@ public class ResultsFormController {
     }
 
     @FXML
+    // Muestra la lista de comentarios del equipo del usuario autenticado.
+    private void showTeamComments() {
+        if (viewData == null) {
+            return;
+        }
+        resultsContent.setAlignment(Pos.TOP_CENTER);
+        resultsContent.getChildren().setAll(buildCommentsView());
+    }
+
+    @FXML
     // Vuelve al menú o a la pantalla de acceso según la sesión.
     private void closeResults() {
         try {
@@ -208,6 +240,19 @@ public class ResultsFormController {
         String publicWinner = data.winner() == null ? "Sin público" : data.winner().getTeamName();
         String juryWinner = data.juryWinner() == null ? "Sin jurado" : data.juryWinner().getTeamName();
         winnerLabel.setText(publicWinner + " / " + juryWinner);
+
+        boolean hasMyTeam = data.myTeam() != null && data.myTeam().getTeamName() != null && !data.myTeam().getTeamName().isBlank();
+        myTeamCardBox.setVisible(hasMyTeam);
+        myTeamCardBox.setManaged(hasMyTeam);
+        if (!hasMyTeam) {
+            return;
+        }
+        myTeamNameLabel.setText(data.myTeam().getTeamName());
+        myTeamPositionLabel.setText(data.myTeam().getPosition() <= 0 ? "-" : data.myTeam().getPosition() + "º");
+        myTeamVotesLabel.setText(Long.toString(data.myTeam().getVotes()));
+        myTeamCommentsLabel.setText(Long.toString(data.myTeam().getCommentsCount()));
+        boolean hasComments = data.myTeam().getComments() != null && !data.myTeam().getComments().isEmpty();
+        viewCommentsButton.setDisable(!hasComments);
     }
 
     // Renderiza la estrategia seleccionada y marca su botón.
@@ -238,6 +283,58 @@ public class ResultsFormController {
         Label label = new Label(message);
         label.getStyleClass().add("results-empty");
         return label;
+    }
+
+    // Construye la vista de comentarios del equipo del usuario.
+    private VBox buildCommentsView() {
+        VBox container = new VBox(18);
+        container.getStyleClass().add("results-ranking-list");
+
+        if (viewData.myTeam() == null || viewData.myTeam().getComments() == null || viewData.myTeam().getComments().isEmpty()) {
+            container.getChildren().add(errorLabel("Todavía no hay comentarios para tu equipo."));
+            return container;
+        }
+
+        for (var comment : viewData.myTeam().getComments()) {
+            VBox card = new VBox(10);
+            card.getStyleClass().add("team-comment-card");
+
+            Label author = new Label(comment.getAuthorLabel() == null ? "Votante anónimo" : comment.getAuthorLabel());
+            author.getStyleClass().add("vote-team-name");
+
+            Label time = new Label(formatRelativeTime(comment.getCreatedAt()));
+            time.getStyleClass().add("vote-team-subtitle");
+
+            Label content = new Label(comment.getComment());
+            content.getStyleClass().add("team-comment-text");
+            content.setWrapText(true);
+
+            card.getChildren().addAll(author, time, content);
+            container.getChildren().add(card);
+        }
+        return container;
+    }
+
+    // Devuelve una etiqueta relativa simple para la fecha del comentario.
+    private String formatRelativeTime(String rawInstant) {
+        if (rawInstant == null || rawInstant.isBlank()) {
+            return "Hace un momento";
+        }
+        try {
+            Duration duration = Duration.between(Instant.parse(rawInstant), Instant.now()).abs();
+            long minutes = Math.max(1, duration.toMinutes());
+            if (minutes < 60) {
+                return "Hace " + minutes + " min";
+            }
+            long hours = duration.toHours();
+            if (hours < 24) {
+                return "Hace " + hours + " horas";
+            }
+            long days = duration.toDays();
+            return "Hace " + days + " días";
+        } catch (Exception ignored) {
+            return "Comentario reciente";
+        }
     }
 
     // Devuelve el evento seleccionado.

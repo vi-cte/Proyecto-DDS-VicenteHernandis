@@ -6,6 +6,9 @@ import com.votify.frontend.dto.VoteResponse;
 import com.votify.frontend.dto.EventSettingsResponse;
 import com.votify.frontend.dto.AdminEventResponse;
 import com.votify.frontend.dto.EventResponse;
+import com.votify.frontend.dto.JuryCriterionScoreRequest;
+import com.votify.frontend.dto.VoteSelectionRequest;
+import com.votify.frontend.dto.VoteSettingsResponse;
 import java.util.List;
 
 // Contrato de comunicación entre el frontend y la API de Votify.
@@ -32,18 +35,25 @@ public interface VotifyApi {
     // Envía las selecciones de voto al backend.
     VoteResponse createVotes(List<String> selections);
     VoteResponse createVotes(Long eventId, List<String> selections);
+    VoteResponse createVotes(Long eventId, List<VoteSelectionRequest> selections, boolean withComments);
     // Envía las selecciones de voto del jurado al backend.
     VoteResponse createJuryVotes(String winnerSelection, String technicalSelection);
     VoteResponse createJuryVotes(Long eventId, String winnerSelection, String technicalSelection);
+    VoteResponse createJuryVotes(Long eventId, String winnerSelection, String winnerComment, String technicalSelection, String technicalComment);
+    VoteResponse createJuryMulticriteriaVotes(Long eventId, String teamSelection, List<JuryCriterionScoreRequest> criteriaScores);
+    VoteResponse createJuryMulticriteriaVotes(Long eventId, String teamSelection, List<JuryCriterionScoreRequest> criteriaScores, String comment);
     // Devuelve el límite máximo de equipos votables.
     int getVotingLimit();
     int getVotingLimit(Long eventId);
+    VoteSettingsResponse getVoteSettings();
+    VoteSettingsResponse getVoteSettings(Long eventId);
     // Descarga los resultados agregados.
     ResultsResponse getResults();
     ResultsResponse getResults(Long eventId);
     // Indica si el usuario actual ya ha votado.
     boolean hasVoted();
     boolean hasVoted(Long eventId);
+    List<String> getEvaluatedJuryTeams(Long eventId);
     // Devuelve el correo del usuario de la sesión actual.
     String getCurrentUserEmail();
     // Devuelve el rol del usuario de la sesión actual.
@@ -59,13 +69,13 @@ public interface VotifyApi {
     // Devuelve eventos seleccionables.
     List<EventResponse> getEvents();
     // Actualiza los ajustes administrativos del evento.
-    void updateAdminSettings(boolean registrationsOpen, boolean votingOpen, boolean resultsVisible, int maxTeamsToVote);
+    void updateAdminSettings(boolean registrationsOpen, boolean votingOpen, boolean resultsVisible, int maxTeamsToVote, String juryVotingMode);
     // Reinicia votos y participantes del evento.
     void resetEvent();
     // Devuelve eventos administrativos.
     List<AdminEventResponse> getAdminEvents();
     // Crea un evento administrativo.
-    AdminEventResponse createAdminEvent(String name, String eventDate, String description, boolean registrationsOpen, boolean votingOpen, boolean resultsVisible, int maxTeamsToVote, boolean juryEnabled);
+    AdminEventResponse createAdminEvent(String name, String eventDate, String description, boolean registrationsOpen, boolean votingOpen, boolean resultsVisible, int maxTeamsToVote, boolean juryEnabled, String juryVotingMode);
     // Actualiza un evento administrativo.
-    AdminEventResponse updateAdminEvent(Long id, String name, String eventDate, String description, boolean registrationsOpen, boolean votingOpen, boolean resultsVisible, int maxTeamsToVote, boolean juryEnabled);
+    AdminEventResponse updateAdminEvent(Long id, String name, String eventDate, String description, boolean registrationsOpen, boolean votingOpen, boolean resultsVisible, int maxTeamsToVote, boolean juryEnabled, String juryVotingMode);
 }

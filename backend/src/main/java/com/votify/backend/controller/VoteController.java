@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 // Controlador REST para operaciones de votacion en el API /api.
 @RestController
 @RequestMapping("/api")
@@ -40,8 +42,11 @@ public class VoteController {
 
     // GET /api/results: devuelve resultados agregados.
     @GetMapping("/results")
-    public ResultsResponse getResults(@RequestParam(required = false) Long eventId) {
-        return voteService.getResults(eventId);
+    public ResultsResponse getResults(
+            @RequestParam(required = false) Long eventId,
+            @RequestHeader(value = "X-User-ID", required = false) Long userId
+    ) {
+        return voteService.getResults(eventId, userId);
     }
 
     @GetMapping("/votes/settings")
@@ -57,5 +62,14 @@ public class VoteController {
             @RequestParam(required = false) Long eventId
     ) {
         return voteService.hasUserVoted(userId, eventId);
+    }
+
+    // GET /api/votes/evaluated-teams: equipos ya evaluados por el jurado multicriterio.
+    @GetMapping("/votes/evaluated-teams")
+    public List<String> getEvaluatedJuryTeams(
+            @RequestHeader("X-User-ID") Long userId,
+            @RequestParam(required = false) Long eventId
+    ) {
+        return voteService.getEvaluatedJuryTeamNames(userId, eventId);
     }
 }
