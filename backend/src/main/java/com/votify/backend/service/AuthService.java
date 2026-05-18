@@ -9,6 +9,7 @@ import com.votify.backend.entity.UserRole;
 import com.votify.backend.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
+import jakarta.annotation.PostConstruct;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -22,6 +23,15 @@ public class AuthService {
     // Inyecta el repositorio de usuarios.
     public AuthService(UserRepository userRepository) {
         this.userRepository = userRepository;
+    }
+
+    @PostConstruct
+    public void initDefaultAccounts() {
+        if (userRepository.findByEmail("jurado@jurado.com").isEmpty()) {
+            UserDirector director = new UserDirector(new DefaultUserBuilder());
+            User user = director.buildRegisteredUser("jurado@jurado.com", hashPassword("jurado123"), UserRole.JURY);
+            userRepository.save(user);
+        }
     }
 
     // Registra un usuario nuevo tras validar contraseña y correo único.

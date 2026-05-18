@@ -17,8 +17,8 @@
         <VBox spacing="24.0" styleClass="create-event-root">
             <children>
                 <VBox spacing="6.0">
-                    <Label styleClass="settings-title" text="Crear evento" />
-                    <Label styleClass="settings-subtitle" text="Configura una nueva votación y sus ajustes iniciales" />
+                    <Label fx:id="dialogTitle" styleClass="settings-title" text="Crear evento" />
+                    <Label fx:id="dialogSubtitle" styleClass="settings-subtitle" text="Configura una nueva votación y sus ajustes iniciales" />
                 </VBox>
                 <VBox spacing="8.0">
                     <Label styleClass="field-label" text="Nombre del evento" />
@@ -26,7 +26,7 @@
                 </VBox>
                 <VBox spacing="8.0">
                     <Label styleClass="field-label" text="Fecha del evento" />
-                    <DatePicker fx:id="eventDatePicker" maxWidth="1.7976931348623157E308" styleClass="input-field" />
+                    <DatePicker fx:id="eventDatePicker" maxWidth="1.7976931348623157E308" styleClass="input-field" style="-fx-control-inner-background: white; -fx-text-inner-color: black;" />
                 </VBox>
                 <VBox spacing="8.0">
                     <Label styleClass="field-label" text="Descripción" />
@@ -37,19 +37,19 @@
                         <Label styleClass="settings-label" text="Inscripciones" />
                         <Label fx:id="registrationsLabel" styleClass="settings-status" text="Abiertas" />
                     </VBox>
-                    <CheckBox fx:id="registrationsToggle" onAction="#updateLabels" selected="true" />
+                    <CheckBox fx:id="registrationsToggle" onAction="#onRegistrationToggle" selected="true" />
                 </HBox>
                 <HBox alignment="CENTER_LEFT" styleClass="settings-row">
                     <VBox HBox.hgrow="ALWAYS">
                         <Label styleClass="settings-label" text="Votaciones" />
                         <Label fx:id="votingLabel" styleClass="settings-status" text="Cerradas" />
                     </VBox>
-                    <CheckBox fx:id="votingToggle" onAction="#updateLabels" />
+                    <CheckBox fx:id="votingToggle" onAction="#onVotingToggle" />
                 </HBox>
                 <VBox spacing="8.0" styleClass="settings-field-section">
                     <Label styleClass="settings-label" text="Número de votos por persona" />
                     <HBox alignment="CENTER_LEFT" spacing="10.0">
-                        <TextField fx:id="maxVotesField" prefWidth="100.0" styleClass="settings-number-field" text="1" />
+                        <TextField fx:id="maxVotesField" prefWidth="100.0" styleClass="settings-number-field" text="1" style="-fx-control-inner-background: white; -fx-text-inner-color: black;" />
                         <Label styleClass="settings-subtitle" text="voto" />
                     </HBox>
                 </VBox>
@@ -60,11 +60,14 @@
                     </VBox>
                     <CheckBox fx:id="juryToggle" onAction="#updateLabels" />
                 </HBox>
-                <VBox spacing="8.0" styleClass="settings-field-section">
+                <VBox managed="${juryToggle.selected}" spacing="8.0" styleClass="settings-field-section" visible="${juryToggle.selected}">
                     <Label styleClass="settings-label" text="Modo de votación del jurado" />
                     <ComboBox fx:id="juryVotingModeComboBox" maxWidth="1.7976931348623157E308" styleClass="input-field" />
                 </VBox>
-                <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#createEvent" styleClass="danger-button" text="Crear evento" />
+                <VBox spacing="12.0">
+                    <Button fx:id="actionButton" defaultButton="true" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#createEvent" styleClass="submit-votes-button" text="Crear evento" />
+                    <Button fx:id="deleteButton" managed="false" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#deleteEvent" styleClass="danger-button" text="Eliminar evento" visible="false" />
+                </VBox>
             </children>
             <padding>
                 <Insets bottom="30.0" left="30.0" right="30.0" top="30.0" />

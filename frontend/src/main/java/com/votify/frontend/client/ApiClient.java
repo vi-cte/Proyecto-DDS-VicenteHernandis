@@ -74,14 +74,15 @@ public class ApiClient implements VotifyApi {
     @Override
     // Comprueba acceso a inscripción, votación o resultados según estado y sesión.
     public AccessDecision checkAccess(AccessTarget target) {
-        EventSettingsResponse settings = getEventSettings();
+        List<EventResponse> events = getEvents();
 
         return switch (target) {
             case REGISTRATION -> {
                 if (!isUserLoggedIn()) {
                     yield AccessDecision.deny("Debes iniciar sesión para registrar un equipo.");
                 }
-                if (!settings.isRegistrationsOpen()) {
+                boolean anyOpen = events.stream().anyMatch(EventResponse::isRegistrationsOpen);
+                if (!anyOpen) {
                     yield AccessDecision.deny("Las inscripciones están cerradas actualmente.");
                 }
                 yield AccessDecision.allow();
@@ -90,16 +91,29 @@ public class ApiClient implements VotifyApi {
                 if (!isUserLoggedIn()) {
                     yield AccessDecision.deny("Debes iniciar sesión para votar.");
                 }
-                if (!settings.isVotingOpen()) {
+                boolean anyOpen = false;
+                boolean canVote = false;
+                for (EventResponse event : events) {
+                    if (event.isVotingOpen()) {
+                        if (isCurrentUserJury() && !event.isJuryEnabled()) continue;
+                        anyOpen = true;
+                        if (!hasVoted(event.getId())) {
+                            canVote = true;
+                            break;
+                        }
+                    }
+                }
+                if (!anyOpen) {
                     yield AccessDecision.deny("Las votaciones están cerradas actualmente.");
                 }
-                if (hasVoted()) {
-                    yield AccessDecision.deny("Ya has votado en este evento.");
+                if (!canVote) {
+                    yield AccessDecision.deny("Ya has votado en todos los eventos disponibles.");
                 }
                 yield AccessDecision.allow();
             }
             case RESULTS -> {
-                if (!settings.isResultsVisible()) {
+                boolean anyVisible = events.stream().anyMatch(EventResponse::isResultsVisible);
+                if (!anyVisible) {
                     yield AccessDecision.deny("Los resultados están ocultos actualmente por el administrador.");
                 }
                 yield AccessDecision.allow();
@@ -771,6 +785,19 @@ public class ApiClient implements VotifyApi {
             return MAPPER.readValue(response.body(), AdminEventResponse.class);
         } catch (Exception e) {
             throw new ApiClientException("No se pudo procesar el evento actualizado");
+        }
+    }
+
+    // Elimina un evento desde administración.
+    public void deleteAdminEvent(Long id) {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(baseUrl + "/admin/events/" + id))
+                .header("X-Admin-Password", sessionManager.adminPasswordHeaderValue())
+                .DELETE()
+                .build();
+        HttpResponse<String> response = send(request);
+        if (response.statusCode() != 200) {
+            throw new ApiClientException(extractErrorMessage(response.body(), response.statusCode()));
         }
     }
 

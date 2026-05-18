@@ -114,10 +114,10 @@
                      <children>
                         <Label styleClass="summary-caption" text="Ganador del jurado" />
                         <ComboBox fx:id="juryWinnerComboBox" maxWidth="1.7976931348623157E308" styleClass="input-field" />
-                        <TextArea fx:id="juryWinnerCommentArea" prefRowCount="3" promptText="Añade un comentario para este equipo..." styleClass="vote-comment-area" wrapText="true" />
+                        <TextArea fx:id="juryWinnerCommentArea" prefRowCount="3" promptText="Añade un comentario para este equipo..." styleClass="vote-comment-area" wrapText="true" style="-fx-control-inner-background: white; -fx-text-inner-color: black;" />
                         <Label styleClass="summary-caption" text="Mención técnica del jurado" />
                         <ComboBox fx:id="juryTechnicalComboBox" maxWidth="1.7976931348623157E308" styleClass="input-field" />
-                        <TextArea fx:id="juryTechnicalCommentArea" prefRowCount="3" promptText="Añade un comentario para este equipo..." styleClass="vote-comment-area" wrapText="true" />
+                        <TextArea fx:id="juryTechnicalCommentArea" prefRowCount="3" promptText="Añade un comentario para este equipo..." styleClass="vote-comment-area" wrapText="true" style="-fx-control-inner-background: white; -fx-text-inner-color: black;" />
                      </children>
                   </VBox>
                   <VBox fx:id="juryMulticriteriaBox" managed="false" spacing="14.0" visible="false">
@@ -130,7 +130,7 @@
                         </VBox>
                         <Separator />
                         <VBox fx:id="juryCriteriaContainer" spacing="12.0" />
-                        <TextArea fx:id="juryMulticriteriaCommentArea" prefRowCount="4" promptText="Añade un comentario para este equipo..." styleClass="vote-comment-area" wrapText="true" />
+                        <TextArea fx:id="juryMulticriteriaCommentArea" prefRowCount="4" promptText="Añade un comentario para este equipo..." styleClass="vote-comment-area" wrapText="true" style="-fx-control-inner-background: white; -fx-text-inner-color: black;" />
                      </children>
                   </VBox>
                </children>

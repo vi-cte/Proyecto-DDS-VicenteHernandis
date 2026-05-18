@@ -277,9 +277,6 @@ public class VoteService {
     // Calcula y devuelve el resumen agregado y, si aplica, los comentarios del equipo del usuario autenticado.
     public ResultsResponse getResults(Long eventId, Long userId) {
         EventEntity event = eventSettingsService.getEventOrActive(eventId);
-        if (!event.isResultsVisible()) {
-            throw new ApiException(HttpStatus.FORBIDDEN, "Los resultados estan ocultos actualmente por el administrador");
-        }
         List<ResultItemResponse> publicResults = toResultItems(voteRepository.tallyByEventAndVoterRole(event, UserRole.PUBLIC));
         List<ResultItemResponse> juryResults = toResultItems(voteRepository.tallyByEventAndVoterRole(event, UserRole.JURY));
         long totalPublicVotes = voteRepository.countByEventAndVoterRole(event, UserRole.PUBLIC);

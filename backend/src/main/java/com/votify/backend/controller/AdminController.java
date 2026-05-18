@@ -63,6 +63,13 @@ public class AdminController {
         return ResponseEntity.ok(eventAdminService.update(id, request));
     }
 
+    @DeleteMapping("/events/{id}")
+    // Elimina un evento existente y todos sus datos asociados.
+    public ResponseEntity<Void> deleteEvent(@PathVariable Long id) {
+        eventAdminService.delete(id);
+        return ResponseEntity.ok().build();
+    }
+
     @PostMapping("/reset")
     // Borra votos y participantes manteniendo usuarios y configuración.
     public ResponseEntity<Void> resetEvent() {

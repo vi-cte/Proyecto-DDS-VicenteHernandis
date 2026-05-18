@@ -71,12 +71,12 @@
 .logout-button {
     -fx-background-color: #ffffff;
     -fx-text-fill: #162642;
-    -fx-font-size: 15px;
+    -fx-font-size: 16px;
     -fx-font-weight: 700;
-    -fx-padding: 13 18 13 18;
-    -fx-background-radius: 12;
+    -fx-padding: 15 22 15 22;
+    -fx-background-radius: 10;
     -fx-border-color: #d8e0ea;
-    -fx-border-radius: 12;
+    -fx-border-radius: 10;
     -fx-border-width: 1;
     -fx-content-display: left;
     -fx-graphic-text-gap: 7;
@@ -1213,10 +1213,10 @@
 .admin-primary-button {
     -fx-background-color: #2f7df6;
     -fx-text-fill: white;
-    -fx-font-size: 18px;
+    -fx-font-size: 16px;
     -fx-font-weight: 800;
     -fx-background-radius: 10;
-    -fx-padding: 16 24;
+    -fx-padding: 15 22;
     -fx-cursor: hand;
 }
 
@@ -1248,6 +1248,12 @@
     -fx-background-radius: 16;
     -fx-border-color: #e5e7eb;
     -fx-border-radius: 16;
+    -fx-cursor: hand;
+}
+
+.admin-event-card:hover {
+    -fx-translate-y: -2;
+    -fx-effect: dropshadow(gaussian, rgba(29, 54, 95, 0.12), 16, 0.12, 0, 4);
 }
 
 .admin-event-header {

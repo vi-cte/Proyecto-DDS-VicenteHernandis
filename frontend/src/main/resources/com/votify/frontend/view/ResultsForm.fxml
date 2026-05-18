@@ -103,6 +103,23 @@
                         </HBox>
                      </children>
                   </HBox>
+                  <HBox fx:id="descriptionCardBox" managed="false" spacing="22.0" visible="false">
+                     <children>
+                        <HBox HBox.hgrow="ALWAYS" spacing="16.0" styleClass="results-summary-card">
+                           <children>
+                              <VBox alignment="CENTER_LEFT" spacing="6.0" HBox.hgrow="ALWAYS">
+                                 <children>
+                                    <Label style="-fx-font-weight: 800; -fx-text-fill: #0f1f3d;" styleClass="results-stat-label" text="Descripción del evento" />
+                                    <Label fx:id="eventDescriptionLabel" styleClass="about-text" wrapText="true" />
+                                 </children>
+                              </VBox>
+                           </children>
+                           <padding>
+                              <Insets bottom="18.0" left="18.0" right="18.0" top="18.0" />
+                           </padding>
+                        </HBox>
+                     </children>
+                  </HBox>
                   <HBox fx:id="myTeamCardBox" managed="false" spacing="22.0" visible="false">
                      <children>
                         <HBox HBox.hgrow="ALWAYS" spacing="16.0" styleClass="results-summary-card, my-team-results-card">

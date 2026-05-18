@@ -54,6 +54,10 @@ public class AccessController {
         checkBackendConnection();
         updateProfileButtons();
 
+        if (actionButton != null) {
+            actionButton.setDefaultButton(true);
+        }
+
         // Listener para validar el correo al salir de la casilla (perder el foco)
         emailField.focusedProperty().addListener((observable, oldValue, newValue) -> {
             if (!newValue) { 
@@ -176,10 +180,20 @@ public class AccessController {
     private void handleAction() {
         if (errorLabel != null) errorLabel.setText("");
         String email = emailField.getText(), password = passwordField.getText();
+
+        if (email.isBlank() || password.isBlank()) { 
+            showInlineError(FormValidators.MSG_REQUIRED_FIELDS); 
+            return; 
+        }
+
         if (selectedProfile == AccessProfile.ADMIN) {
+            if (!"admin@admin.com".equalsIgnoreCase(email.trim())) {
+                showInlineError("Credenciales de administrador incorrectas.");
+                return;
+            }
             try {
                 if (!authProxy.authenticateAdmin(password)) {
-                    showInlineError("Contraseña de administrador incorrecta.");
+                    showInlineError("Credenciales de administrador incorrectas.");
                     return;
                 }
                 Stage stage = (Stage) actionButton.getScene().getWindow();
@@ -193,10 +207,6 @@ public class AccessController {
                 AlertHelper.showError("Error abriendo administración: " + e.getMessage());
             }
             return;
-        }
-        if (email.isBlank() || password.isBlank()) { 
-            showInlineError(FormValidators.MSG_REQUIRED_FIELDS); 
-            return; 
         }
 
         if (!FormValidators.isValidEmail(email)) {
@@ -324,24 +334,35 @@ public class AccessController {
         ButtonType okButtonType = new ButtonType("Aceptar", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(okButtonType, ButtonType.CANCEL);
 
+        TextField emailInput = new TextField();
+        emailInput.setPromptText("Correo de administrador");
+
         PasswordField pwd = new PasswordField();
         pwd.setPromptText("Contraseña de administrador");
 
         VBox vbox = new VBox(10);
-        vbox.getChildren().addAll(new Label("Introduce la contraseña de administrador:"), pwd);
+        vbox.getChildren().addAll(new Label("Introduce las credenciales de administrador:"), emailInput, pwd);
         dialog.getDialogPane().setContent(vbox);
 
-        Platform.runLater(pwd::requestFocus);
+        Platform.runLater(emailInput::requestFocus);
 
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == okButtonType) {
-                return pwd.getText();
+                if ("admin@admin.com".equalsIgnoreCase(emailInput.getText().trim())) {
+                    return pwd.getText();
+                } else {
+                    return "INVALID_EMAIL";
+                }
             }
             return null;
         });
 
         Optional<String> result = dialog.showAndWait();
         if (result.isPresent()) {
+            if ("INVALID_EMAIL".equals(result.get())) {
+                AlertHelper.showError("Correo de administrador incorrecto.");
+                return;
+            }
             if (authProxy.authenticateAdmin(result.get())) {
                 try {
                     Stage stage = new Stage();

@@ -41,6 +41,7 @@ public class ResultsFormController {
     );
 
     private ResultsViewData viewData;
+    private boolean fromAdminDashboard = false;
 
     @FXML
     private Label totalVotesLabel;
@@ -91,6 +92,27 @@ public class ResultsFormController {
     private ComboBox<EventResponse> eventComboBox;
 
     @FXML
+    private Label eventDescriptionLabel;
+
+    @FXML
+    private HBox descriptionCardBox;
+
+    // Indica si se ha navegado desde el panel de administración
+    public void setFromAdminDashboard(boolean fromAdmin) {
+        this.fromAdminDashboard = fromAdmin;
+        if (fromAdmin) {
+            if (userNameLabel != null) {
+                userNameLabel.setText("Administrador");
+            }
+            if (exitButton != null) {
+                exitButton.setVisible(true);
+                exitButton.setManaged(true);
+            }
+            loadResultEvents();
+        }
+    }
+
+    @FXML
     // Carga resultados y prepara las estrategias de visualización.
     private void initialize() {
         String currentUserEmail = apiClient.getCurrentUserEmail();
@@ -119,7 +141,7 @@ public class ResultsFormController {
     private void loadResultEvents() {
         try {
             List<EventResponse> events = apiClient.getEvents().stream()
-                    .filter(EventResponse::isResultsVisible)
+                    .filter(e -> fromAdminDashboard || e.isResultsVisible())
                     .toList();
             eventComboBox.setItems(FXCollections.observableArrayList(events));
             if (!events.isEmpty()) {
@@ -135,27 +157,55 @@ public class ResultsFormController {
         }
     }
 
+    // Preselecciona un evento específico cuando se navega desde el dashboard.
+    public void loadEvent(Long eventId) {
+        if (eventComboBox != null && eventId != null) {
+            eventComboBox.getItems().stream()
+                    .filter(e -> e.getId().equals(eventId))
+                    .findFirst()
+                    .ifPresent(e -> eventComboBox.getSelectionModel().select(e));
+        }
+    }
+
     // Recarga resultados y participantes del evento seleccionado.
     private void loadResultsData() {
+        EventResponse selectedEvent = eventComboBox == null ? null : eventComboBox.getValue();
+        if (descriptionCardBox != null && eventDescriptionLabel != null) {
+            if (selectedEvent != null && selectedEvent.getDescription() != null && !selectedEvent.getDescription().isBlank()) {
+                eventDescriptionLabel.setText(selectedEvent.getDescription());
+                descriptionCardBox.setVisible(true);
+                descriptionCardBox.setManaged(true);
+            } else {
+                descriptionCardBox.setVisible(false);
+                descriptionCardBox.setManaged(false);
+            }
+        }
+
         Long eventId = selectedEventId();
         try {
             ResultsResponse response = apiClient.getResults(eventId);
-            int participantCount = apiClient.getParticipantResponses(eventId).size();
-            List<ResultItemResponse> ranking = response.getResults() == null
-                    ? List.of()
-                    : response.getResults().stream()
-                    .sorted(Comparator.comparingLong(ResultItemResponse::getVotes).reversed())
-                    .toList();
-            List<ResultItemResponse> publicRanking = response.getPublicResults() == null || response.getPublicResults().isEmpty()
-                    ? ranking
-                    : response.getPublicResults().stream()
-                    .sorted(Comparator.comparingLong(ResultItemResponse::getVotes).reversed())
-                    .toList();
-            List<ResultItemResponse> juryRanking = response.getJuryResults() == null
-                    ? List.of()
-                    : response.getJuryResults().stream()
-                    .sorted(Comparator.comparingLong(ResultItemResponse::getVotes).reversed())
-                    .toList();
+            List<com.votify.frontend.dto.ParticipantResponse> allParticipants = apiClient.getParticipantResponses(eventId);
+            int participantCount = allParticipants.size();
+
+            List<ResultItemResponse> ranking = new java.util.ArrayList<>(response.getResults() == null ? List.of() : response.getResults());
+            List<ResultItemResponse> publicRanking = new java.util.ArrayList<>(response.getPublicResults() == null || response.getPublicResults().isEmpty() ? ranking : response.getPublicResults());
+            List<ResultItemResponse> juryRanking = new java.util.ArrayList<>(response.getJuryResults() == null ? List.of() : response.getJuryResults());
+
+            for (com.votify.frontend.dto.ParticipantResponse p : allParticipants) {
+                if (ranking.stream().noneMatch(r -> r.getTeamName().equals(p.getTeamName()))) {
+                    ranking.add(new ResultItemResponse(p.getTeamName(), 0L));
+                }
+                if (publicRanking.stream().noneMatch(r -> r.getTeamName().equals(p.getTeamName()))) {
+                    publicRanking.add(new ResultItemResponse(p.getTeamName(), 0L));
+                }
+                if (juryRanking.stream().noneMatch(r -> r.getTeamName().equals(p.getTeamName()))) {
+                    juryRanking.add(new ResultItemResponse(p.getTeamName(), 0L));
+                }
+            }
+
+            ranking.sort(Comparator.comparingLong(ResultItemResponse::getVotes).reversed());
+            publicRanking.sort(Comparator.comparingLong(ResultItemResponse::getVotes).reversed());
+            juryRanking.sort(Comparator.comparingLong(ResultItemResponse::getVotes).reversed());
 
             viewData = new ResultsViewData(response, publicRanking, juryRanking, participantCount);
             bindSummary(viewData);
@@ -200,6 +250,16 @@ public class ResultsFormController {
     // Vuelve al menú o a la pantalla de acceso según la sesión.
     private void closeResults() {
         try {
+            if (fromAdminDashboard) {
+                SceneNavigator.showScene(
+                        (Stage) resultsContent.getScene().getWindow(),
+                        "/com/votify/frontend/view/AdminDashboard.fxml",
+                        "/com/votify/frontend/view/MainMenu.css",
+                        "Votify - Administración"
+                );
+                return;
+            }
+
             String currentUserEmail = apiClient.getCurrentUserEmail();
             if (currentUserEmail == null || currentUserEmail.isBlank()) {
                 SceneNavigator.showScene(

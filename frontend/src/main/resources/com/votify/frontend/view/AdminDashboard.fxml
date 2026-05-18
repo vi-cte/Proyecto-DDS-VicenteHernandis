@@ -4,48 +4,86 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.SVGPath?>
 
 <BorderPane prefHeight="768.0" prefWidth="1365.0" styleClass="admin-root" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.votify.frontend.controller.AdminDashboardController">
     <top>
-        <HBox alignment="CENTER_LEFT" spacing="18.0" styleClass="admin-top">
+        <HBox alignment="CENTER_LEFT" prefHeight="100.0" spacing="18.0" styleClass="top-bar">
             <children>
-                <VBox spacing="10.0">
+                <VBox spacing="1.0" styleClass="brand-block">
                     <children>
-                        <Label styleClass="admin-title" text="Panel de Administración" />
-                        <Label styleClass="admin-subtitle" text="Monitorea votaciones en tiempo real y gestiona la configuración de eventos activos" />
+                        <HBox alignment="CENTER_LEFT" spacing="9.0">
+                            <children>
+                                <ImageView fitHeight="70.0" fitWidth="250.0" pickOnBounds="true" preserveRatio="true" styleClass="brand-logo">
+                                    <image>
+                                        <Image url="@Logo%20Votify.png" />
+                                    </image>
+                                </ImageView>
+                                <VBox managed="false" spacing="-1.0" visible="false">
+                                    <children>
+                                        <Label styleClass="brand-title" text="Votify" />
+                                        <Label styleClass="brand-subtitle" text="Empowering Participation" />
+                                    </children>
+                                </VBox>
+                            </children>
+                        </HBox>
                     </children>
                 </VBox>
                 <Region HBox.hgrow="ALWAYS" />
-                <Button mnemonicParsing="false" onAction="#showHistory" styleClass="admin-secondary-button" text="Histórico de Eventos" />
-                <Button mnemonicParsing="false" onAction="#openCreateEvent" styleClass="admin-primary-button" text="+  Nuevo Evento" />
-                <Button mnemonicParsing="false" onAction="#exit" styleClass="logout-button" text="Salir" />
+                <HBox alignment="CENTER_RIGHT" spacing="14.0">
+                    <children>
+                        <Button mnemonicParsing="false" onAction="#showHistory" styleClass="admin-secondary-button" text="Histórico de Eventos" />
+                        <Button mnemonicParsing="false" onAction="#openCreateEvent" styleClass="admin-primary-button" text="+  Nuevo Evento" />
+                        <Button mnemonicParsing="false" onAction="#exit" styleClass="logout-button" text="Cerrar sesión">
+                            <graphic>
+                                <SVGPath content="M7.3 5.5H11.3V7.1H8.9V16.9H11.3V18.5H7.3V5.5ZM12.8 8.0L17.8 12.0L12.8 16.0V13.5H9.9V10.5H12.8V8.0Z" styleClass="logout-icon" />
+                            </graphic>
+                        </Button>
+                    </children>
+                </HBox>
             </children>
             <padding>
-                <Insets bottom="26.0" left="22.0" right="22.0" top="26.0" />
+                <Insets bottom="16.0" left="30.0" right="38.0" top="16.0" />
             </padding>
         </HBox>
     </top>
     <center>
         <ScrollPane fitToWidth="true" hbarPolicy="NEVER" styleClass="screen-scroll">
             <content>
-                <VBox spacing="28.0" styleClass="admin-content">
+                <VBox spacing="38.0" styleClass="admin-content">
                     <children>
-                        <HBox alignment="CENTER_LEFT">
+                        <VBox spacing="13.0">
                             <children>
-                                <Label fx:id="eventsTitleLabel" styleClass="admin-section-title" text="Eventos Activos" />
-                                <Region HBox.hgrow="ALWAYS" />
-                                <Label styleClass="admin-live-label" text="●  Actualizando en tiempo real" />
+                                <Label styleClass="page-title" text="Panel de Administración" />
+                                <Label styleClass="page-subtitle" text="Monitorea votaciones en tiempo real y gestiona la configuración de eventos activos" wrapText="true" />
                             </children>
-                        </HBox>
-                        <FlowPane fx:id="eventsContainer" hgap="30.0" vgap="30.0" />
+                        </VBox>
+                        <VBox spacing="28.0">
+                            <children>
+                                <HBox alignment="CENTER_LEFT">
+                                    <children>
+                                        <Label fx:id="eventsTitleLabel" styleClass="admin-section-title" text="Eventos Activos" />
+                                        <Region HBox.hgrow="ALWAYS" />
+                                        <Label styleClass="admin-live-label" text="●  Actualizando en tiempo real" />
+                                    </children>
+                                </HBox>
+                                <ScrollPane fitToHeight="true" hbarPolicy="AS_NEEDED" styleClass="screen-scroll" vbarPolicy="NEVER">
+                                    <content>
+                                        <HBox fx:id="eventsContainer" spacing="30.0" />
+                                    </content>
+                                </ScrollPane>
+                            </children>
+                        </VBox>
                     </children>
                     <padding>
-                        <Insets bottom="30.0" left="22.0" right="22.0" top="20.0" />
+                        <Insets bottom="26.0" left="38.0" right="38.0" top="54.0" />
                     </padding>
                 </VBox>
             </content>

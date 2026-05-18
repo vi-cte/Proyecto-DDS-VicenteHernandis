@@ -11,6 +11,7 @@ import com.votify.backend.repository.EventJpaRepository;
 import com.votify.backend.repository.ParticipantJpaRepository;
 import com.votify.backend.repository.VoteJpaRepository;
 import com.votify.backend.repository.VoteTallyProjection;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,11 +24,13 @@ public class EventAdminService {
     private final EventJpaRepository eventRepository;
     private final ParticipantJpaRepository participantRepository;
     private final VoteJpaRepository voteRepository;
+    private final JdbcTemplate jdbcTemplate;
 
-    public EventAdminService(EventJpaRepository eventRepository, ParticipantJpaRepository participantRepository, VoteJpaRepository voteRepository) {
+    public EventAdminService(EventJpaRepository eventRepository, ParticipantJpaRepository participantRepository, VoteJpaRepository voteRepository, JdbcTemplate jdbcTemplate) {
         this.eventRepository = eventRepository;
         this.participantRepository = participantRepository;
         this.voteRepository = voteRepository;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     @Transactional(readOnly = true)
@@ -93,11 +96,30 @@ public class EventAdminService {
         return toResponse(eventRepository.save(event));
     }
 
+    @Transactional
+    // Elimina un evento y todos sus datos asociados.
+    public void delete(Long id) {
+        EventEntity event = eventRepository.findById(id)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "El evento no existe"));
+        jdbcTemplate.update("DELETE FROM votes WHERE event_id = ?", id);
+        jdbcTemplate.update("DELETE FROM participant_members WHERE participant_id IN (SELECT id FROM participants WHERE event_id = ?)", id);
+        jdbcTemplate.update("DELETE FROM participants WHERE event_id = ?", id);
+        eventRepository.delete(event);
+    }
+
     // Convierte entidad en DTO administrativo con ranking.
     private AdminEventResponse toResponse(EventEntity event) {
-        List<ResultItemResponse> ranking = voteRepository.tallyByEvent(event).stream()
+        List<ResultItemResponse> ranking = new java.util.ArrayList<>(voteRepository.tallyByEvent(event).stream()
                 .map(this::toResult)
-                .toList();
+                .toList());
+        
+        List<com.votify.backend.entity.ParticipantEntity> participants = participantRepository.findAllByEvent(event);
+        for (com.votify.backend.entity.ParticipantEntity p : participants) {
+            if (ranking.stream().noneMatch(r -> r.teamName().equals(p.getTeamName()))) {
+                ranking.add(new ResultItemResponse(p.getTeamName(), 0L));
+            }
+        }
+
         return new AdminEventResponse(
                 event.getId(),
                 event.getName(),

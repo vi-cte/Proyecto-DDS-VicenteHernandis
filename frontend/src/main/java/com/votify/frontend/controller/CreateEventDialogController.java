@@ -4,16 +4,21 @@ import com.votify.frontend.client.ApiClient;
 import com.votify.frontend.exception.ApiClientException;
 import com.votify.frontend.ui.AlertHelper;
 import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
+import javafx.scene.control.Button;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 
 // Controlador del formulario de creación de evento.
 public class CreateEventDialogController {
+    @FXML private Label dialogTitle;
+    @FXML private Label dialogSubtitle;
     @FXML private TextField nameField;
     @FXML private DatePicker eventDatePicker;
     @FXML private TextArea descriptionArea;
@@ -25,12 +30,30 @@ public class CreateEventDialogController {
     @FXML private Label registrationsLabel;
     @FXML private Label votingLabel;
     @FXML private Label juryLabel;
+    @FXML private Button actionButton;
+    @FXML private Button deleteButton;
+
+    private Long editEventId = null;
+    private boolean editResultsVisible = false;
 
     @FXML
-    private void updateLabels() {
+    private void onRegistrationToggle() {
         if (registrationsToggle.isSelected()) {
             votingToggle.setSelected(false);
         }
+        updateLabels();
+    }
+
+    @FXML
+    private void onVotingToggle() {
+        if (votingToggle.isSelected()) {
+            registrationsToggle.setSelected(false);
+        }
+        updateLabels();
+    }
+
+    @FXML
+    private void updateLabels() {
         registrationsLabel.setText(registrationsToggle.isSelected() ? "Abiertas" : "Cerradas");
         votingLabel.setText(votingToggle.isSelected() ? "Abiertas" : "Cerradas");
         juryLabel.setText(juryToggle.isSelected() ? "Activado" : "Desactivado");
@@ -42,28 +65,95 @@ public class CreateEventDialogController {
         juryVotingModeComboBox.setValue("SIMPLE");
     }
 
+    // Carga los datos de un evento existente para editarlo.
+    public void loadEvent(com.votify.frontend.dto.AdminEventResponse event) {
+        editEventId = event.getId();
+        editResultsVisible = event.isResultsVisible();
+        
+        if (dialogTitle != null) dialogTitle.setText("Ajustes del evento");
+        if (dialogSubtitle != null) dialogSubtitle.setText("Modifica la configuración de este evento");
+        if (actionButton != null) actionButton.setText("Guardar cambios");
+        
+        if (deleteButton != null) {
+            deleteButton.setVisible(true);
+            deleteButton.setManaged(true);
+        }
+        
+        nameField.setText(event.getName());
+        if (event.getEventDate() != null) {
+            try {
+                eventDatePicker.setValue(java.time.LocalDate.parse(event.getEventDate()));
+            } catch (Exception ignored) {}
+        }
+        descriptionArea.setText(event.getDescription() != null ? event.getDescription() : "");
+        registrationsToggle.setSelected(event.isRegistrationsOpen());
+        votingToggle.setSelected(event.isVotingOpen());
+        maxVotesField.setText(String.valueOf(event.getMaxTeamsToVote()));
+        juryToggle.setSelected(event.isJuryEnabled());
+        juryVotingModeComboBox.setValue(normalizeMode(event.getJuryVotingMode()));
+        
+        updateLabels();
+    }
+
     @FXML
     private void createEvent() {
         try {
             int maxVotes = Integer.parseInt(maxVotesField.getText().trim());
             String date = eventDatePicker.getValue() == null ? null : eventDatePicker.getValue().toString();
-            ApiClient.getInstance().createAdminEvent(
-                    nameField.getText(),
-                    date,
-                    descriptionArea.getText(),
-                    registrationsToggle.isSelected(),
-                    votingToggle.isSelected(),
-                    false,
-                    maxVotes,
-                    juryToggle.isSelected(),
-                    normalizeMode(juryVotingModeComboBox.getValue())
-            );
+            
+            if (editEventId != null) {
+                ApiClient.getInstance().updateAdminEvent(
+                        editEventId,
+                        nameField.getText(),
+                        date,
+                        descriptionArea.getText(),
+                        registrationsToggle.isSelected(),
+                        votingToggle.isSelected(),
+                        editResultsVisible, // Mantenemos la visibilidad de resultados que ya tenía
+                        maxVotes,
+                        juryToggle.isSelected(),
+                        normalizeMode(juryVotingModeComboBox.getValue())
+                );
+            } else {
+                ApiClient.getInstance().createAdminEvent(
+                        nameField.getText(),
+                        date,
+                        descriptionArea.getText(),
+                        registrationsToggle.isSelected(),
+                        votingToggle.isSelected(),
+                        false,
+                        maxVotes,
+                        juryToggle.isSelected(),
+                        normalizeMode(juryVotingModeComboBox.getValue())
+                );
+            }
             ((Stage) nameField.getScene().getWindow()).close();
         } catch (NumberFormatException e) {
             AlertHelper.showError("El número de votos debe ser numérico.");
         } catch (ApiClientException e) {
             AlertHelper.showError(e.getMessage());
         }
+    }
+
+    @FXML
+    private void deleteEvent() {
+        if (editEventId == null) return;
+        
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Confirmar eliminación");
+        alert.setHeaderText("Eliminar evento");
+        alert.setContentText("¿Estás seguro de que deseas eliminar este evento? Se perderán todos los datos, participantes y votos. Esta acción no se puede deshacer.");
+        
+        alert.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.OK) {
+                try {
+                    ApiClient.getInstance().deleteAdminEvent(editEventId);
+                    ((Stage) nameField.getScene().getWindow()).close();
+                } catch (ApiClientException e) {
+                    AlertHelper.showError(e.getMessage());
+                }
+            }
+        });
     }
 
     private String normalizeMode(String mode) {

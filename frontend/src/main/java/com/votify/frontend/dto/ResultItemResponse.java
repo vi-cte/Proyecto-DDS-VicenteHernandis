@@ -9,6 +9,12 @@ public class ResultItemResponse {
     public ResultItemResponse() {
     }
 
+    // Constructor con parámetros
+    public ResultItemResponse(String teamName, long votes) {
+        this.teamName = teamName;
+        this.votes = votes;
+    }
+
     // Devuelve el nombre del equipo.
     public String getTeamName() {
         return teamName;
