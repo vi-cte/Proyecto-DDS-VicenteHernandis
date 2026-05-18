@@ -122,38 +122,43 @@
                   </HBox>
                   <HBox fx:id="myTeamCardBox" managed="false" spacing="22.0" visible="false">
                      <children>
-                        <HBox HBox.hgrow="ALWAYS" spacing="16.0" styleClass="results-summary-card, my-team-results-card">
+                        <VBox HBox.hgrow="ALWAYS" spacing="16.0" styleClass="results-summary-card, my-team-results-card">
                            <children>
-                              <VBox alignment="CENTER_LEFT" spacing="6.0" HBox.hgrow="ALWAYS">
+                              <HBox alignment="CENTER_LEFT" spacing="16.0">
                                  <children>
-                                    <Label styleClass="results-stat-label" text="Resultados de mi equipo" />
-                                    <Label fx:id="myTeamNameLabel" styleClass="results-stat-winner" text="Sin equipo" />
+                                    <VBox alignment="CENTER_LEFT" spacing="6.0" HBox.hgrow="ALWAYS">
+                                       <children>
+                                          <Label styleClass="results-stat-label" text="Resultados de mi equipo" />
+                                          <Label fx:id="myTeamNameLabel" styleClass="results-stat-winner" text="Sin equipo" />
+                                       </children>
+                                    </VBox>
+                                    <VBox alignment="CENTER" spacing="6.0">
+                                       <children>
+                                          <Label styleClass="results-stat-label" text="Posición" />
+                                          <Label fx:id="myTeamPositionLabel" styleClass="results-stat-value" text="0" />
+                                       </children>
+                                    </VBox>
+                                    <VBox alignment="CENTER" spacing="6.0">
+                                       <children>
+                                          <Label styleClass="results-stat-label" text="Votos" />
+                                          <Label fx:id="myTeamVotesLabel" styleClass="results-stat-value" text="0" />
+                                       </children>
+                                    </VBox>
+                                    <VBox alignment="CENTER" spacing="6.0">
+                                       <children>
+                                          <Label styleClass="results-stat-label" text="Comentarios" />
+                                          <Label fx:id="myTeamCommentsLabel" styleClass="results-stat-value" text="0" />
+                                       </children>
+                                    </VBox>
+                                    <Button fx:id="viewCommentsButton" mnemonicParsing="false" onAction="#showTeamComments" styleClass="secondary-button" text="Ver comentarios" />
                                  </children>
-                              </VBox>
-                              <VBox alignment="CENTER" spacing="6.0">
-                                 <children>
-                                    <Label styleClass="results-stat-label" text="Posición" />
-                                    <Label fx:id="myTeamPositionLabel" styleClass="results-stat-value" text="0" />
-                                 </children>
-                              </VBox>
-                              <VBox alignment="CENTER" spacing="6.0">
-                                 <children>
-                                    <Label styleClass="results-stat-label" text="Votos" />
-                                    <Label fx:id="myTeamVotesLabel" styleClass="results-stat-value" text="0" />
-                                 </children>
-                              </VBox>
-                              <VBox alignment="CENTER" spacing="6.0">
-                                 <children>
-                                    <Label styleClass="results-stat-label" text="Comentarios" />
-                                    <Label fx:id="myTeamCommentsLabel" styleClass="results-stat-value" text="0" />
-                                 </children>
-                              </VBox>
-                              <Button fx:id="viewCommentsButton" mnemonicParsing="false" onAction="#showTeamComments" styleClass="secondary-button" text="Ver comentarios" />
+                              </HBox>
+                              <VBox fx:id="myTeamCommentsBox" managed="false" visible="false" spacing="12.0" />
                            </children>
                            <padding>
                               <Insets bottom="18.0" left="18.0" right="18.0" top="18.0" />
                            </padding>
-                        </HBox>
+                        </VBox>
                      </children>
                   </HBox>
                   <HBox spacing="22.0">

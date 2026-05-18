@@ -27,6 +27,8 @@ public class CreateEventDialogController {
     @FXML private CheckBox juryToggle;
     @FXML private ComboBox<String> juryVotingModeComboBox;
     @FXML private TextField maxVotesField;
+    @FXML private CheckBox resultsToggle;
+    @FXML private Label resultsLabel;
     @FXML private Label registrationsLabel;
     @FXML private Label votingLabel;
     @FXML private Label juryLabel;
@@ -56,6 +58,9 @@ public class CreateEventDialogController {
     private void updateLabels() {
         registrationsLabel.setText(registrationsToggle.isSelected() ? "Abiertas" : "Cerradas");
         votingLabel.setText(votingToggle.isSelected() ? "Abiertas" : "Cerradas");
+        if (resultsLabel != null) {
+            resultsLabel.setText(resultsToggle != null && resultsToggle.isSelected() ? "Visibles" : "Ocultos");
+        }
         juryLabel.setText(juryToggle.isSelected() ? "Activado" : "Desactivado");
     }
 
@@ -88,6 +93,9 @@ public class CreateEventDialogController {
         descriptionArea.setText(event.getDescription() != null ? event.getDescription() : "");
         registrationsToggle.setSelected(event.isRegistrationsOpen());
         votingToggle.setSelected(event.isVotingOpen());
+        if (resultsToggle != null) {
+            resultsToggle.setSelected(event.isResultsVisible());
+        }
         maxVotesField.setText(String.valueOf(event.getMaxTeamsToVote()));
         juryToggle.setSelected(event.isJuryEnabled());
         juryVotingModeComboBox.setValue(normalizeMode(event.getJuryVotingMode()));
@@ -109,7 +117,7 @@ public class CreateEventDialogController {
                         descriptionArea.getText(),
                         registrationsToggle.isSelected(),
                         votingToggle.isSelected(),
-                        editResultsVisible, // Mantenemos la visibilidad de resultados que ya tenía
+                        resultsToggle != null ? resultsToggle.isSelected() : editResultsVisible,
                         maxVotes,
                         juryToggle.isSelected(),
                         normalizeMode(juryVotingModeComboBox.getValue())
@@ -121,7 +129,7 @@ public class CreateEventDialogController {
                         descriptionArea.getText(),
                         registrationsToggle.isSelected(),
                         votingToggle.isSelected(),
-                        false,
+                        resultsToggle != null ? resultsToggle.isSelected() : false,
                         maxVotes,
                         juryToggle.isSelected(),
                         normalizeMode(juryVotingModeComboBox.getValue())

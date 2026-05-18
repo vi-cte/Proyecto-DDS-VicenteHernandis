@@ -46,6 +46,13 @@
                     </VBox>
                     <CheckBox fx:id="votingToggle" onAction="#onVotingToggle" />
                 </HBox>
+                <HBox alignment="CENTER_LEFT" styleClass="settings-row">
+                    <VBox HBox.hgrow="ALWAYS">
+                        <Label styleClass="settings-label" text="Resultados al público" />
+                        <Label fx:id="resultsLabel" styleClass="settings-status" text="Ocultos" />
+                    </VBox>
+                    <CheckBox fx:id="resultsToggle" onAction="#updateLabels" />
+                </HBox>
                 <VBox spacing="8.0" styleClass="settings-field-section">
                     <Label styleClass="settings-label" text="Número de votos por persona" />
                     <HBox alignment="CENTER_LEFT" spacing="10.0">

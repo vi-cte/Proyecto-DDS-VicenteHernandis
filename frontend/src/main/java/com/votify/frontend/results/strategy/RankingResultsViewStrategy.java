@@ -74,16 +74,23 @@ public class RankingResultsViewStrategy implements ResultsViewStrategy {
         Label teamName = new Label(item.getTeamName());
         teamName.getStyleClass().addAll("ranking-team-name", "team-link");
         
-        // Abre la vista previa del equipo.
-        teamName.setOnMouseClicked(event -> {
+        teamBox.getChildren().add(teamName);
+
+        // Abre la vista previa del equipo al hacer clic en cualquier parte de la fila.
+        card.setStyle("-fx-cursor: hand;");
+        card.setOnMouseClicked(event -> {
             try {
-                apiClient.getParticipantResponses().stream()
-                        .filter(p -> p.getTeamName() != null && p.getTeamName().equals(item.getTeamName()))
-                        .findFirst()
-                        .ifPresent(TeamInfoDialog::show);
+                for (com.votify.frontend.dto.EventResponse ev : apiClient.getEvents()) {
+                    java.util.Optional<com.votify.frontend.dto.ParticipantResponse> match = apiClient.getParticipantResponses(ev.getId()).stream()
+                            .filter(p -> p.getTeamName() != null && p.getTeamName().equalsIgnoreCase(item.getTeamName()))
+                            .findFirst();
+                    if (match.isPresent()) {
+                        TeamInfoDialog.show(match.get());
+                        return;
+                    }
+                }
             } catch (Exception ignored) {}
         });
-        teamBox.getChildren().add(teamName);
 
         VBox scoreBox = new VBox(2);
         scoreBox.setAlignment(Pos.CENTER_RIGHT);

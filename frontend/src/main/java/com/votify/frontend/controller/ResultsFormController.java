@@ -97,6 +97,9 @@ public class ResultsFormController {
     @FXML
     private HBox descriptionCardBox;
 
+    @FXML
+    private VBox myTeamCommentsBox;
+
     // Indica si se ha navegado desde el panel de administración
     public void setFromAdminDashboard(boolean fromAdmin) {
         this.fromAdminDashboard = fromAdmin;
@@ -237,13 +240,21 @@ public class ResultsFormController {
     }
 
     @FXML
-    // Muestra la lista de comentarios del equipo del usuario autenticado.
+    // Muestra u oculta la lista de comentarios del equipo del usuario autenticado.
     private void showTeamComments() {
         if (viewData == null) {
             return;
         }
-        resultsContent.setAlignment(Pos.TOP_CENTER);
-        resultsContent.getChildren().setAll(buildCommentsView());
+        if (myTeamCommentsBox != null && myTeamCommentsBox.isVisible()) {
+            myTeamCommentsBox.setVisible(false);
+            myTeamCommentsBox.setManaged(false);
+            viewCommentsButton.setText("Ver comentarios");
+        } else if (myTeamCommentsBox != null) {
+            myTeamCommentsBox.getChildren().setAll(buildCommentsView().getChildren());
+            myTeamCommentsBox.setVisible(true);
+            myTeamCommentsBox.setManaged(true);
+            viewCommentsButton.setText("Ocultar comentarios");
+        }
     }
 
     @FXML
@@ -313,6 +324,13 @@ public class ResultsFormController {
         myTeamCommentsLabel.setText(Long.toString(data.myTeam().getCommentsCount()));
         boolean hasComments = data.myTeam().getComments() != null && !data.myTeam().getComments().isEmpty();
         viewCommentsButton.setDisable(!hasComments);
+        
+        // Ocultar caja de comentarios por defecto al recargar o cambiar de evento
+        if (myTeamCommentsBox != null) {
+            myTeamCommentsBox.setVisible(false);
+            myTeamCommentsBox.setManaged(false);
+            viewCommentsButton.setText("Ver comentarios");
+        }
     }
 
     // Renderiza la estrategia seleccionada y marca su botón.
