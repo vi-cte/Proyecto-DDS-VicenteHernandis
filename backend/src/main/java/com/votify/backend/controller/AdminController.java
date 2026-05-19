@@ -70,6 +70,13 @@ public class AdminController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/events/{id}/archive")
+    // Archiva un evento existente dejándolo inactivo.
+    public ResponseEntity<Void> archiveEvent(@PathVariable Long id) {
+        jdbcTemplate.update("UPDATE events SET active = false WHERE id = ?", id);
+        return ResponseEntity.ok().build();
+    }
+
     @PostMapping("/reset")
     // Borra votos y participantes manteniendo usuarios y configuración.
     public ResponseEntity<Void> resetEvent() {

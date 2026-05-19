@@ -50,7 +50,7 @@ public class VotingFormController {
     private final Set<String> selectedTeamNames = new LinkedHashSet<>();
     private final Set<String> evaluatedJuryTeams = new LinkedHashSet<>();
     private final Map<String, String> teamComments = new LinkedHashMap<>();
-    private final Map<String, TextField> juryCriteriaFields = new java.util.LinkedHashMap<>();
+    private final Map<String, Map<String, TextField>> teamJuryCriteriaFields = new LinkedHashMap<>();
 
     private int maxTeamsToVote = FALLBACK_MAX_TEAMS_TO_VOTE;
     private String juryVotingMode = SIMPLE_MODE;
@@ -128,7 +128,7 @@ public class VotingFormController {
     private void loadVotingEvents() {
         try {
             List<EventResponse> events = apiClient.getEvents().stream()
-                    .filter(EventResponse::isVotingOpen)
+                    .filter(e -> e.isActive() && e.isVotingOpen())
                     .filter(event -> !juryMode || event.isJuryEnabled())
                     .toList();
             eventComboBox.setItems(FXCollections.observableArrayList(events));
@@ -284,44 +284,57 @@ public class VotingFormController {
         }
     }
 
-    // Envía la evaluación multicriterio del jurado para un equipo.
+    // Envía la evaluación multicriterio del jurado para todos los equipos.
     private void submitJuryMulticriteriaVote() {
-        String selectedTeam = juryTeamComboBox.getValue();
-        if (selectedTeam == null || selectedTeam.isBlank()) {
-            showError("Selecciona el equipo que quieres evaluar.");
+        if (teamJuryCriteriaFields.isEmpty()) {
+            showError("No hay equipos para evaluar.");
             return;
         }
 
-        List<com.votify.frontend.dto.JuryCriterionScoreRequest> scores = new ArrayList<>();
-        for (JuryCriterionDefinition criterion : JURY_CRITERIA) {
-            TextField field = juryCriteriaFields.get(criterion.key());
-            String rawValue = field == null ? "" : field.getText();
-            if (rawValue == null || rawValue.isBlank()) {
-                showError("Debes puntuar todos los criterios del jurado.");
-                return;
-            }
-            try {
-                int score = Integer.parseInt(rawValue.trim());
-                if (score < 0 || score > 10) {
-                    showError("Las puntuaciones deben estar entre 0 y 10.");
+        for (Map.Entry<String, Map<String, TextField>> entry : teamJuryCriteriaFields.entrySet()) {
+            for (JuryCriterionDefinition criterion : JURY_CRITERIA) {
+                TextField field = entry.getValue().get(criterion.key());
+                String rawValue = field == null ? "" : field.getText();
+                if (rawValue == null || rawValue.isBlank()) {
+                    showError("Debes puntuar todos los criterios para todos los equipos.");
                     return;
                 }
-                scores.add(new com.votify.frontend.dto.JuryCriterionScoreRequest(criterion.key(), score));
-            } catch (NumberFormatException e) {
-                showError("Las puntuaciones del jurado deben ser numéricas.");
-                return;
+                try {
+                    int score = Integer.parseInt(rawValue.trim());
+                    if (score < 0 || score > 10) {
+                        showError("Las puntuaciones deben estar entre 0 y 10.");
+                        return;
+                    }
+                } catch (NumberFormatException e) {
+                    showError("Las puntuaciones del jurado deben ser numéricas.");
+                    return;
+                }
             }
         }
 
         try {
-            VoteResponse response = apiClient.createJuryMulticriteriaVotes(
-                    selectedEventId(),
-                    selectedTeam,
-                    scores,
-                    trimToNull(juryMulticriteriaCommentArea.getText())
-            );
-            AlertHelper.showInfo("Evaluación del jurado registrada: " + response.getRecordedVotes() + " criterios");
-            evaluatedJuryTeams.add(selectedTeam);
+            int totalCriteria = 0;
+            for (Map.Entry<String, Map<String, TextField>> entry : teamJuryCriteriaFields.entrySet()) {
+                String teamName = entry.getKey();
+                List<com.votify.frontend.dto.JuryCriterionScoreRequest> scores = new ArrayList<>();
+                
+                for (JuryCriterionDefinition criterion : JURY_CRITERIA) {
+                    TextField field = entry.getValue().get(criterion.key());
+                    int score = Integer.parseInt(field.getText().trim());
+                    scores.add(new com.votify.frontend.dto.JuryCriterionScoreRequest(criterion.key(), score));
+                }
+
+                VoteResponse response = apiClient.createJuryMulticriteriaVotes(
+                        selectedEventId(),
+                        teamName,
+                        scores,
+                        null // En la votación global se envía nulo el comentario de equipo
+                );
+                totalCriteria += response.getRecordedVotes();
+                evaluatedJuryTeams.add(teamName);
+            }
+
+            AlertHelper.showInfo("Evaluaciones del jurado registradas exitosamente.");
             clearMulticriteriaInputs();
             loadVotingData();
         } catch (ApiClientException e) {
@@ -383,12 +396,30 @@ public class VotingFormController {
     private void updateSelectionState() {
         if (juryMode) {
             if (MULTICRITERIA_MODE.equals(juryVotingMode)) {
-                boolean hasTeam = juryTeamComboBox.getValue() != null && !juryTeamComboBox.getValue().isBlank();
-                boolean hasScores = juryCriteriaFields.values().stream()
-                        .allMatch(field -> field.getText() != null && !field.getText().isBlank());
-                selectionCountLabel.setText(evaluatedJuryTeams.size() + " equipos evaluados");
+                boolean isValid = true;
+                for (Map<String, TextField> fields : teamJuryCriteriaFields.values()) {
+                    for (TextField field : fields.values()) {
+                        String text = field.getText();
+                        if (text == null || text.isBlank()) {
+                            isValid = false;
+                            break;
+                        }
+                        try {
+                            int score = Integer.parseInt(text.trim());
+                            if (score < 0 || score > 10) {
+                                isValid = false;
+                                break;
+                            }
+                        } catch (NumberFormatException e) {
+                            isValid = false;
+                            break;
+                        }
+                    }
+                    if (!isValid) break;
+                }
+                selectionCountLabel.setText("Evaluación multicriterio");
                 submitButton.setText("Guardar evaluación del jurado");
-                submitButton.setDisable(!(hasTeam && hasScores));
+                submitButton.setDisable(!isValid || teamJuryCriteriaFields.isEmpty());
                 return;
             }
             boolean ready = juryWinnerComboBox.getValue() != null && juryTechnicalComboBox.getValue() != null;
@@ -428,12 +459,12 @@ public class VotingFormController {
         participantList.setManaged(false);
         juryVotingBox.setVisible(true);
         juryVotingBox.setManaged(true);
-        List<String> teamNames = items.stream().map(VoteCandidateItem::teamName).toList();
         if (MULTICRITERIA_MODE.equals(juryVotingMode)) {
-            configureJuryMulticriteriaMode(teamNames);
+            configureJuryMulticriteriaMode(items);
             return;
         }
 
+        List<String> teamNames = items.stream().map(VoteCandidateItem::teamName).toList();
         hintLabel.setText("Selecciona el ganador del jurado y la mención técnica");
         selectionCountLabel.setText("0 / 2");
         submitButton.setText("Enviar valoración del jurado");
@@ -449,17 +480,21 @@ public class VotingFormController {
     }
 
     // Configura la interfaz del jurado en modo multicriterio.
-    private void configureJuryMulticriteriaMode(List<String> teamNames) {
-        hintLabel.setText("Evalúa un equipo por criterios y registra su puntuación.");
+    private void configureJuryMulticriteriaMode(List<VoteCandidateItem> items) {
+        hintLabel.setText("Evalúa todos los equipos. Haz clic en el nombre de un equipo para ver sus detalles.");
         juryMulticriteriaBox.setVisible(true);
         juryMulticriteriaBox.setManaged(true);
 
-        List<String> availableTeams = teamNames.stream()
-                .filter(teamName -> !evaluatedJuryTeams.contains(teamName))
-                .toList();
-        juryTeamComboBox.setItems(FXCollections.observableArrayList(availableTeams));
-        juryTeamComboBox.getSelectionModel().clearSelection();
-        buildJuryCriteriaInputs();
+        if (juryTeamComboBox != null) {
+            juryTeamComboBox.setVisible(false);
+            juryTeamComboBox.setManaged(false);
+        }
+        if (juryMulticriteriaCommentArea != null) {
+            juryMulticriteriaCommentArea.setVisible(false);
+            juryMulticriteriaCommentArea.setManaged(false);
+        }
+
+        buildJuryMulticriteriaAllTeams(items);
         updateSelectionState();
     }
 
@@ -485,30 +520,59 @@ public class VotingFormController {
         }
     }
 
-    // Crea los campos de puntuación para cada criterio del jurado.
-    private void buildJuryCriteriaInputs() {
-        juryCriteriaFields.clear();
+    // Crea los campos de puntuación multicriterio para todos los equipos.
+    private void buildJuryMulticriteriaAllTeams(List<VoteCandidateItem> items) {
+        teamJuryCriteriaFields.clear();
         juryCriteriaContainer.getChildren().clear();
 
-        for (JuryCriterionDefinition criterion : JURY_CRITERIA) {
-            Label title = new Label(criterion.title());
-            title.getStyleClass().add("ranking-team-name");
-            Label description = new Label(criterion.description());
-            description.getStyleClass().add("vote-team-subtitle");
-            description.setWrapText(true);
+        for (VoteCandidateItem item : items) {
+            if (evaluatedJuryTeams.contains(item.teamName())) {
+                continue; // Evita mostrar equipos ya evaluados
+            }
 
-            TextField scoreField = new TextField();
-            scoreField.setPromptText("0-10");
-            scoreField.getStyleClass().add("settings-number-field");
-            scoreField.textProperty().addListener((observable, oldValue, newValue) -> updateSelectionState());
-            juryCriteriaFields.put(criterion.key(), scoreField);
+            VBox teamBox = new VBox(12);
+            teamBox.getStyleClass().add("vote-row");
+            teamBox.setStyle("-fx-border-color: #e0e0e0; -fx-border-radius: 8; -fx-background-color: white; -fx-background-radius: 8; -fx-padding: 16;");
 
-            HBox row = new HBox(18);
-            row.setAlignment(Pos.CENTER_LEFT);
-            VBox textBox = new VBox(4, title, description);
-            HBox.setHgrow(textBox, Priority.ALWAYS);
-            row.getChildren().addAll(textBox, scoreField);
-            juryCriteriaContainer.getChildren().add(row);
+            Label title = new Label(item.teamName());
+            title.getStyleClass().add("vote-team-name");
+            title.getStyleClass().add("team-link");
+            title.setOnMouseClicked(event -> {
+                event.consume();
+                com.votify.frontend.ui.TeamInfoDialog.show(item.participant());
+            });
+
+            Label subtitle = new Label(item.subtitle());
+            subtitle.getStyleClass().add("vote-team-subtitle");
+            subtitle.setWrapText(true);
+
+            VBox criteriaBox = new VBox(8);
+            Map<String, TextField> criteriaFields = new java.util.LinkedHashMap<>();
+            
+            for (JuryCriterionDefinition criterion : JURY_CRITERIA) {
+                Label critTitle = new Label(criterion.title());
+                critTitle.getStyleClass().add("ranking-team-name");
+                Label critDesc = new Label(criterion.description());
+                critDesc.getStyleClass().add("vote-team-subtitle");
+                critDesc.setWrapText(true);
+
+                TextField scoreField = new TextField();
+                scoreField.setPromptText("0-10");
+                scoreField.getStyleClass().add("settings-number-field");
+                scoreField.textProperty().addListener((observable, oldValue, newValue) -> updateSelectionState());
+                criteriaFields.put(criterion.key(), scoreField);
+
+                HBox row = new HBox(18);
+                row.setAlignment(Pos.CENTER_LEFT);
+                VBox textBox = new VBox(4, critTitle, critDesc);
+                HBox.setHgrow(textBox, Priority.ALWAYS);
+                row.getChildren().addAll(textBox, scoreField);
+                criteriaBox.getChildren().add(row);
+            }
+
+            teamJuryCriteriaFields.put(item.teamName(), criteriaFields);
+            teamBox.getChildren().addAll(title, subtitle, criteriaBox);
+            juryCriteriaContainer.getChildren().add(teamBox);
         }
     }
 
@@ -517,7 +581,11 @@ public class VotingFormController {
         if (juryTeamComboBox != null) {
             juryTeamComboBox.getSelectionModel().clearSelection();
         }
-        juryCriteriaFields.values().forEach(field -> field.clear());
+        for (Map<String, TextField> fields : teamJuryCriteriaFields.values()) {
+            for (TextField field : fields.values()) {
+                field.clear();
+            }
+        }
         if (juryMulticriteriaCommentArea != null) {
             juryMulticriteriaCommentArea.clear();
         }

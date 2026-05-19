@@ -11,7 +11,8 @@ public record ResultsViewData(
         ResultsResponse response,
         List<ResultItemResponse> ranking,
         List<ResultItemResponse> juryRanking,
-        int participantCount
+        int participantCount,
+        boolean isMulticriteria
 ) {
     // Devuelve el primer clasificado o null si no hay resultados.
     public ResultItemResponse winner() {

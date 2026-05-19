@@ -42,6 +42,7 @@ public class ResultsFormController {
 
     private ResultsViewData viewData;
     private boolean fromAdminDashboard = false;
+    private boolean fromHistoryDashboard = false;
 
     @FXML
     private Label totalVotesLabel;
@@ -98,12 +99,34 @@ public class ResultsFormController {
     private HBox descriptionCardBox;
 
     @FXML
+    private Label eventStatusLabel;
+
+    @FXML
+    private HBox statusCardBox;
+
+    @FXML
     private VBox myTeamCommentsBox;
 
     // Indica si se ha navegado desde el panel de administración
     public void setFromAdminDashboard(boolean fromAdmin) {
         this.fromAdminDashboard = fromAdmin;
         if (fromAdmin) {
+            if (userNameLabel != null) {
+                userNameLabel.setText("Administrador");
+            }
+            if (exitButton != null) {
+                exitButton.setVisible(true);
+                exitButton.setManaged(true);
+            }
+            loadResultEvents();
+        }
+    }
+
+    // Indica si se ha navegado desde el histórico de eventos
+    public void setFromHistoryDashboard(boolean fromHistory) {
+        this.fromHistoryDashboard = fromHistory;
+        this.fromAdminDashboard = fromHistory; // Hereda la visibilidad de los botones del admin
+        if (fromHistory) {
             if (userNameLabel != null) {
                 userNameLabel.setText("Administrador");
             }
@@ -143,9 +166,30 @@ public class ResultsFormController {
     // Carga eventos con resultados visibles para consultar.
     private void loadResultEvents() {
         try {
-            List<EventResponse> events = apiClient.getEvents().stream()
-                    .filter(e -> fromAdminDashboard || e.isResultsVisible())
-                    .toList();
+            List<EventResponse> events;
+            if (fromAdminDashboard || fromHistoryDashboard) {
+                events = apiClient.getAdminEvents().stream()
+                        .filter(e -> fromHistoryDashboard ? !e.isActive() : e.isActive())
+                        .map(a -> {
+                            EventResponse e = new EventResponse();
+                            e.setId(a.getId());
+                            e.setName(a.getName());
+                            e.setEventDate(a.getEventDate());
+                            e.setDescription(a.getDescription());
+                            e.setRegistrationsOpen(a.isRegistrationsOpen());
+                            e.setVotingOpen(a.isVotingOpen());
+                            e.setResultsVisible(a.isResultsVisible());
+                            e.setMaxTeamsToVote(a.getMaxTeamsToVote());
+                            e.setJuryEnabled(a.isJuryEnabled());
+                            e.setActive(a.isActive());
+                            return e;
+                        })
+                        .toList();
+            } else {
+                events = apiClient.getEvents().stream()
+                        .filter(EventResponse::isResultsVisible)
+                        .toList();
+            }
             eventComboBox.setItems(FXCollections.observableArrayList(events));
             if (!events.isEmpty()) {
                 eventComboBox.getSelectionModel().selectFirst();
@@ -153,7 +197,7 @@ public class ResultsFormController {
                 totalVotesLabel.setText("0");
                 participantsCountLabel.setText("0");
                 winnerLabel.setText("Sin datos");
-                resultsContent.getChildren().setAll(errorLabel("No hay eventos con resultados visibles."));
+                resultsContent.getChildren().setAll(errorLabel("No hay eventos disponibles."));
             }
         } catch (ApiClientException e) {
             resultsContent.getChildren().setAll(errorLabel(e.getMessage()));
@@ -184,6 +228,31 @@ public class ResultsFormController {
             }
         }
 
+        if (statusCardBox != null && eventStatusLabel != null) {
+            if (selectedEvent != null) {
+                String statusText = "";
+                String resPub = selectedEvent.isResultsVisible() ? "resultados publicados" : "resultados no publicados";
+                String resVis = selectedEvent.isResultsVisible() ? "resultados públicos" : "resultados no públicos";
+
+                if (!selectedEvent.isActive()) {
+                    statusText = "Archivado con " + resPub;
+                } else if (selectedEvent.isRegistrationsOpen()) {
+                    statusText = "Activo en fase de registro de participantes con " + resVis;
+                } else if (selectedEvent.isVotingOpen()) {
+                    statusText = "Activo en fase de votación con " + resVis;
+                } else {
+                    statusText = "Finalizado con " + resPub;
+                }
+                
+                eventStatusLabel.setText(statusText);
+                statusCardBox.setVisible(true);
+                statusCardBox.setManaged(true);
+            } else {
+                statusCardBox.setVisible(false);
+                statusCardBox.setManaged(false);
+            }
+        }
+
         Long eventId = selectedEventId();
         try {
             ResultsResponse response = apiClient.getResults(eventId);
@@ -210,8 +279,13 @@ public class ResultsFormController {
             publicRanking.sort(Comparator.comparingLong(ResultItemResponse::getVotes).reversed());
             juryRanking.sort(Comparator.comparingLong(ResultItemResponse::getVotes).reversed());
 
-            viewData = new ResultsViewData(response, publicRanking, juryRanking, participantCount);
-            bindSummary(viewData);
+            boolean isMulticriteria = false;
+            try {
+                isMulticriteria = "MULTICRITERIA".equals(apiClient.getVoteSettings(eventId).getJuryVotingMode());
+            } catch (ApiClientException ignored) {}
+
+            viewData = new ResultsViewData(response, publicRanking, juryRanking, participantCount, isMulticriteria);
+            bindSummary(viewData, isMulticriteria);
             selectStrategy("ranking");
         } catch (ApiClientException e) {
             totalVotesLabel.setText("0");
@@ -261,6 +335,15 @@ public class ResultsFormController {
     // Vuelve al menú o a la pantalla de acceso según la sesión.
     private void closeResults() {
         try {
+            if (fromHistoryDashboard) {
+                SceneNavigator.showScene(
+                        (Stage) resultsContent.getScene().getWindow(),
+                        "/com/votify/frontend/view/HistoryDashboard.fxml",
+                        "/com/votify/frontend/view/MainMenu.css",
+                        "Votify - Histórico de Eventos"
+                );
+                return;
+            }
             if (fromAdminDashboard) {
                 SceneNavigator.showScene(
                         (Stage) resultsContent.getScene().getWindow(),
@@ -304,9 +387,10 @@ public class ResultsFormController {
     }
 
     // Actualiza los indicadores resumen de la pantalla.
-    private void bindSummary(ResultsViewData data) {
-        totalVotesLabel.setText(data.response().getTotalPublicVotes() + " público · "
-                + data.response().getTotalJuryVotes() + " jurado");
+    private void bindSummary(ResultsViewData data, boolean isMulticriteria) {
+        String juryUnit = isMulticriteria ? "puntos" : "votos";
+        totalVotesLabel.setText(data.response().getTotalPublicVotes() + " votos público · "
+                + data.response().getTotalJuryVotes() + " " + juryUnit + " jurado");
         participantsCountLabel.setText(Integer.toString(data.participantCount()));
         String publicWinner = data.winner() == null ? "Sin público" : data.winner().getTeamName();
         String juryWinner = data.juryWinner() == null ? "Sin jurado" : data.juryWinner().getTeamName();

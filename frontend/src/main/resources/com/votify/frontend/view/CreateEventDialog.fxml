@@ -8,77 +8,92 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TextArea?>
 <?import javafx.scene.control.TextField?>
-<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<ScrollPane fitToWidth="true" prefHeight="720.0" prefWidth="620.0" styleClass="screen-scroll" stylesheets="@MainMenu.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.votify.frontend.controller.CreateEventDialogController">
-    <content>
-        <VBox spacing="24.0" styleClass="create-event-root">
+<VBox alignment="TOP_CENTER" spacing="28.0" styleClass="dialog-root" stylesheets="@MainMenu.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.votify.frontend.controller.CreateEventDialogController">
+    <padding>
+        <Insets bottom="40.0" left="42.0" right="42.0" top="40.0" />
+    </padding>
+    <children>
+        <VBox alignment="CENTER" spacing="8.0">
             <children>
-                <VBox spacing="6.0">
-                    <Label fx:id="dialogTitle" styleClass="settings-title" text="Crear evento" />
-                    <Label fx:id="dialogSubtitle" styleClass="settings-subtitle" text="Configura una nueva votación y sus ajustes iniciales" />
-                </VBox>
-                <VBox spacing="8.0">
-                    <Label styleClass="field-label" text="Nombre del evento" />
-                    <TextField fx:id="nameField" promptText="Ej: Hackathon 2026" styleClass="input-field" />
-                </VBox>
-                <VBox spacing="8.0">
-                    <Label styleClass="field-label" text="Fecha del evento" />
-                    <DatePicker fx:id="eventDatePicker" maxWidth="1.7976931348623157E308" styleClass="input-field" style="-fx-control-inner-background: white; -fx-text-inner-color: black;" />
-                </VBox>
-                <VBox spacing="8.0">
-                    <Label styleClass="field-label" text="Descripción" />
-                    <TextArea fx:id="descriptionArea" prefRowCount="4" promptText="Describe el evento..." styleClass="input-field" wrapText="true" />
-                </VBox>
-                <HBox alignment="CENTER_LEFT" styleClass="settings-row">
-                    <VBox HBox.hgrow="ALWAYS">
-                        <Label styleClass="settings-label" text="Inscripciones" />
-                        <Label fx:id="registrationsLabel" styleClass="settings-status" text="Abiertas" />
-                    </VBox>
-                    <CheckBox fx:id="registrationsToggle" onAction="#onRegistrationToggle" selected="true" />
-                </HBox>
-                <HBox alignment="CENTER_LEFT" styleClass="settings-row">
-                    <VBox HBox.hgrow="ALWAYS">
-                        <Label styleClass="settings-label" text="Votaciones" />
-                        <Label fx:id="votingLabel" styleClass="settings-status" text="Cerradas" />
-                    </VBox>
-                    <CheckBox fx:id="votingToggle" onAction="#onVotingToggle" />
-                </HBox>
-                <HBox alignment="CENTER_LEFT" styleClass="settings-row">
-                    <VBox HBox.hgrow="ALWAYS">
-                        <Label styleClass="settings-label" text="Resultados al público" />
-                        <Label fx:id="resultsLabel" styleClass="settings-status" text="Ocultos" />
-                    </VBox>
-                    <CheckBox fx:id="resultsToggle" onAction="#updateLabels" />
-                </HBox>
-                <VBox spacing="8.0" styleClass="settings-field-section">
-                    <Label styleClass="settings-label" text="Número de votos por persona" />
-                    <HBox alignment="CENTER_LEFT" spacing="10.0">
-                        <TextField fx:id="maxVotesField" prefWidth="100.0" styleClass="settings-number-field" text="1" style="-fx-control-inner-background: white; -fx-text-inner-color: black;" />
-                        <Label styleClass="settings-subtitle" text="voto" />
-                    </HBox>
-                </VBox>
-                <HBox alignment="CENTER_LEFT" styleClass="settings-row">
-                    <VBox HBox.hgrow="ALWAYS">
-                        <Label styleClass="settings-label" text="Incluir jurado" />
-                        <Label fx:id="juryLabel" styleClass="settings-status" text="Desactivado" />
-                    </VBox>
-                    <CheckBox fx:id="juryToggle" onAction="#updateLabels" />
-                </HBox>
-                <VBox managed="${juryToggle.selected}" spacing="8.0" styleClass="settings-field-section" visible="${juryToggle.selected}">
-                    <Label styleClass="settings-label" text="Modo de votación del jurado" />
-                    <ComboBox fx:id="juryVotingModeComboBox" maxWidth="1.7976931348623157E308" styleClass="input-field" />
-                </VBox>
-                <VBox spacing="12.0">
-                    <Button fx:id="actionButton" defaultButton="true" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#createEvent" styleClass="submit-votes-button" text="Crear evento" />
-                    <Button fx:id="deleteButton" managed="false" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#deleteEvent" styleClass="danger-button" text="Eliminar evento" visible="false" />
-                </VBox>
+                <Label fx:id="dialogTitle" styleClass="about-title" text="Crear nuevo evento" />
+                <Label fx:id="dialogSubtitle" styleClass="vote-subtitle" text="Define los parámetros básicos para el nuevo evento" />
             </children>
-            <padding>
-                <Insets bottom="30.0" left="30.0" right="30.0" top="30.0" />
-            </padding>
         </VBox>
-    </content>
-</ScrollPane>
+          <VBox spacing="6.0">
+              <children>
+                  <Label styleClass="field-label" text="Nombre del evento" />
+                  <TextField fx:id="nameField" promptText="Ej: Hackathon de Innovación" styleClass="input-field" />
+              </children>
+          </VBox>
+          <VBox spacing="6.0">
+              <children>
+                  <Label styleClass="field-label" text="Fecha del evento" />
+                  <DatePicker fx:id="eventDatePicker" maxWidth="1.7976931348623157E308" styleClass="input-field" />
+              </children>
+          </VBox>
+          <VBox spacing="6.0">
+              <children>
+                  <Label styleClass="field-label" text="Descripción" />
+                  <TextArea fx:id="descriptionArea" prefRowCount="3" promptText="Breve descripción del evento" styleClass="input-field" wrapText="true" />
+              </children>
+          </VBox>
+      <HBox spacing="40.0">
+         <children>
+                <HBox alignment="CENTER_LEFT" spacing="12.0">
+                    <children>
+                        <CheckBox fx:id="registrationsToggle" mnemonicParsing="false" onAction="#onRegistrationToggle" styleClass="settings-toggle" />
+                        <Label styleClass="field-label" text="Inscripciones" />
+                        <Label fx:id="registrationsLabel" styleClass="settings-status-label" text="Cerradas" />
+                    </children>
+                </HBox>
+                <HBox alignment="CENTER_LEFT" spacing="12.0">
+                    <children>
+                        <CheckBox fx:id="votingToggle" mnemonicParsing="false" onAction="#onVotingToggle" styleClass="settings-toggle" />
+                        <Label styleClass="field-label" text="Votaciones" />
+                        <Label fx:id="votingLabel" styleClass="settings-status-label" text="Cerradas" />
+                    </children>
+                </HBox>
+                <HBox alignment="CENTER_LEFT" spacing="12.0">
+                    <children>
+                        <CheckBox fx:id="resultsToggle" mnemonicParsing="false" onAction="#updateLabels" styleClass="settings-toggle" />
+                        <Label styleClass="field-label" text="Resultados" />
+                        <Label fx:id="resultsLabel" styleClass="settings-status-label" text="Ocultos" />
+                    </children>
+                </HBox>
+         </children>
+      </HBox>
+      <HBox alignment="CENTER_LEFT" spacing="10.0">
+         <children>
+                  <Label styleClass="field-label" text="Máximo de votos por usuario" />
+                  <TextField fx:id="maxVotesField" prefHeight="33.0" prefWidth="89.0" promptText="3" styleClass="settings-number-field" text="3" />
+         </children>
+      </HBox>
+      <HBox spacing="40.0">
+         <children>
+                <HBox alignment="CENTER_LEFT" spacing="12.0">
+                    <children>
+                        <CheckBox fx:id="juryToggle" mnemonicParsing="false" onAction="#updateLabels" styleClass="settings-toggle" />
+                        <Label styleClass="field-label" text="Jurado" />
+                        <Label fx:id="juryLabel" styleClass="settings-status-label" text="Desactivado" />
+                    </children>
+                </HBox>
+            <HBox alignment="CENTER_LEFT" prefHeight="56.0" prefWidth="435.0" spacing="10.0">
+               <children>
+                        <Label styleClass="field-label" text="Modo de voto del jurado" />
+                        <ComboBox fx:id="juryVotingModeComboBox" maxWidth="1.7976931348623157E308" prefHeight="56.0" prefWidth="220.0" styleClass="input-field" />
+               </children>
+            </HBox>
+         </children>
+      </HBox>
+        <HBox alignment="CENTER_RIGHT" spacing="14.0">
+            <children>
+                <Button fx:id="deleteButton" managed="false" mnemonicParsing="false" onAction="#deleteEvent" styleClass="delete-button" text="Eliminar evento" visible="false" />
+                <Button fx:id="archiveButton" managed="false" mnemonicParsing="false" onAction="#archiveEvent" styleClass="admin-secondary-button" text="Archivar evento" visible="false" />
+                <Button fx:id="actionButton" mnemonicParsing="false" onAction="#createEvent" styleClass="action-button" text="Crear evento" />
+            </children>
+        </HBox>
+    </children>
+</VBox>

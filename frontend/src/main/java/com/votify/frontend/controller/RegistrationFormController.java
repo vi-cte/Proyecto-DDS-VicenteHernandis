@@ -119,7 +119,7 @@ public class RegistrationFormController {
     private void loadRegistrationEvents() {
         try {
             List<EventResponse> events = apiClient.getEvents().stream()
-                    .filter(EventResponse::isRegistrationsOpen)
+                    .filter(e -> e.isActive() && e.isRegistrationsOpen())
                     .toList();
             eventComboBox.setItems(FXCollections.observableArrayList(events));
             if (!events.isEmpty()) {

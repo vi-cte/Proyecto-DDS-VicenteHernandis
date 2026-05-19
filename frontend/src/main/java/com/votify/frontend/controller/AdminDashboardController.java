@@ -42,8 +42,9 @@ public class AdminDashboardController {
     private void loadEvents() {
         try {
             List<AdminEventResponse> events = apiClient.getAdminEvents();
-            eventsTitleLabel.setText("Eventos Activos (" + events.stream().filter(AdminEventResponse::isActive).count() + ")");
-            eventsContainer.getChildren().setAll(IntStream.range(0, events.size()).mapToObj(i -> eventCard(events.get(i), i)).toList());
+            List<AdminEventResponse> activeEvents = events.stream().filter(AdminEventResponse::isActive).toList();
+            eventsTitleLabel.setText("Eventos Activos (" + activeEvents.size() + ")");
+            eventsContainer.getChildren().setAll(IntStream.range(0, activeEvents.size()).mapToObj(i -> eventCard(activeEvents.get(i), i)).toList());
         } catch (ApiClientException e) {
             AlertHelper.showError(e.getMessage());
         }
@@ -91,14 +92,16 @@ public class AdminDashboardController {
             empty.getStyleClass().add("results-empty");
             body.getChildren().add(empty);
         } else {
+                boolean isMulticriteria = "MULTICRITERIA".equals(event.getJuryVotingMode());
             long total = Math.max(1, ranking.stream().mapToLong(ResultItemResponse::getVotes).sum());
             for (ResultItemResponse item : ranking) {
-                body.getChildren().add(rankRow(item, total));
+                    body.getChildren().add(rankRow(item, total, isMulticriteria));
             }
         }
         card.getChildren().addAll(header, body);
 
         // Navegar a la vista de resultados cuando se hace clic en la tarjeta del evento
+        card.setStyle("-fx-cursor: hand;");
         card.setOnMouseClicked(mouseEvent -> {
             try {
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/votify/frontend/view/ResultsForm.fxml"));
@@ -170,7 +173,7 @@ public class AdminDashboardController {
         return box;
     }
 
-    private HBox rankRow(ResultItemResponse item, long totalVotes) {
+    private HBox rankRow(ResultItemResponse item, long totalVotes, boolean isMulticriteria) {
         HBox row = new HBox(16);
         row.setAlignment(Pos.CENTER_LEFT);
         row.getStyleClass().add("admin-rank-row");
@@ -181,7 +184,7 @@ public class AdminDashboardController {
         ProgressBar progress = new ProgressBar(item.getVotes() / (double) totalVotes);
         progress.getStyleClass().add("ranking-progress");
         text.getChildren().addAll(name, progress);
-        Label votes = new Label(Long.toString(item.getVotes()));
+        Label votes = new Label(item.getVotes() + (isMulticriteria ? " pts" : " votos"));
         votes.getStyleClass().add("admin-rank-votes");
         votes.setMinWidth(javafx.scene.layout.Region.USE_PREF_SIZE);
         row.getChildren().addAll(text, votes);
@@ -205,7 +208,11 @@ public class AdminDashboardController {
 
     @FXML
     private void showHistory() {
-        AlertHelper.showInfo("El histórico completo se añadirá en la siguiente iteración.");
+        try {
+            SceneNavigator.showScene((Stage) eventsContainer.getScene().getWindow(), "/com/votify/frontend/view/HistoryDashboard.fxml", "/com/votify/frontend/view/MainMenu.css", "Votify - Histórico de Eventos");
+        } catch (IOException e) {
+            AlertHelper.showError("No se pudo abrir el histórico: " + e.getMessage());
+        }
     }
 
     @FXML

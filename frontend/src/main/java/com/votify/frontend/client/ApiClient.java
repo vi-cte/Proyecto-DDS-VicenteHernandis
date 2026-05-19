@@ -81,7 +81,7 @@ public class ApiClient implements VotifyApi {
                 if (!isUserLoggedIn()) {
                     yield AccessDecision.deny("Debes iniciar sesión para registrar un equipo.");
                 }
-                boolean anyOpen = events.stream().anyMatch(EventResponse::isRegistrationsOpen);
+                boolean anyOpen = events.stream().anyMatch(e -> e.isActive() && e.isRegistrationsOpen());
                 if (!anyOpen) {
                     yield AccessDecision.deny("Las inscripciones están cerradas actualmente.");
                 }
@@ -94,7 +94,7 @@ public class ApiClient implements VotifyApi {
                 boolean anyOpen = false;
                 boolean canVote = false;
                 for (EventResponse event : events) {
-                    if (event.isVotingOpen()) {
+                    if (event.isActive() && event.isVotingOpen()) {
                         if (isCurrentUserJury() && !event.isJuryEnabled()) continue;
                         anyOpen = true;
                         if (!hasVoted(event.getId())) {
@@ -794,6 +794,20 @@ public class ApiClient implements VotifyApi {
                 .uri(URI.create(baseUrl + "/admin/events/" + id))
                 .header("X-Admin-Password", sessionManager.adminPasswordHeaderValue())
                 .DELETE()
+                .build();
+        HttpResponse<String> response = send(request);
+        if (response.statusCode() != 200) {
+            throw new ApiClientException(extractErrorMessage(response.body(), response.statusCode()));
+        }
+    }
+
+    @Override
+    // Archiva un evento desde administración.
+    public void archiveAdminEvent(Long id) {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(baseUrl + "/admin/events/" + id + "/archive"))
+                .header("X-Admin-Password", sessionManager.adminPasswordHeaderValue())
+                .POST(HttpRequest.BodyPublishers.noBody())
                 .build();
         HttpResponse<String> response = send(request);
         if (response.statusCode() != 200) {

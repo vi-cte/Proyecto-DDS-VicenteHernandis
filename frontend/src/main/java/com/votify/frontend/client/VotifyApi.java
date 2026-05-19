@@ -78,4 +78,6 @@ public interface VotifyApi {
     AdminEventResponse createAdminEvent(String name, String eventDate, String description, boolean registrationsOpen, boolean votingOpen, boolean resultsVisible, int maxTeamsToVote, boolean juryEnabled, String juryVotingMode);
     // Actualiza un evento administrativo.
     AdminEventResponse updateAdminEvent(Long id, String name, String eventDate, String description, boolean registrationsOpen, boolean votingOpen, boolean resultsVisible, int maxTeamsToVote, boolean juryEnabled, String juryVotingMode);
+    // Archiva un evento administrativo.
+    void archiveAdminEvent(Long id);
 }

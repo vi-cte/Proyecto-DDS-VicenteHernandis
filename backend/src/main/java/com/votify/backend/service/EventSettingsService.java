@@ -132,7 +132,9 @@ public class EventSettingsService {
     @Transactional(readOnly = true)
     // Devuelve los eventos activos disponibles para pantallas publicas.
     public List<EventEntity> getPublicEvents() {
-        return eventRepository.findAllByActiveTrueOrderByEventDateDescIdDesc();
+        List<EventEntity> events = eventRepository.findAll();
+        events.sort(java.util.Comparator.comparing(EventEntity::getId).reversed());
+        return events;
     }
 
     // Busca la configuración singleton o la crea si aún no existe.

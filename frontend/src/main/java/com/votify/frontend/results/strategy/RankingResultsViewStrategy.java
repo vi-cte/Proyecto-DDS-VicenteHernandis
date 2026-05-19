@@ -38,7 +38,7 @@ public class RankingResultsViewStrategy implements ResultsViewStrategy {
             long totalVotes = Math.max(1, data.response().getTotalPublicVotes());
             for (int i = 0; i < data.ranking().size(); i++) {
                 ResultItemResponse item = data.ranking().get(i);
-                container.getChildren().add(rankCard(item, i + 1, totalVotes));
+                container.getChildren().add(rankCard(item, i + 1, totalVotes, false));
             }
         }
 
@@ -47,14 +47,14 @@ public class RankingResultsViewStrategy implements ResultsViewStrategy {
             long totalJuryVotes = Math.max(1, data.juryRanking().stream().mapToLong(ResultItemResponse::getVotes).sum());
             for (int i = 0; i < data.juryRanking().size(); i++) {
                 ResultItemResponse item = data.juryRanking().get(i);
-                container.getChildren().add(rankCard(item, i + 1, totalJuryVotes));
+                container.getChildren().add(rankCard(item, i + 1, totalJuryVotes, data.isMulticriteria()));
             }
         }
         return container;
     }
 
     // Crea una tarjeta visual para una posición del ranking.
-    private Node rankCard(ResultItemResponse item, int position, long totalVotes) {
+    private Node rankCard(ResultItemResponse item, int position, long totalVotes, boolean isMulticriteria) {
         HBox card = new HBox(18);
         card.getStyleClass().add("ranking-card");
         card.setAlignment(Pos.CENTER_LEFT);
@@ -94,7 +94,8 @@ public class RankingResultsViewStrategy implements ResultsViewStrategy {
 
         VBox scoreBox = new VBox(2);
         scoreBox.setAlignment(Pos.CENTER_RIGHT);
-        Label votes = new Label(Long.toString(item.getVotes()));
+        String unit = isMulticriteria ? " pts" : " votos";
+        Label votes = new Label(item.getVotes() + unit);
         votes.getStyleClass().add("ranking-votes");
         scoreBox.getChildren().add(votes);
 

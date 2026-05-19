@@ -34,6 +34,7 @@ public class CreateEventDialogController {
     @FXML private Label juryLabel;
     @FXML private Button actionButton;
     @FXML private Button deleteButton;
+    @FXML private Button archiveButton;
 
     private Long editEventId = null;
     private boolean editResultsVisible = false;
@@ -82,6 +83,11 @@ public class CreateEventDialogController {
         if (deleteButton != null) {
             deleteButton.setVisible(true);
             deleteButton.setManaged(true);
+        }
+        
+        if (archiveButton != null) {
+            archiveButton.setVisible(event.isActive());
+            archiveButton.setManaged(event.isActive());
         }
         
         nameField.setText(event.getName());
@@ -156,6 +162,27 @@ public class CreateEventDialogController {
             if (response == ButtonType.OK) {
                 try {
                     ApiClient.getInstance().deleteAdminEvent(editEventId);
+                    ((Stage) nameField.getScene().getWindow()).close();
+                } catch (ApiClientException e) {
+                    AlertHelper.showError(e.getMessage());
+                }
+            }
+        });
+    }
+
+    @FXML
+    private void archiveEvent() {
+        if (editEventId == null) return;
+        
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Confirmar archivado");
+        alert.setHeaderText("Archivar evento");
+        alert.setContentText("¿Estás seguro de que deseas archivar este evento? Dejará de estar activo y pasará al histórico.");
+        
+        alert.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.OK) {
+                try {
+                    ApiClient.getInstance().archiveAdminEvent(editEventId);
                     ((Stage) nameField.getScene().getWindow()).close();
                 } catch (ApiClientException e) {
                     AlertHelper.showError(e.getMessage());
