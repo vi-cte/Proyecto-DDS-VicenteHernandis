@@ -802,6 +802,7 @@ public class ApiClient implements VotifyApi {
                 .GET()
                 .build();
 
+        // La suscripción se devuelve como AutoCloseable para que el controlador la cierre al cambiar de pantalla.
         DashboardUpdateSubscription subscription = new DashboardUpdateSubscription(onDashboardUpdate);
         subscription.start(httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofInputStream()));
         return subscription;
@@ -912,10 +913,14 @@ public class ApiClient implements VotifyApi {
         return "PUBLIC_VOTING_OPEN".equals(phase);
     }
 
+    // Mantiene viva la conexión SSE y traduce eventos del backend en callbacks JavaFX.
     private static class DashboardUpdateSubscription implements AutoCloseable {
         private final Runnable onDashboardUpdate;
+        // Future de la petición HTTP asíncrona para poder cancelarla si se abandona la pantalla.
         private CompletableFuture<HttpResponse<InputStream>> responseFuture;
+        // Stream abierto por el backend mientras la suscripción SSE siga activa.
         private InputStream stream;
+        // Bandera compartida con el hilo lector para detenerlo de forma cooperativa.
         private volatile boolean closed;
 
         DashboardUpdateSubscription(Runnable onDashboardUpdate) {
@@ -929,12 +934,14 @@ public class ApiClient implements VotifyApi {
                     return;
                 }
                 stream = response.body();
+                // El lector vive en un hilo daemon para no bloquear el cierre de la app JavaFX.
                 Thread readerThread = new Thread(() -> readEvents(stream), "votify-admin-dashboard-sse");
                 readerThread.setDaemon(true);
                 readerThread.start();
             });
         }
 
+        // Lee el formato SSE línea a línea y dispara el refresco solo para eventos de actualización.
         private void readEvents(InputStream inputStream) {
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
                 String line;
@@ -948,6 +955,7 @@ public class ApiClient implements VotifyApi {
         }
 
         @Override
+        // Cierra la suscripción cuando el dashboard deja de estar visible.
         public void close() {
             closed = true;
             if (responseFuture != null) {

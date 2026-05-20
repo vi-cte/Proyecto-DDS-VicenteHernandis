@@ -31,7 +31,9 @@ import java.util.Map;
 @ConditionalOnProperty(prefix = "votify.seed", name = "enabled", havingValue = "true")
 // Carga datos de demostracion realistas para enseñar el sistema completo.
 public class DemoDataSeeder implements CommandLineRunner {
+    // Evento marcador usado para detectar si el seed ya se ejecutó y evitar duplicados.
     private static final String MARKER_EVENT_NAME = "Demo Votify Live 2026";
+    // Contraseña común de usuarios demo, guardada hasheada igual que en AuthService.
     private static final String DEMO_PASSWORD = "demo1234";
 
     private final EventJpaRepository eventRepository;
@@ -53,6 +55,7 @@ public class DemoDataSeeder implements CommandLineRunner {
 
     @Override
     @Transactional
+    // Punto de entrada del seed: crea datos solo cuando no existe el evento marcador.
     public void run(String... args) {
         boolean alreadySeeded = eventRepository.findAll().stream()
                 .anyMatch(event -> MARKER_EVENT_NAME.equalsIgnoreCase(event.getName()));
@@ -61,6 +64,7 @@ public class DemoDataSeeder implements CommandLineRunner {
             return;
         }
 
+        // Usuarios y eventos se crean primero porque participantes y votos dependen de ellos.
         Map<String, User> users = createUsers();
         EventEntity liveEvent = createEvent(
                 MARKER_EVENT_NAME,
@@ -99,6 +103,7 @@ public class DemoDataSeeder implements CommandLineRunner {
                 JuryVotingMode.SIMPLE
         );
 
+        // Participantes repartidos por eventos para cubrir dashboard, votación, resultados e histórico.
         List<ParticipantEntity> liveTeams = createParticipants(liveEvent, List.of(
                 team("Aurora Labs", "aurora@demo.votify", "IA para reducir tiempos de espera en hospitales."),
                 team("EcoTrack", "ecotrack@demo.votify", "Trazabilidad de residuos para campus y empresas."),
@@ -125,6 +130,7 @@ public class DemoDataSeeder implements CommandLineRunner {
                 team("Archive Two", "archive.two@demo.votify", "Segundo prototipo histórico.")
         ), users);
 
+        // Votos de muestra diseñados para que los rankings tengan ganadores claros y empates realistas.
         createPublicVotes(liveEvent, liveTeams, users, List.of(
                 votePlan("public01@demo.votify", "Aurora Labs", "EcoTrack", "MindBridge"),
                 votePlan("public02@demo.votify", "Aurora Labs", "SafeRoute", "AgroPulse"),
@@ -187,6 +193,7 @@ public class DemoDataSeeder implements CommandLineRunner {
         return users;
     }
 
+    // Crea o actualiza un usuario demo, manteniendo la operación repetible.
     private void addUser(Map<String, User> users, String email, UserRole role) {
         User user = userRepository.findByEmail(email).orElseGet(User::new);
         user.setEmail(email);
@@ -195,6 +202,7 @@ public class DemoDataSeeder implements CommandLineRunner {
         users.put(email, userRepository.save(user));
     }
 
+    // Construye un evento completo en una fase concreta del ciclo de vida.
     private EventEntity createEvent(
             String name,
             LocalDate eventDate,
@@ -215,6 +223,7 @@ public class DemoDataSeeder implements CommandLineRunner {
         return eventRepository.save(event);
     }
 
+    // Crea equipos con propietario, miembros y datos de contacto dentro del evento indicado.
     private List<ParticipantEntity> createParticipants(EventEntity event, List<TeamSeed> teams, Map<String, User> users) {
         List<ParticipantEntity> participants = new ArrayList<>();
         int memberSeed = 1;
@@ -240,6 +249,7 @@ public class DemoDataSeeder implements CommandLineRunner {
         return participants;
     }
 
+    // Inserta votos públicos simples; cada equipo nombrado recibe un voto del usuario indicado.
     private void createPublicVotes(EventEntity event, List<ParticipantEntity> participants, Map<String, User> users, List<VotePlan> plans) {
         for (VotePlan plan : plans) {
             User user = users.get(plan.userEmail());
@@ -250,6 +260,7 @@ public class DemoDataSeeder implements CommandLineRunner {
         }
     }
 
+    // Inserta votos de jurado en modo simple para eventos que no usan criterios.
     private void createSimpleJuryVotes(EventEntity event, List<ParticipantEntity> participants, Map<String, User> users, List<VotePlan> plans) {
         for (VotePlan plan : plans) {
             User user = users.get(plan.userEmail());
@@ -260,6 +271,7 @@ public class DemoDataSeeder implements CommandLineRunner {
         }
     }
 
+    // Genera evaluaciones multicriterio: cuatro votos por equipo, uno por cada criterio del jurado.
     private void createJuryMulticriteriaVotes(EventEntity event, List<ParticipantEntity> participants, Map<String, User> users, List<String> juryEmails) {
         String[] criteria = {"innovacion", "viabilidad", "impacto", "presentacion"};
         int juryIndex = 0;
@@ -287,6 +299,7 @@ public class DemoDataSeeder implements CommandLineRunner {
         }
     }
 
+    // Factoría común para mantener consistente la creación de entidades VoteEntity.
     private VoteEntity vote(
             EventEntity event,
             ParticipantEntity participant,
@@ -309,6 +322,7 @@ public class DemoDataSeeder implements CommandLineRunner {
         return vote;
     }
 
+    // Localiza el participante por nombre dentro de la lista ya creada para ese evento.
     private ParticipantEntity findParticipant(List<ParticipantEntity> participants, String teamName) {
         return participants.stream()
                 .filter(participant -> participant.getTeamName().equalsIgnoreCase(teamName))
@@ -332,6 +346,7 @@ public class DemoDataSeeder implements CommandLineRunner {
         return new TeamSeed(name, ownerEmail, description);
     }
 
+    // Reproduce el mismo hash de contraseñas usado por AuthService.
     private String hashPassword(String password) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");

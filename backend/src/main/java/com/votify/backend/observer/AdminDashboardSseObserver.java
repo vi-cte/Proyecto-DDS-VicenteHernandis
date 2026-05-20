@@ -12,9 +12,11 @@ import java.util.concurrent.CopyOnWriteArrayList;
 @Component
 // Observador que transforma cambios de votos en eventos SSE para el dashboard admin.
 public class AdminDashboardSseObserver implements VoteObserver {
+    // Mantiene el stream abierto indefinidamente mientras el cliente admin siga conectado.
     private static final long TIMEOUT = 0L;
 
     private final VoteEventPublisher voteEventPublisher;
+    // Cada SseEmitter representa un dashboard admin conectado en tiempo real.
     private final List<SseEmitter> emitters = new CopyOnWriteArrayList<>();
 
     public AdminDashboardSseObserver(VoteEventPublisher voteEventPublisher) {
@@ -22,15 +24,18 @@ public class AdminDashboardSseObserver implements VoteObserver {
     }
 
     @PostConstruct
+    // Al arrancar Spring, esta clase se suscribe como observador del publisher de votos.
     public void registerObserver() {
         voteEventPublisher.addObserver(this);
     }
 
     @PreDestroy
+    // Al cerrar la aplicación, se retira para no dejar referencias colgadas.
     public void unregisterObserver() {
         voteEventPublisher.removeObserver(this);
     }
 
+    // Crea una suscripción SSE para un dashboard y registra limpieza automática al desconectar.
     public SseEmitter subscribe() {
         SseEmitter emitter = new SseEmitter(TIMEOUT);
         emitters.add(emitter);
@@ -42,12 +47,14 @@ public class AdminDashboardSseObserver implements VoteObserver {
     }
 
     @Override
+    // Cuando hay nuevos votos, envía un evento ligero; el frontend decide recargar los datos.
     public void onVotesChanged(Long eventId) {
         for (SseEmitter emitter : emitters) {
             send(emitter, "dashboard-updated", eventId);
         }
     }
 
+    // Envía un mensaje SSE y elimina clientes que ya no aceptan datos.
     private void send(SseEmitter emitter, String eventName, Long eventId) {
         try {
             emitter.send(SseEmitter.event()

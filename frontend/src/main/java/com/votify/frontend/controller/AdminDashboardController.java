@@ -33,7 +33,9 @@ import java.util.stream.IntStream;
 // Controlador del dashboard administrativo de eventos.
 public class AdminDashboardController {
     private final ApiClient apiClient = ApiClient.getInstance();
+    // Suscripción activa al stream SSE; se cierra al salir del dashboard.
     private AutoCloseable dashboardUpdatesSubscription;
+    // Evita encolar varios refrescos simultáneos si llegan muchos votos seguidos.
     private volatile boolean refreshQueued;
 
     @FXML private Label eventsTitleLabel;
@@ -120,6 +122,7 @@ public class AdminDashboardController {
         return card;
     }
 
+    // Renderiza un bloque de ranking independiente para público o jurado.
     private VBox rankingSection(String titleText, List<ResultItemResponse> sourceRanking, String valueSuffix) {
         VBox section = new VBox(10);
         section.getStyleClass().add("admin-ranking-section");
@@ -192,6 +195,7 @@ public class AdminDashboardController {
         return box;
     }
 
+    // Construye una fila visual con barra proporcional y valor de votos/puntos.
     private HBox rankRow(ResultItemResponse item, long totalVotes, String valueSuffix) {
         HBox row = new HBox(16);
         row.setAlignment(Pos.CENTER_LEFT);
@@ -210,6 +214,7 @@ public class AdminDashboardController {
         return row;
     }
 
+    // Abre la conexión de tiempo real y prepara su cierre cuando la ventana desaparece.
     private void subscribeToDashboardUpdates() {
         dashboardUpdatesSubscription = apiClient.subscribeAdminDashboardUpdates(this::scheduleDashboardRefresh);
         eventsContainer.sceneProperty().addListener((observable, oldScene, newScene) -> {
@@ -223,6 +228,7 @@ public class AdminDashboardController {
         });
     }
 
+    // Pasa el refresco al hilo JavaFX, que es el único que puede modificar controles de pantalla.
     private void scheduleDashboardRefresh() {
         if (refreshQueued) {
             return;
@@ -237,6 +243,7 @@ public class AdminDashboardController {
         });
     }
 
+    // Libera la conexión SSE para que el backend no conserve un cliente desconectado.
     private void closeDashboardUpdatesSubscription() {
         if (dashboardUpdatesSubscription == null) {
             return;
