@@ -52,6 +52,15 @@ public interface VoteJpaRepository extends JpaRepository<VoteEntity, Long> {
             """)
     long countByEventAndVoterRole(EventEntity event, UserRole voterRole);
 
+    @Query("""
+            select coalesce(sum(coalesce(v.scoreValue, 1)), 0)
+            from VoteEntity v
+            where v.event = :event
+              and (v.voterRole = :voterRole
+               or (:voterRole = com.votify.backend.entity.UserRole.PUBLIC and v.voterRole is null))
+            """)
+    long sumScoreByEventAndVoterRole(EventEntity event, UserRole voterRole);
+
     long countByEvent(EventEntity event);
     List<VoteEntity> findAllByEventIsNull();
 

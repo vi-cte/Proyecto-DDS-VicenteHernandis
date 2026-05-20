@@ -181,6 +181,7 @@ public class ResultsFormController {
                             e.setResultsVisible(a.isResultsVisible());
                             e.setMaxTeamsToVote(a.getMaxTeamsToVote());
                             e.setJuryEnabled(a.isJuryEnabled());
+                            e.setPhase(a.getPhase());
                             e.setActive(a.isActive());
                             return e;
                         })

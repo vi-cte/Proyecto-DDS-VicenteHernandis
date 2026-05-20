@@ -11,8 +11,9 @@ public class AdminEventRequest {
     public int maxTeamsToVote;
     public boolean juryEnabled;
     public String juryVotingMode;
+    public String phase;
 
-    public AdminEventRequest(String name, String eventDate, String description, boolean registrationsOpen, boolean votingOpen, boolean resultsVisible, int maxTeamsToVote, boolean juryEnabled, String juryVotingMode) {
+    public AdminEventRequest(String name, String eventDate, String description, boolean registrationsOpen, boolean votingOpen, boolean resultsVisible, int maxTeamsToVote, boolean juryEnabled, String juryVotingMode, String phase) {
         this.name = name;
         this.eventDate = eventDate;
         this.description = description;
@@ -22,5 +23,6 @@ public class AdminEventRequest {
         this.maxTeamsToVote = maxTeamsToVote;
         this.juryEnabled = juryEnabled;
         this.juryVotingMode = juryVotingMode;
+        this.phase = phase;
     }
 }

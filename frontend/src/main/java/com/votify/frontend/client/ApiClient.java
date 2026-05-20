@@ -5,6 +5,7 @@ import com.votify.frontend.dto.AuthResponse;
 import com.votify.frontend.dto.AdminEventRequest;
 import com.votify.frontend.dto.AdminEventResponse;
 import com.votify.frontend.dto.JuryCriterionScoreRequest;
+import com.votify.frontend.dto.JuryTeamEvaluationRequest;
 import com.votify.frontend.dto.ParticipantRequest;
 import com.votify.frontend.dto.ParticipantResponse;
 import com.votify.frontend.dto.ResultsResponse;
@@ -21,12 +22,17 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.BufferedReader;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 // Cliente HTTP singleton que implementa las llamadas a la API backend.
 public class ApiClient implements VotifyApi {
@@ -94,8 +100,7 @@ public class ApiClient implements VotifyApi {
                 boolean anyOpen = false;
                 boolean canVote = false;
                 for (EventResponse event : events) {
-                    if (event.isActive() && event.isVotingOpen()) {
-                        if (isCurrentUserJury() && !event.isJuryEnabled()) continue;
+                    if (event.isActive() && canCurrentUserVoteInPhase(event)) {
                         anyOpen = true;
                         if (!hasVoted(event.getId())) {
                             canVote = true;
@@ -388,6 +393,22 @@ public class ApiClient implements VotifyApi {
         }
     }
 
+    // Obtiene el modo de votación del jurado directamente del JSON para evitar fallos de mapeo DTO.
+    public String getJuryVotingModeRaw(Long eventId) {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(withEventId(baseUrl + "/votes/settings", eventId)))
+                .GET()
+                .build();
+        HttpResponse<String> response = send(request);
+        try {
+            com.fasterxml.jackson.databind.JsonNode node = MAPPER.readTree(response.body());
+            if (node.has("juryVotingMode") && !node.get("juryVotingMode").isNull()) {
+                return node.get("juryVotingMode").asText();
+            }
+        } catch (Exception ignored) {}
+        return "SIMPLE";
+    }
+
     @Override
     // Crea los dos votos de un usuario jurado.
     public VoteResponse createJuryVotes(String winnerSelection, String technicalSelection) {
@@ -445,13 +466,24 @@ public class ApiClient implements VotifyApi {
     @Override
     // Crea una evaluacion multicriterio del jurado con comentario opcional.
     public VoteResponse createJuryMulticriteriaVotes(Long eventId, String teamSelection, List<JuryCriterionScoreRequest> criteriaScores, String comment) {
+        return createJuryMulticriteriaVotes(eventId, List.of(new JuryTeamEvaluationRequest(teamSelection, criteriaScores, comment)));
+    }
+
+    @Override
+    // Crea una evaluacion multicriterio del jurado para todos los equipos en una sola peticion.
+    public VoteResponse createJuryMulticriteriaVotes(Long eventId, List<JuryTeamEvaluationRequest> evaluations) {
         if (!sessionManager.hasUserToken()) {
             throw new ApiClientException("No has iniciado sesión para poder votar.");
         }
 
         String json;
         try {
-            json = MAPPER.writeValueAsString(new VoteRequest(teamSelection, criteriaScores, comment));
+            VoteRequest body = new VoteRequest();
+            body.setSelections(List.of());
+            body.setSelectionEntries(List.of());
+            body.setJuryCriteriaScores(List.of());
+            body.setJuryTeamEvaluations(evaluations);
+            json = MAPPER.writeValueAsString(body);
         } catch (JsonProcessingException e) {
             throw new ApiClientException("No se pudo preparar la solicitud al servidor");
         }
@@ -488,6 +520,9 @@ public class ApiClient implements VotifyApi {
                 .GET();
         if (sessionManager.hasUserToken()) {
             builder.header("X-User-ID", sessionManager.userIdHeaderValue());
+        }
+        if (sessionManager.hasAdminSession()) {
+            builder.header("X-Admin-Password", sessionManager.adminPasswordHeaderValue());
         }
         HttpRequest request = builder.build();
 
@@ -624,6 +659,28 @@ public class ApiClient implements VotifyApi {
     }
 
     @Override
+    // Crea una cuenta de jurado usando la sesión administrativa.
+    public void createJuryAccount(String email, String password) {
+        String json;
+        try {
+            json = MAPPER.writeValueAsString(new AuthRequest(email, password, "JURY"));
+        } catch (JsonProcessingException e) {
+            throw new ApiClientException("No se pudo preparar la cuenta de jurado");
+        }
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(baseUrl + "/admin/jury"))
+                .header("Content-Type", "application/json")
+                .header("X-Admin-Password", sessionManager.adminPasswordHeaderValue())
+                .POST(HttpRequest.BodyPublishers.ofString(json))
+                .build();
+        HttpResponse<String> response = send(request);
+        if (response.statusCode() != 201 && response.statusCode() != 200) {
+            throw new ApiClientException(extractErrorMessage(response.body(), response.statusCode()));
+        }
+    }
+
+    @Override
     // Obtiene los ajustes del evento usando credenciales admin.
     public EventSettingsResponse getAdminSettings() {
         HttpRequest request = HttpRequest.newBuilder()
@@ -736,12 +793,26 @@ public class ApiClient implements VotifyApi {
         }
     }
 
+    // Se suscribe al stream SSE de cambios de votos para refrescar el dashboard admin.
+    public AutoCloseable subscribeAdminDashboardUpdates(Runnable onDashboardUpdate) {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(baseUrl + "/admin/events/stream"))
+                .header("Accept", "text/event-stream")
+                .header("X-Admin-Password", sessionManager.adminPasswordHeaderValue())
+                .GET()
+                .build();
+
+        DashboardUpdateSubscription subscription = new DashboardUpdateSubscription(onDashboardUpdate);
+        subscription.start(httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofInputStream()));
+        return subscription;
+    }
+
     @Override
     // Crea un nuevo evento desde administración.
-    public AdminEventResponse createAdminEvent(String name, String eventDate, String description, boolean registrationsOpen, boolean votingOpen, boolean resultsVisible, int maxTeamsToVote, boolean juryEnabled, String juryVotingMode) {
+    public AdminEventResponse createAdminEvent(String name, String eventDate, String description, boolean registrationsOpen, boolean votingOpen, boolean resultsVisible, int maxTeamsToVote, boolean juryEnabled, String juryVotingMode, String phase) {
         String json;
         try {
-            json = MAPPER.writeValueAsString(new AdminEventRequest(name, eventDate, description, registrationsOpen, votingOpen, resultsVisible, maxTeamsToVote, juryEnabled, juryVotingMode));
+            json = MAPPER.writeValueAsString(new AdminEventRequest(name, eventDate, description, registrationsOpen, votingOpen, resultsVisible, maxTeamsToVote, juryEnabled, juryVotingMode, phase));
         } catch (JsonProcessingException e) {
             throw new ApiClientException("No se pudo preparar el evento");
         }
@@ -764,10 +835,10 @@ public class ApiClient implements VotifyApi {
 
     @Override
     // Actualiza un evento desde administración.
-    public AdminEventResponse updateAdminEvent(Long id, String name, String eventDate, String description, boolean registrationsOpen, boolean votingOpen, boolean resultsVisible, int maxTeamsToVote, boolean juryEnabled, String juryVotingMode) {
+    public AdminEventResponse updateAdminEvent(Long id, String name, String eventDate, String description, boolean registrationsOpen, boolean votingOpen, boolean resultsVisible, int maxTeamsToVote, boolean juryEnabled, String juryVotingMode, String phase) {
         String json;
         try {
-            json = MAPPER.writeValueAsString(new AdminEventRequest(name, eventDate, description, registrationsOpen, votingOpen, resultsVisible, maxTeamsToVote, juryEnabled, juryVotingMode));
+            json = MAPPER.writeValueAsString(new AdminEventRequest(name, eventDate, description, registrationsOpen, votingOpen, resultsVisible, maxTeamsToVote, juryEnabled, juryVotingMode, phase));
         } catch (JsonProcessingException e) {
             throw new ApiClientException("No se pudo preparar el evento");
         }
@@ -831,6 +902,64 @@ public class ApiClient implements VotifyApi {
     // Indica si el usuario actualmente autenticado pertenece al jurado.
     public boolean isCurrentUserJury() {
         return sessionManager.isCurrentUserJury();
+    }
+
+    private boolean canCurrentUserVoteInPhase(EventResponse event) {
+        String phase = event.getPhase() == null ? "" : event.getPhase().trim().toUpperCase(java.util.Locale.ROOT);
+        if (isCurrentUserJury()) {
+            return event.isJuryEnabled() && "JURY_VOTING_OPEN".equals(phase);
+        }
+        return "PUBLIC_VOTING_OPEN".equals(phase);
+    }
+
+    private static class DashboardUpdateSubscription implements AutoCloseable {
+        private final Runnable onDashboardUpdate;
+        private CompletableFuture<HttpResponse<InputStream>> responseFuture;
+        private InputStream stream;
+        private volatile boolean closed;
+
+        DashboardUpdateSubscription(Runnable onDashboardUpdate) {
+            this.onDashboardUpdate = onDashboardUpdate;
+        }
+
+        void start(CompletableFuture<HttpResponse<InputStream>> future) {
+            this.responseFuture = future;
+            future.thenAccept(response -> {
+                if (closed || response.statusCode() != 200) {
+                    return;
+                }
+                stream = response.body();
+                Thread readerThread = new Thread(() -> readEvents(stream), "votify-admin-dashboard-sse");
+                readerThread.setDaemon(true);
+                readerThread.start();
+            });
+        }
+
+        private void readEvents(InputStream inputStream) {
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
+                String line;
+                while (!closed && (line = reader.readLine()) != null) {
+                    if (line.startsWith("event: dashboard-updated")) {
+                        onDashboardUpdate.run();
+                    }
+                }
+            } catch (IOException ignored) {
+            }
+        }
+
+        @Override
+        public void close() {
+            closed = true;
+            if (responseFuture != null) {
+                responseFuture.cancel(true);
+            }
+            if (stream != null) {
+                try {
+                    stream.close();
+                } catch (IOException ignored) {
+                }
+            }
+        }
     }
 
     // Limpia los datos de sesión local.

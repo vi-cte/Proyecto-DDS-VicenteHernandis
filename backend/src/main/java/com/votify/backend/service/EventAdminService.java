@@ -4,6 +4,7 @@ import com.votify.backend.dto.AdminEventRequest;
 import com.votify.backend.dto.AdminEventResponse;
 import com.votify.backend.dto.ResultItemResponse;
 import com.votify.backend.entity.EventEntity;
+import com.votify.backend.entity.EventPhase;
 import com.votify.backend.entity.JuryVotingMode;
 import com.votify.backend.entity.UserRole;
 import com.votify.backend.exception.ApiException;
@@ -13,10 +14,12 @@ import com.votify.backend.repository.VoteJpaRepository;
 import com.votify.backend.repository.VoteTallyProjection;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.http.HttpStatus;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 // Casos de uso administrativos para gestionar eventos.
@@ -55,13 +58,10 @@ public class EventAdminService {
         event.setName(request.name().trim());
         event.setEventDate(request.eventDate());
         event.setDescription(trimToNull(request.description()));
-        event.setRegistrationsOpen(request.registrationsOpen());
-        event.setVotingOpen(request.votingOpen() && !request.registrationsOpen());
-        event.setResultsVisible(request.resultsVisible());
         event.setMaxTeamsToVote(request.maxTeamsToVote());
         event.setJuryEnabled(request.juryEnabled());
         event.setJuryVotingMode(request.juryVotingMode() == null ? JuryVotingMode.SIMPLE : request.juryVotingMode());
-        event.setActive(true);
+        event.setPhase(resolvePhase(request));
         return toResponse(eventRepository.save(event));
     }
 
@@ -87,20 +87,27 @@ public class EventAdminService {
         }
         event.setEventDate(request.eventDate());
         event.setDescription(trimToNull(request.description()));
-        event.setRegistrationsOpen(request.registrationsOpen());
-        event.setVotingOpen(request.votingOpen() && !request.registrationsOpen());
-        event.setResultsVisible(request.resultsVisible());
         event.setMaxTeamsToVote(request.maxTeamsToVote());
         event.setJuryEnabled(request.juryEnabled());
         event.setJuryVotingMode(requestedMode);
+        event.setPhase(resolvePhase(request));
         return toResponse(eventRepository.save(event));
     }
 
     @Transactional
-    // Elimina un evento y todos sus datos asociados.
-    public void delete(Long id) {
+    // Archiva un evento aplicando el estado de dominio correspondiente.
+    public void archive(@NonNull Long id) {
         EventEntity event = eventRepository.findById(id)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "El evento no existe"));
+        event.setPhase(EventPhase.ARCHIVED);
+        eventRepository.save(event);
+    }
+
+    @Transactional
+    // Elimina un evento y todos sus datos asociados.
+    public void delete(@NonNull Long id) {
+        EventEntity event = Objects.requireNonNull(eventRepository.findById(id)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "El evento no existe")));
         jdbcTemplate.update("DELETE FROM votes WHERE event_id = ?", id);
         jdbcTemplate.update("DELETE FROM participant_members WHERE participant_id IN (SELECT id FROM participants WHERE event_id = ?)", id);
         jdbcTemplate.update("DELETE FROM participants WHERE event_id = ?", id);
@@ -108,18 +115,13 @@ public class EventAdminService {
     }
 
     // Convierte entidad en DTO administrativo con ranking.
-    private AdminEventResponse toResponse(EventEntity event) {
-        List<ResultItemResponse> ranking = new java.util.ArrayList<>(voteRepository.tallyByEvent(event).stream()
-                .map(this::toResult)
-                .toList());
+    private AdminEventResponse toResponse(@NonNull EventEntity event) {
+        List<ResultItemResponse> ranking = withRegisteredParticipants(event, voteRepository.tallyByEvent(event));
+        List<ResultItemResponse> publicRanking = withRegisteredParticipants(event, voteRepository.tallyByEventAndVoterRole(event, UserRole.PUBLIC));
+        List<ResultItemResponse> juryRanking = withRegisteredParticipants(event, voteRepository.tallyByEventAndVoterRole(event, UserRole.JURY));
+        long totalPublicVotes = voteRepository.sumScoreByEventAndVoterRole(event, UserRole.PUBLIC);
+        long totalJuryVotes = voteRepository.sumScoreByEventAndVoterRole(event, UserRole.JURY);
         
-        List<com.votify.backend.entity.ParticipantEntity> participants = participantRepository.findAllByEvent(event);
-        for (com.votify.backend.entity.ParticipantEntity p : participants) {
-            if (ranking.stream().noneMatch(r -> r.teamName().equals(p.getTeamName()))) {
-                ranking.add(new ResultItemResponse(p.getTeamName(), 0L));
-            }
-        }
-
         return new AdminEventResponse(
                 event.getId(),
                 event.getName(),
@@ -131,11 +133,27 @@ public class EventAdminService {
                 event.getMaxTeamsToVote(),
                 event.isJuryEnabled(),
                 event.getJuryVotingMode(),
+                event.getPhase(),
                 event.isActive(),
-                voteRepository.countByEvent(event),
+                totalPublicVotes + totalJuryVotes,
                 participantRepository.countByEvent(event),
-                ranking
+                ranking,
+                publicRanking,
+                juryRanking
         );
+    }
+
+    private List<ResultItemResponse> withRegisteredParticipants(EventEntity event, List<VoteTallyProjection> tally) {
+        List<ResultItemResponse> ranking = new java.util.ArrayList<>(tally.stream()
+                .map(this::toResult)
+                .toList());
+        List<com.votify.backend.entity.ParticipantEntity> participants = participantRepository.findAllByEvent(event);
+        for (com.votify.backend.entity.ParticipantEntity p : participants) {
+            if (ranking.stream().noneMatch(r -> r.teamName().equals(p.getTeamName()))) {
+                ranking.add(new ResultItemResponse(p.getTeamName(), 0L));
+            }
+        }
+        return ranking;
     }
 
     private ResultItemResponse toResult(VoteTallyProjection projection) {
@@ -148,5 +166,24 @@ public class EventAdminService {
         }
         String trimmed = value.trim();
         return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private EventPhase resolvePhase(AdminEventRequest request) {
+        if (request.phase() != null) {
+            return request.phase();
+        }
+        if (request.resultsVisible()) {
+            return EventPhase.RESULTS_VISIBLE;
+        }
+        if (request.votingOpen() && request.juryEnabled()) {
+            return EventPhase.JURY_VOTING_OPEN;
+        }
+        if (request.votingOpen()) {
+            return EventPhase.PUBLIC_VOTING_OPEN;
+        }
+        if (request.registrationsOpen()) {
+            return EventPhase.REGISTRATION_OPEN;
+        }
+        return EventPhase.REGISTRATION_CLOSED;
     }
 }

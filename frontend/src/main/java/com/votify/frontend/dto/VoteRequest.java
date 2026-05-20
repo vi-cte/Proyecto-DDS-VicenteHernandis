@@ -12,6 +12,7 @@ public class VoteRequest {
     private String juryTechnicalComment;
     private String juryTeamSelection;
     private List<JuryCriterionScoreRequest> juryCriteriaScores;
+    private List<JuryTeamEvaluationRequest> juryTeamEvaluations;
     private String juryTeamComment;
 
     // Constructor vacío requerido por Jackson.
@@ -23,6 +24,7 @@ public class VoteRequest {
         this.selections = selections;
         this.selectionEntries = List.of();
         this.juryCriteriaScores = List.of();
+        this.juryTeamEvaluations = List.of();
     }
 
     // Crea una petición pública con comentarios por equipo.
@@ -30,6 +32,7 @@ public class VoteRequest {
         this.selections = List.of();
         this.selectionEntries = selectionEntries;
         this.juryCriteriaScores = List.of();
+        this.juryTeamEvaluations = List.of();
     }
 
     // Crea una petición de voto de jurado con sus dos categorías.
@@ -39,6 +42,7 @@ public class VoteRequest {
         this.juryWinnerSelection = juryWinnerSelection;
         this.juryTechnicalSelection = juryTechnicalSelection;
         this.juryCriteriaScores = List.of();
+        this.juryTeamEvaluations = List.of();
     }
 
     // Crea una peticion de jurado multicriterio para un equipo concreto.
@@ -47,6 +51,7 @@ public class VoteRequest {
         this.selectionEntries = List.of();
         this.juryTeamSelection = juryTeamSelection;
         this.juryCriteriaScores = juryCriteriaScores;
+        this.juryTeamEvaluations = List.of();
         this.juryTeamComment = juryTeamComment;
     }
 
@@ -118,6 +123,14 @@ public class VoteRequest {
 
     public void setJuryCriteriaScores(List<JuryCriterionScoreRequest> juryCriteriaScores) {
         this.juryCriteriaScores = juryCriteriaScores;
+    }
+
+    public List<JuryTeamEvaluationRequest> getJuryTeamEvaluations() {
+        return juryTeamEvaluations;
+    }
+
+    public void setJuryTeamEvaluations(List<JuryTeamEvaluationRequest> juryTeamEvaluations) {
+        this.juryTeamEvaluations = juryTeamEvaluations;
     }
 
     public String getJuryTeamComment() {

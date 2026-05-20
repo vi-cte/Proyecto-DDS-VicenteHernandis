@@ -1,5 +1,7 @@
 package com.votify.backend.entity;
 
+import com.votify.backend.domain.event.EventState;
+import com.votify.backend.domain.event.EventStateFactory;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -50,6 +52,10 @@ public class EventEntity {
     @Column(name = "active", nullable = false)
     private boolean active;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "phase", nullable = false, length = 40)
+    private EventPhase phase = EventPhase.REGISTRATION_OPEN;
+
     public Long getId() { return id; }
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
@@ -71,4 +77,44 @@ public class EventEntity {
     public void setJuryVotingMode(JuryVotingMode juryVotingMode) { this.juryVotingMode = juryVotingMode == null ? JuryVotingMode.SIMPLE : juryVotingMode; }
     public boolean isActive() { return active; }
     public void setActive(boolean active) { this.active = active; }
+    public EventPhase getPhase() { return phase == null ? inferLegacyPhase() : phase; }
+    public void setPhase(EventPhase phase) {
+        this.phase = phase == null ? EventPhase.REGISTRATION_OPEN : phase;
+        applyState(EventStateFactory.fromPhase(this.phase));
+    }
+    public boolean isPublicVotingOpen() { return EventStateFactory.fromPhase(getPhase()).publicVotingOpen(); }
+    public boolean isJuryVotingOpen() { return EventStateFactory.fromPhase(getPhase()).juryVotingOpen(); }
+
+    public void syncPhaseFromFlags() {
+        setPhase(inferLegacyPhase());
+    }
+
+    private EventPhase inferLegacyPhase() {
+        if (!active) {
+            return EventPhase.ARCHIVED;
+        }
+        if (resultsVisible) {
+            return EventPhase.RESULTS_VISIBLE;
+        }
+        if (votingOpen && juryEnabled) {
+            return EventPhase.JURY_VOTING_OPEN;
+        }
+        if (votingOpen) {
+            return EventPhase.PUBLIC_VOTING_OPEN;
+        }
+        if (registrationsOpen) {
+            return EventPhase.REGISTRATION_OPEN;
+        }
+        return EventPhase.REGISTRATION_CLOSED;
+    }
+
+    private void applyState(EventState state) {
+        this.registrationsOpen = state.registrationsOpen();
+        this.votingOpen = state.publicVotingOpen() || state.juryVotingOpen();
+        this.resultsVisible = state.resultsVisible();
+        this.active = state.active();
+        if (state.juryVotingOpen()) {
+            this.juryEnabled = true;
+        }
+    }
 }

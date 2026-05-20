@@ -40,6 +40,12 @@
                   <TextArea fx:id="descriptionArea" prefRowCount="3" promptText="Breve descripción del evento" styleClass="input-field" wrapText="true" />
               </children>
           </VBox>
+      <VBox spacing="6.0">
+         <children>
+            <Label styleClass="field-label" text="Fase del evento" />
+            <ComboBox fx:id="phaseComboBox" maxWidth="1.7976931348623157E308" styleClass="input-field" />
+         </children>
+      </VBox>
       <HBox spacing="40.0">
          <children>
                 <HBox alignment="CENTER_LEFT" spacing="12.0">

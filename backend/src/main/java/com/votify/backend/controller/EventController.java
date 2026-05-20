@@ -48,6 +48,7 @@ public class EventController {
                 event.isResultsVisible(),
                 event.getMaxTeamsToVote(),
                 event.isJuryEnabled(),
+                event.getPhase(),
                 event.isActive()
         );
     }

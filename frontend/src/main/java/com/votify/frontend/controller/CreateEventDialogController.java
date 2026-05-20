@@ -26,6 +26,7 @@ public class CreateEventDialogController {
     @FXML private CheckBox votingToggle;
     @FXML private CheckBox juryToggle;
     @FXML private ComboBox<String> juryVotingModeComboBox;
+    @FXML private ComboBox<PhaseOption> phaseComboBox;
     @FXML private TextField maxVotesField;
     @FXML private CheckBox resultsToggle;
     @FXML private Label resultsLabel;
@@ -38,6 +39,16 @@ public class CreateEventDialogController {
 
     private Long editEventId = null;
     private boolean editResultsVisible = false;
+
+    private static final java.util.List<PhaseOption> PHASES = java.util.List.of(
+            new PhaseOption("REGISTRATION_OPEN", "Registro de equipos abierto"),
+            new PhaseOption("REGISTRATION_CLOSED", "Registro cerrado"),
+            new PhaseOption("PUBLIC_VOTING_OPEN", "Votación pública abierta"),
+            new PhaseOption("JURY_VOTING_OPEN", "Votación del jurado abierta"),
+            new PhaseOption("VOTING_CLOSED", "Votaciones cerradas"),
+            new PhaseOption("RESULTS_VISIBLE", "Resultados visibles"),
+            new PhaseOption("ARCHIVED", "Archivado")
+    );
 
     @FXML
     private void onRegistrationToggle() {
@@ -69,6 +80,11 @@ public class CreateEventDialogController {
     private void initialize() {
         juryVotingModeComboBox.getItems().setAll("SIMPLE", "MULTICRITERIA");
         juryVotingModeComboBox.setValue("SIMPLE");
+        if (phaseComboBox != null) {
+            phaseComboBox.getItems().setAll(PHASES);
+            phaseComboBox.setValue(findPhase("REGISTRATION_OPEN"));
+            phaseComboBox.valueProperty().addListener((observable, oldValue, newValue) -> applyPhaseToLegacyToggles());
+        }
     }
 
     // Carga los datos de un evento existente para editarlo.
@@ -105,6 +121,9 @@ public class CreateEventDialogController {
         maxVotesField.setText(String.valueOf(event.getMaxTeamsToVote()));
         juryToggle.setSelected(event.isJuryEnabled());
         juryVotingModeComboBox.setValue(normalizeMode(event.getJuryVotingMode()));
+        if (phaseComboBox != null) {
+            phaseComboBox.setValue(findPhase(event.getPhase()));
+        }
         
         updateLabels();
     }
@@ -126,7 +145,8 @@ public class CreateEventDialogController {
                         resultsToggle != null ? resultsToggle.isSelected() : editResultsVisible,
                         maxVotes,
                         juryToggle.isSelected(),
-                        normalizeMode(juryVotingModeComboBox.getValue())
+                        normalizeMode(juryVotingModeComboBox.getValue()),
+                        selectedPhase()
                 );
             } else {
                 ApiClient.getInstance().createAdminEvent(
@@ -138,7 +158,8 @@ public class CreateEventDialogController {
                         resultsToggle != null ? resultsToggle.isSelected() : false,
                         maxVotes,
                         juryToggle.isSelected(),
-                        normalizeMode(juryVotingModeComboBox.getValue())
+                        normalizeMode(juryVotingModeComboBox.getValue()),
+                        selectedPhase()
                 );
             }
             ((Stage) nameField.getScene().getWindow()).close();
@@ -196,5 +217,38 @@ public class CreateEventDialogController {
             return "SIMPLE";
         }
         return mode.trim().toUpperCase(java.util.Locale.ROOT);
+    }
+
+    private String selectedPhase() {
+        PhaseOption phase = phaseComboBox == null ? null : phaseComboBox.getValue();
+        return phase == null ? "REGISTRATION_OPEN" : phase.key();
+    }
+
+    private PhaseOption findPhase(String phase) {
+        String normalized = phase == null || phase.isBlank() ? "REGISTRATION_OPEN" : phase.trim().toUpperCase(java.util.Locale.ROOT);
+        return PHASES.stream()
+                .filter(option -> option.key().equals(normalized))
+                .findFirst()
+                .orElse(PHASES.getFirst());
+    }
+
+    private void applyPhaseToLegacyToggles() {
+        String phase = selectedPhase();
+        registrationsToggle.setSelected("REGISTRATION_OPEN".equals(phase));
+        votingToggle.setSelected("PUBLIC_VOTING_OPEN".equals(phase) || "JURY_VOTING_OPEN".equals(phase));
+        if ("JURY_VOTING_OPEN".equals(phase)) {
+            juryToggle.setSelected(true);
+        }
+        if (resultsToggle != null) {
+            resultsToggle.setSelected("RESULTS_VISIBLE".equals(phase) || "ARCHIVED".equals(phase));
+        }
+        updateLabels();
+    }
+
+    private record PhaseOption(String key, String label) {
+        @Override
+        public String toString() {
+            return label;
+        }
     }
 }

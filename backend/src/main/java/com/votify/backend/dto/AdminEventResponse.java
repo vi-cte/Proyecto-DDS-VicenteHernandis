@@ -1,6 +1,7 @@
 package com.votify.backend.dto;
 
 import com.votify.backend.entity.JuryVotingMode;
+import com.votify.backend.entity.EventPhase;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -17,9 +18,12 @@ public record AdminEventResponse(
         int maxTeamsToVote,
         boolean juryEnabled,
         JuryVotingMode juryVotingMode,
+        EventPhase phase,
         boolean active,
         long totalVotes,
         long participants,
-        List<ResultItemResponse> ranking
+        List<ResultItemResponse> ranking,
+        List<ResultItemResponse> publicRanking,
+        List<ResultItemResponse> juryRanking
 ) {
 }

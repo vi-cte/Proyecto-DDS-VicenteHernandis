@@ -14,10 +14,13 @@ public class AdminEventResponse {
     private int maxTeamsToVote;
     private boolean juryEnabled;
     private String juryVotingMode;
+    private String phase;
     private boolean active;
     private long totalVotes;
     private long participants;
     private List<ResultItemResponse> ranking;
+    private List<ResultItemResponse> publicRanking;
+    private List<ResultItemResponse> juryRanking;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -39,6 +42,8 @@ public class AdminEventResponse {
     public void setJuryEnabled(boolean juryEnabled) { this.juryEnabled = juryEnabled; }
     public String getJuryVotingMode() { return juryVotingMode; }
     public void setJuryVotingMode(String juryVotingMode) { this.juryVotingMode = juryVotingMode; }
+    public String getPhase() { return phase; }
+    public void setPhase(String phase) { this.phase = phase; }
     public boolean isActive() { return active; }
     public void setActive(boolean active) { this.active = active; }
     public long getTotalVotes() { return totalVotes; }
@@ -47,4 +52,8 @@ public class AdminEventResponse {
     public void setParticipants(long participants) { this.participants = participants; }
     public List<ResultItemResponse> getRanking() { return ranking; }
     public void setRanking(List<ResultItemResponse> ranking) { this.ranking = ranking; }
+    public List<ResultItemResponse> getPublicRanking() { return publicRanking; }
+    public void setPublicRanking(List<ResultItemResponse> publicRanking) { this.publicRanking = publicRanking; }
+    public List<ResultItemResponse> getJuryRanking() { return juryRanking; }
+    public void setJuryRanking(List<ResultItemResponse> juryRanking) { this.juryRanking = juryRanking; }
 }

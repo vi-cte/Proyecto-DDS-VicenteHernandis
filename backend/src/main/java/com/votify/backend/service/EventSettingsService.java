@@ -3,6 +3,7 @@ package com.votify.backend.service;
 import com.votify.backend.dto.EventSettingsDto;
 import com.votify.backend.entity.EventEntity;
 import com.votify.backend.entity.EventSettingsEntity;
+import com.votify.backend.entity.EventPhase;
 import com.votify.backend.entity.JuryVotingMode;
 import com.votify.backend.entity.UserRole;
 import com.votify.backend.exception.ApiException;
@@ -63,11 +64,9 @@ public class EventSettingsService {
                 && voteRepository.existsByEventAndVoterRole(entity, UserRole.JURY)) {
             throw new ApiException(HttpStatus.CONFLICT, "No puedes cambiar el modo del jurado cuando ya hay votos del jurado registrados");
         }
-        entity.setRegistrationsOpen(settings.registrationsOpen());
-        entity.setVotingOpen(settings.votingOpen() && !settings.registrationsOpen());
-        entity.setResultsVisible(settings.resultsVisible());
         entity.setMaxTeamsToVote(settings.maxTeamsToVote());
         entity.setJuryVotingMode(requestedMode);
+        entity.setPhase(resolvePhase(settings));
         eventRepository.save(entity);
     }
 
@@ -174,12 +173,20 @@ public class EventSettingsService {
         event.setMaxTeamsToVote(Math.max(1, legacy.getMaxTeamsToVote()));
         event.setJuryEnabled(true);
         event.setJuryVotingMode(JuryVotingMode.SIMPLE);
-        event.setActive(true);
+        event.setPhase(resolvePhase(new EventSettingsDto(
+                legacy.isRegistrationsOpen(),
+                legacy.isVotingOpen(),
+                legacy.isResultsVisible(),
+                legacy.getMaxTeamsToVote(),
+                JuryVotingMode.SIMPLE
+        )));
         return eventRepository.save(event);
     }
 
     // Asocia datos antiguos sin event_id al evento activo para no perder equipos ni votos.
     private void migrateLegacyData(EventEntity event) {
+        event.setPhase(event.getPhase());
+        eventRepository.save(event);
         participantRepository.findAllByEventIsNull().forEach(participant -> {
             participant.setEvent(event);
             participantRepository.save(participant);
@@ -191,5 +198,18 @@ public class EventSettingsService {
             vote.setEvent(event);
             voteRepository.save(vote);
         });
+    }
+
+    private EventPhase resolvePhase(EventSettingsDto settings) {
+        if (settings.resultsVisible()) {
+            return EventPhase.RESULTS_VISIBLE;
+        }
+        if (settings.votingOpen()) {
+            return EventPhase.PUBLIC_VOTING_OPEN;
+        }
+        if (settings.registrationsOpen()) {
+            return EventPhase.REGISTRATION_OPEN;
+        }
+        return EventPhase.REGISTRATION_CLOSED;
     }
 }

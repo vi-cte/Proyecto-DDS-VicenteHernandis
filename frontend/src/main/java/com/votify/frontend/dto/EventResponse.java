@@ -11,6 +11,7 @@ public class EventResponse {
     private boolean resultsVisible;
     private int maxTeamsToVote;
     private boolean juryEnabled;
+    private String phase;
     private boolean active;
 
     public Long getId() { return id; }
@@ -31,6 +32,8 @@ public class EventResponse {
     public void setMaxTeamsToVote(int maxTeamsToVote) { this.maxTeamsToVote = maxTeamsToVote; }
     public boolean isJuryEnabled() { return juryEnabled; }
     public void setJuryEnabled(boolean juryEnabled) { this.juryEnabled = juryEnabled; }
+    public String getPhase() { return phase; }
+    public void setPhase(String phase) { this.phase = phase; }
     public boolean isActive() { return active; }
     public void setActive(boolean active) { this.active = active; }
 

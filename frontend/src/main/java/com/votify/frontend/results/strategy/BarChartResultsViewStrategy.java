@@ -13,7 +13,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.layout.Priority;
 import javafx.geometry.Insets;
 import java.util.List;
 
@@ -110,7 +109,8 @@ public class BarChartResultsViewStrategy implements ResultsViewStrategy {
             });
             jurySeries.getData().add(dataPoint);
         }
-        chart.getData().addAll(publicSeries, jurySeries);
+        chart.getData().add(publicSeries);
+        chart.getData().add(jurySeries);
 
         VBox container = new VBox(16);
         container.getStyleClass().add("results-bar-list");

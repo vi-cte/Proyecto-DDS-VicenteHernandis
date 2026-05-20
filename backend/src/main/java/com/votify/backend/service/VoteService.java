@@ -4,7 +4,9 @@ import com.votify.backend.domain.vote.Vote;
 import com.votify.backend.dto.ResultItemResponse;
 import com.votify.backend.dto.ResultsResponse;
 import com.votify.backend.dto.JuryCriterionScoreRequest;
+import com.votify.backend.dto.JuryTeamEvaluationRequest;
 import com.votify.backend.dto.MyTeamResultsResponse;
+import com.votify.backend.dto.ParticipantResponse;
 import com.votify.backend.dto.TeamCommentResponse;
 import com.votify.backend.dto.VoteRequest;
 import com.votify.backend.dto.VoteResponse;
@@ -20,6 +22,7 @@ import com.votify.backend.entity.EventEntity;
 import com.votify.backend.exception.ApiException;
 import com.votify.backend.factory.JuryVoteCreator;
 import com.votify.backend.factory.PublicVoteCreator;
+import com.votify.backend.observer.VoteEventPublisher;
 import com.votify.backend.repository.UserRepository;
 import com.votify.backend.repository.TeamCommentProjection;
 import com.votify.backend.repository.VoteJpaRepository;
@@ -31,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -54,6 +58,7 @@ public class VoteService {
     private final JuryVoteCreator juryVoteCreator;
     private final EventSettingsService eventSettingsService;
     private final UserRepository userRepository;
+    private final VoteEventPublisher voteEventPublisher;
 
     // Inyecta repositorios y servicios necesarios para registrar votos.
     public VoteService(
@@ -62,7 +67,8 @@ public class VoteService {
             PublicVoteCreator voteCreator,
             JuryVoteCreator juryVoteCreator,
             EventSettingsService eventSettingsService,
-            UserRepository userRepository
+            UserRepository userRepository,
+            VoteEventPublisher voteEventPublisher
     ) {
         this.voteRepository = voteRepository;
         this.participantService = participantService;
@@ -70,6 +76,7 @@ public class VoteService {
         this.juryVoteCreator = juryVoteCreator;
         this.eventSettingsService = eventSettingsService;
         this.userRepository = userRepository;
+        this.voteEventPublisher = voteEventPublisher;
     }
 
     @Transactional
@@ -82,7 +89,7 @@ public class VoteService {
     // Registra los votos de un usuario para el evento seleccionado.
     public VoteResponse createVotes(VoteRequest request, Long userId, Long eventId) {
         EventEntity event = eventSettingsService.getEventOrActive(eventId);
-        if (!event.isVotingOpen()) {
+        if (!event.isPublicVotingOpen() && !event.isJuryVotingOpen()) {
             throw new ApiException(HttpStatus.FORBIDDEN, "Las votaciones estan cerradas actualmente");
         }
         User user = userId == null ? null : userRepository.findById(userId).orElse(null);
@@ -90,21 +97,33 @@ public class VoteService {
             throw new ApiException(HttpStatus.UNAUTHORIZED, "Usuario no registrado");
         }
         if (user.getRole() == UserRole.JURY) {
+            if (!event.isJuryVotingOpen()) {
+                throw new ApiException(HttpStatus.FORBIDDEN, "La votación del jurado está cerrada actualmente");
+            }
             if (!event.isJuryEnabled()) {
                 throw new ApiException(HttpStatus.FORBIDDEN, "La votación del jurado no está habilitada para este evento");
             }
             if (event.getJuryVotingMode() == JuryVotingMode.MULTICRITERIA) {
-                return createJuryMulticriteriaVotes(request, userId, event);
+                VoteResponse response = createJuryMulticriteriaVotes(request, userId, event);
+                voteEventPublisher.notifyVotesChanged(event.getId());
+                return response;
             }
             if (voteRepository.existsByEventAndUserId(event, userId)) {
                 throw new ApiException(HttpStatus.CONFLICT, "Ya has votado. No puedes votar de nuevo.");
             }
-            return createJuryVotes(request, userId, event);
+            VoteResponse response = createJuryVotes(request, userId, event);
+            voteEventPublisher.notifyVotesChanged(event.getId());
+            return response;
+        }
+        if (!event.isPublicVotingOpen()) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "Las votaciones del público estan cerradas actualmente");
         }
         if (voteRepository.existsByEventAndUserId(event, userId)) {
             throw new ApiException(HttpStatus.CONFLICT, "Ya has votado. No puedes votar de nuevo.");
         }
-        return createPublicVotes(request, userId, event);
+        VoteResponse response = createPublicVotes(request, userId, event);
+        voteEventPublisher.notifyVotesChanged(event.getId());
+        return response;
     }
 
     // Registra votos públicos con el límite configurado por el administrador.
@@ -156,82 +175,146 @@ public class VoteService {
         return new VoteResponse(orderedSelections.size(), orderedSelections);
     }
 
-    // Registra los dos votos diferenciados del jurado.
+    // Registra votos simples del jurado (mismo flujo que el público pero en categoría JURY).
     private VoteResponse createJuryVotes(VoteRequest request, Long userId, EventEntity activeEvent) {
-        List<String> jurySelections = normalizeSelections(List.of(
-                nullToEmpty(request.juryWinnerSelection()),
-                nullToEmpty(request.juryTechnicalSelection())
-        ));
-        if (jurySelections.size() != 2) {
-            throw new ApiException(HttpStatus.BAD_REQUEST, "El jurado debe seleccionar un ganador y una mención técnica");
+        List<VoteSelectionRequest> selectionEntries = normalizeSelectionEntries(request);
+        List<String> normalizedSelections = selectionEntries.stream()
+                .map(VoteSelectionRequest::teamName)
+                .toList();
+        int maxTeamsToVote = activeEvent.getMaxTeamsToVote();
+        if (normalizedSelections.isEmpty()) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Debes seleccionar al menos un participante");
+        }
+        if (normalizedSelections.size() > maxTeamsToVote) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Solo puedes votar a " + maxTeamsToVote + " equipos");
+        }
+        Set<String> uniqueSelections = new LinkedHashSet<>(normalizedSelections);
+        if (uniqueSelections.size() != normalizedSelections.size()) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "No se permiten opciones duplicadas");
         }
 
-        for (String teamName : jurySelections) {
+        List<String> orderedSelections = new ArrayList<>(uniqueSelections);
+        for (String teamName : orderedSelections) {
             if (!participantService.existsByTeamName(teamName, activeEvent.getId())) {
                 throw new ApiException(HttpStatus.BAD_REQUEST, "El equipo no existe: " + teamName);
             }
         }
 
-        Vote winnerVote = juryVoteCreator.orderVote(jurySelections.get(0));
-        ParticipantEntity winner = participantService.getByTeamName(winnerVote.getOption(), activeEvent.getId());
-        voteRepository.save(buildVoteEntity(
-                winner,
-                activeEvent,
-                userId,
-                UserRole.JURY,
-                VoteCategory.JURY_WINNER,
-                null,
-                null,
-                trimToNull(request.juryWinnerComment())
-        ));
+        for (String teamName : orderedSelections) {
+            Vote vote = juryVoteCreator.orderVote(teamName);
+            ParticipantEntity participant = participantService.getByTeamName(vote.getOption(), activeEvent.getId());
+            String comment = selectionEntries.stream()
+                    .filter(entry -> teamName.equals(entry.teamName()))
+                    .map(VoteSelectionRequest::comment)
+                    .filter(Objects::nonNull)
+                    .findFirst()
+                    .orElse(null);
+            voteRepository.save(buildVoteEntity(
+                    participant,
+                    activeEvent,
+                    userId,
+                    UserRole.JURY,
+                    VoteCategory.JURY_WINNER,
+                    null,
+                    null,
+                    comment
+            ));
+        }
 
-        Vote technicalVote = juryVoteCreator.orderVote(jurySelections.get(1));
-        ParticipantEntity technical = participantService.getByTeamName(technicalVote.getOption(), activeEvent.getId());
-        voteRepository.save(buildVoteEntity(
-                technical,
-                activeEvent,
-                userId,
-                UserRole.JURY,
-                VoteCategory.JURY_TECHNICAL,
-                null,
-                null,
-                trimToNull(request.juryTechnicalComment())
-        ));
-
-        return new VoteResponse(jurySelections.size(), jurySelections);
+        return new VoteResponse(orderedSelections.size(), orderedSelections);
     }
 
     // Registra una evaluacion multicriterio del jurado para un equipo concreto.
     private VoteResponse createJuryMulticriteriaVotes(VoteRequest request, Long userId, EventEntity activeEvent) {
-        String teamName = request.juryTeamSelection() == null ? "" : request.juryTeamSelection().trim();
-        if (teamName.isEmpty()) {
-            throw new ApiException(HttpStatus.BAD_REQUEST, "Debes seleccionar un equipo para evaluar");
-        }
-        if (!participantService.existsByTeamName(teamName, activeEvent.getId())) {
-            throw new ApiException(HttpStatus.BAD_REQUEST, "El equipo no existe: " + teamName);
-        }
+        List<JuryTeamEvaluationRequest> evaluations = normalizeJuryEvaluations(request);
+        List<String> eventTeamNames = participantService.findAll(activeEvent.getId()).stream()
+                .map(ParticipantResponse::teamName)
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(teamName -> !teamName.isEmpty())
+                .toList();
 
-        ParticipantEntity participant = participantService.getByTeamName(teamName, activeEvent.getId());
-        if (voteRepository.existsByEventAndUserIdAndParticipantIdAndVoteCategory(
+        if (eventTeamNames.isEmpty()) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "No hay equipos registrados para evaluar");
+        }
+        if (evaluations.size() != eventTeamNames.size()) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Debes evaluar todos los equipos antes de enviar la votación del jurado");
+        }
+        if (voteRepository.countDistinctParticipantsByEventAndUserIdAndVoteCategory(
                 activeEvent,
                 userId,
-                participant.getId(),
                 VoteCategory.JURY_MULTICRITERIA
-        )) {
-            throw new ApiException(HttpStatus.CONFLICT, "Ya has evaluado a este equipo con la votación multicriterio");
+        ) > 0) {
+            throw new ApiException(HttpStatus.CONFLICT, "Ya has enviado la votación multicriterio del jurado para este evento");
         }
 
-        List<JuryCriterionScoreRequest> scores = request.juryCriteriaScores() == null
-                ? List.of()
-                : request.juryCriteriaScores();
-        if (scores.size() != JURY_CRITERIA.size()) {
+        Map<String, JuryTeamEvaluationRequest> evaluationsByTeam = new LinkedHashMap<>();
+        for (JuryTeamEvaluationRequest evaluation : evaluations) {
+            String teamName = evaluation == null ? "" : nullToEmpty(evaluation.teamName()).trim();
+            if (teamName.isEmpty()) {
+                throw new ApiException(HttpStatus.BAD_REQUEST, "Cada evaluación debe indicar el equipo");
+            }
+            String normalizedTeamName = teamName.toLowerCase(Locale.ROOT);
+            if (evaluationsByTeam.put(normalizedTeamName, evaluation) != null) {
+                throw new ApiException(HttpStatus.BAD_REQUEST, "No puedes repetir equipos en la evaluación del jurado");
+            }
+        }
+
+        Set<String> eventTeamNamesNormalized = eventTeamNames.stream()
+                .map(teamName -> teamName.toLowerCase(Locale.ROOT))
+                .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
+        if (!evaluationsByTeam.keySet().equals(eventTeamNamesNormalized)) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "La evaluación del jurado debe incluir exactamente todos los equipos del evento");
+        }
+
+        List<VoteEntity> votesToSave = new ArrayList<>();
+        List<String> evaluatedTeamNames = new ArrayList<>();
+        for (String eventTeamName : eventTeamNames) {
+            JuryTeamEvaluationRequest evaluation = evaluationsByTeam.get(eventTeamName.toLowerCase(Locale.ROOT));
+            ParticipantEntity participant = participantService.getByTeamName(eventTeamName, activeEvent.getId());
+            String teamComment = trimToNull(evaluation.comment());
+            boolean commentStored = false;
+            for (JuryCriterionScoreRequest scoreRequest : validateJuryCriteriaScores(evaluation.criteriaScores())) {
+                String normalizedCriterion = normalizeCriterion(scoreRequest.criterion());
+                votesToSave.add(buildVoteEntity(
+                        participant,
+                        activeEvent,
+                        userId,
+                        UserRole.JURY,
+                        VoteCategory.JURY_MULTICRITERIA,
+                        normalizedCriterion,
+                        scoreRequest.score(),
+                        commentStored ? null : teamComment
+                ));
+                commentStored = true;
+            }
+            evaluatedTeamNames.add(eventTeamName);
+        }
+
+        voteRepository.saveAll(votesToSave);
+        return new VoteResponse(votesToSave.size(), evaluatedTeamNames);
+    }
+
+    // Permite recibir el formato nuevo por lotes y conserva compatibilidad con el formato antiguo.
+    private List<JuryTeamEvaluationRequest> normalizeJuryEvaluations(VoteRequest request) {
+        if (request.juryTeamEvaluations() != null && !request.juryTeamEvaluations().isEmpty()) {
+            return request.juryTeamEvaluations();
+        }
+        String teamName = request.juryTeamSelection() == null ? "" : request.juryTeamSelection().trim();
+        if (teamName.isEmpty()) {
+            return List.of();
+        }
+        return List.of(new JuryTeamEvaluationRequest(teamName, request.juryCriteriaScores(), request.juryTeamComment()));
+    }
+
+    // Valida que una evaluación incluya exactamente los cuatro criterios y puntuaciones 0-10.
+    private List<JuryCriterionScoreRequest> validateJuryCriteriaScores(List<JuryCriterionScoreRequest> scores) {
+        List<JuryCriterionScoreRequest> safeScores = scores == null ? List.of() : scores;
+        if (safeScores.size() != JURY_CRITERIA.size()) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Debes puntuar todos los criterios del jurado");
         }
-
         Set<String> receivedCriteria = new HashSet<>();
-        String teamComment = trimToNull(request.juryTeamComment());
-        boolean commentStored = false;
-        for (JuryCriterionScoreRequest scoreRequest : scores) {
+        for (JuryCriterionScoreRequest scoreRequest : safeScores) {
             if (scoreRequest == null || scoreRequest.criterion() == null || scoreRequest.score() == null) {
                 throw new ApiException(HttpStatus.BAD_REQUEST, "Cada criterio del jurado debe incluir nombre y puntuación");
             }
@@ -245,20 +328,8 @@ public class VoteService {
             if (scoreRequest.score() < 0 || scoreRequest.score() > 10) {
                 throw new ApiException(HttpStatus.BAD_REQUEST, "Las puntuaciones del jurado deben estar entre 0 y 10");
             }
-            voteRepository.save(buildVoteEntity(
-                    participant,
-                    activeEvent,
-                    userId,
-                    UserRole.JURY,
-                    VoteCategory.JURY_MULTICRITERIA,
-                    normalizedCriterion,
-                    scoreRequest.score(),
-                    commentStored ? null : teamComment
-            ));
-            commentStored = true;
         }
-
-        return new VoteResponse(scores.size(), List.of(teamName));
+        return safeScores;
     }
 
     @Transactional(readOnly = true)
@@ -276,11 +347,20 @@ public class VoteService {
     @Transactional(readOnly = true)
     // Calcula y devuelve el resumen agregado y, si aplica, los comentarios del equipo del usuario autenticado.
     public ResultsResponse getResults(Long eventId, Long userId) {
+        return getResults(eventId, userId, false);
+    }
+
+    @Transactional(readOnly = true)
+    // Calcula resultados permitiendo al administrador consultar eventos no publicados.
+    public ResultsResponse getResults(Long eventId, Long userId, boolean includeHiddenResults) {
         EventEntity event = eventSettingsService.getEventOrActive(eventId);
+        if (!includeHiddenResults && !event.isResultsVisible()) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "Los resultados están ocultos actualmente por el administrador");
+        }
         List<ResultItemResponse> publicResults = toResultItems(voteRepository.tallyByEventAndVoterRole(event, UserRole.PUBLIC));
         List<ResultItemResponse> juryResults = toResultItems(voteRepository.tallyByEventAndVoterRole(event, UserRole.JURY));
-        long totalPublicVotes = voteRepository.countByEventAndVoterRole(event, UserRole.PUBLIC);
-        long totalJuryVotes = voteRepository.countByEventAndVoterRole(event, UserRole.JURY);
+        long totalPublicVotes = voteRepository.sumScoreByEventAndVoterRole(event, UserRole.PUBLIC);
+        long totalJuryVotes = voteRepository.sumScoreByEventAndVoterRole(event, UserRole.JURY);
         return new ResultsResponse(
                 totalPublicVotes + totalJuryVotes,
                 publicResults,

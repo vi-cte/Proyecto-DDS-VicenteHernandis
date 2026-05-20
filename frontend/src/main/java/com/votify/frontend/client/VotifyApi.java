@@ -7,6 +7,7 @@ import com.votify.frontend.dto.EventSettingsResponse;
 import com.votify.frontend.dto.AdminEventResponse;
 import com.votify.frontend.dto.EventResponse;
 import com.votify.frontend.dto.JuryCriterionScoreRequest;
+import com.votify.frontend.dto.JuryTeamEvaluationRequest;
 import com.votify.frontend.dto.VoteSelectionRequest;
 import com.votify.frontend.dto.VoteSettingsResponse;
 import java.util.List;
@@ -42,11 +43,14 @@ public interface VotifyApi {
     VoteResponse createJuryVotes(Long eventId, String winnerSelection, String winnerComment, String technicalSelection, String technicalComment);
     VoteResponse createJuryMulticriteriaVotes(Long eventId, String teamSelection, List<JuryCriterionScoreRequest> criteriaScores);
     VoteResponse createJuryMulticriteriaVotes(Long eventId, String teamSelection, List<JuryCriterionScoreRequest> criteriaScores, String comment);
+    VoteResponse createJuryMulticriteriaVotes(Long eventId, List<JuryTeamEvaluationRequest> evaluations);
     // Devuelve el límite máximo de equipos votables.
     int getVotingLimit();
     int getVotingLimit(Long eventId);
     VoteSettingsResponse getVoteSettings();
     VoteSettingsResponse getVoteSettings(Long eventId);
+    // Obtiene el modo de votación del jurado directamente del JSON
+    String getJuryVotingModeRaw(Long eventId);
     // Descarga los resultados agregados.
     ResultsResponse getResults();
     ResultsResponse getResults(Long eventId);
@@ -62,6 +66,8 @@ public interface VotifyApi {
     boolean isCurrentUserJury();
     // Valida la contraseña de administrador.
     boolean authenticateAdmin(String password);
+    // Crea una cuenta de jurado desde administración.
+    void createJuryAccount(String email, String password);
     // Obtiene los ajustes desde el endpoint administrativo.
     EventSettingsResponse getAdminSettings();
     // Obtiene los ajustes públicos del evento.
@@ -75,9 +81,9 @@ public interface VotifyApi {
     // Devuelve eventos administrativos.
     List<AdminEventResponse> getAdminEvents();
     // Crea un evento administrativo.
-    AdminEventResponse createAdminEvent(String name, String eventDate, String description, boolean registrationsOpen, boolean votingOpen, boolean resultsVisible, int maxTeamsToVote, boolean juryEnabled, String juryVotingMode);
+    AdminEventResponse createAdminEvent(String name, String eventDate, String description, boolean registrationsOpen, boolean votingOpen, boolean resultsVisible, int maxTeamsToVote, boolean juryEnabled, String juryVotingMode, String phase);
     // Actualiza un evento administrativo.
-    AdminEventResponse updateAdminEvent(Long id, String name, String eventDate, String description, boolean registrationsOpen, boolean votingOpen, boolean resultsVisible, int maxTeamsToVote, boolean juryEnabled, String juryVotingMode);
+    AdminEventResponse updateAdminEvent(Long id, String name, String eventDate, String description, boolean registrationsOpen, boolean votingOpen, boolean resultsVisible, int maxTeamsToVote, boolean juryEnabled, String juryVotingMode, String phase);
     // Archiva un evento administrativo.
     void archiveAdminEvent(Long id);
 }

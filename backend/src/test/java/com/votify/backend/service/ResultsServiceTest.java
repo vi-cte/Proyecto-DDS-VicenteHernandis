@@ -70,8 +70,8 @@ class ResultsServiceTest {
     @Test
     void shouldReturnAccurateResultsWhenResultsAreVisible() {
         // Arrange: Resultados visibles y simulamos respuesta de la base de datos
-        when(voteRepository.countByEventAndVoterRole(activeEvent, UserRole.PUBLIC)).thenReturn(150L);
-        when(voteRepository.countByEventAndVoterRole(activeEvent, UserRole.JURY)).thenReturn(0L);
+        when(voteRepository.sumScoreByEventAndVoterRole(activeEvent, UserRole.PUBLIC)).thenReturn(150L);
+        when(voteRepository.sumScoreByEventAndVoterRole(activeEvent, UserRole.JURY)).thenReturn(0L);
 
         VoteTallyProjection p1 = mock(VoteTallyProjection.class);
         when(p1.getTeamName()).thenReturn("Equipo A");

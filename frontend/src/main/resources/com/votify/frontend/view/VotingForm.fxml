@@ -5,6 +5,7 @@
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.TextArea?>
 <?import javafx.scene.image.Image?>
@@ -91,63 +92,67 @@
       </VBox>
    </top>
    <center>
-      <VBox spacing="18.0" styleClass="vote-page">
-         <children>
-            <StackPane styleClass="summary-card">
+      <ScrollPane fitToWidth="true" hbarPolicy="NEVER" styleClass="screen-scroll">
+         <content>
+            <VBox spacing="18.0" styleClass="vote-page">
                <children>
-                  <VBox alignment="CENTER_LEFT" spacing="6.0">
+                  <StackPane styleClass="summary-card">
                      <children>
-                        <Label styleClass="summary-caption" text="Evento" />
-                        <ComboBox fx:id="eventComboBox" maxWidth="1.7976931348623157E308" styleClass="input-field" />
-                        <Label styleClass="summary-caption" text="Votos seleccionados" />
-                        <Label fx:id="selectionCountLabel" styleClass="summary-value" text="0 / 3" />
-                     </children>
-                  </VBox>
-               </children>
-               <padding>
-                  <Insets bottom="18.0" left="18.0" right="18.0" top="18.0" />
-               </padding>
-            </StackPane>
-            <VBox fx:id="juryVotingBox" managed="false" spacing="16.0" styleClass="summary-card" visible="false">
-               <children>
-                  <VBox fx:id="jurySimpleBox" managed="false" spacing="6.0" visible="false">
-                     <children>
-                        <Label styleClass="summary-caption" text="Ganador del jurado" />
-                        <ComboBox fx:id="juryWinnerComboBox" maxWidth="1.7976931348623157E308" styleClass="input-field" />
-                        <TextArea fx:id="juryWinnerCommentArea" prefRowCount="3" promptText="Añade un comentario para este equipo..." styleClass="vote-comment-area" wrapText="true" style="-fx-control-inner-background: white; -fx-text-inner-color: black;" />
-                        <Label styleClass="summary-caption" text="Mención técnica del jurado" />
-                        <ComboBox fx:id="juryTechnicalComboBox" maxWidth="1.7976931348623157E308" styleClass="input-field" />
-                        <TextArea fx:id="juryTechnicalCommentArea" prefRowCount="3" promptText="Añade un comentario para este equipo..." styleClass="vote-comment-area" wrapText="true" style="-fx-control-inner-background: white; -fx-text-inner-color: black;" />
-                     </children>
-                  </VBox>
-                  <VBox fx:id="juryMulticriteriaBox" managed="false" spacing="14.0" visible="false">
-                     <children>
-                        <VBox spacing="6.0">
+                        <VBox alignment="CENTER_LEFT" spacing="6.0">
                            <children>
-                              <Label styleClass="summary-caption" text="Selecciona el equipo a evaluar" />
-                              <ComboBox fx:id="juryTeamComboBox" maxWidth="1.7976931348623157E308" styleClass="input-field" />
+                              <Label styleClass="summary-caption" text="Evento" />
+                              <ComboBox fx:id="eventComboBox" maxWidth="1.7976931348623157E308" styleClass="input-field" />
+                              <Label styleClass="summary-caption" text="Votos seleccionados" />
+                              <Label fx:id="selectionCountLabel" styleClass="summary-value" text="0 / 3" />
                            </children>
                         </VBox>
-                        <Separator />
-                        <VBox fx:id="juryCriteriaContainer" spacing="12.0" />
-                        <TextArea fx:id="juryMulticriteriaCommentArea" prefRowCount="4" promptText="Añade un comentario para este equipo..." styleClass="vote-comment-area" wrapText="true" style="-fx-control-inner-background: white; -fx-text-inner-color: black;" />
                      </children>
+                     <padding>
+                        <Insets bottom="18.0" left="18.0" right="18.0" top="18.0" />
+                     </padding>
+                  </StackPane>
+                  <VBox fx:id="juryVotingBox" managed="false" spacing="16.0" styleClass="summary-card" visible="false">
+                     <children>
+                        <VBox fx:id="jurySimpleBox" managed="false" spacing="6.0" visible="false">
+                           <children>
+                              <Label styleClass="summary-caption" text="Ganador del jurado" />
+                              <ComboBox fx:id="juryWinnerComboBox" maxWidth="1.7976931348623157E308" styleClass="input-field" />
+                              <TextArea fx:id="juryWinnerCommentArea" prefRowCount="3" promptText="Añade un comentario para este equipo..." styleClass="vote-comment-area" wrapText="true" style="-fx-control-inner-background: white; -fx-text-inner-color: black;" />
+                              <Label styleClass="summary-caption" text="Mención técnica del jurado" />
+                              <ComboBox fx:id="juryTechnicalComboBox" maxWidth="1.7976931348623157E308" styleClass="input-field" />
+                              <TextArea fx:id="juryTechnicalCommentArea" prefRowCount="3" promptText="Añade un comentario para este equipo..." styleClass="vote-comment-area" wrapText="true" style="-fx-control-inner-background: white; -fx-text-inner-color: black;" />
+                           </children>
+                        </VBox>
+                        <VBox fx:id="juryMulticriteriaBox" managed="false" spacing="14.0" visible="false">
+                           <children>
+                              <VBox spacing="6.0">
+                                 <children>
+                                    <Label styleClass="summary-caption" text="Selecciona cada equipo y puntúa los cuatro criterios" />
+                                    <ComboBox fx:id="juryTeamComboBox" maxWidth="1.7976931348623157E308" styleClass="input-field" />
+                                 </children>
+                              </VBox>
+                              <Separator />
+                              <VBox fx:id="juryCriteriaContainer" spacing="12.0" />
+                              <TextArea fx:id="juryMulticriteriaCommentArea" prefRowCount="4" promptText="Añade un comentario para este equipo..." styleClass="vote-comment-area" wrapText="true" style="-fx-control-inner-background: white; -fx-text-inner-color: black;" />
+                           </children>
+                        </VBox>
+                     </children>
+                     <padding>
+                        <Insets bottom="18.0" left="18.0" right="18.0" top="18.0" />
+                     </padding>
                   </VBox>
+                  <ListView fx:id="participantList" prefHeight="430.0" styleClass="vote-list" />
+                  <HBox alignment="CENTER">
+                     <children>
+                        <Button fx:id="submitButton" defaultButton="true" mnemonicParsing="false" onAction="#submitVote" styleClass="submit-votes-button" text="Enviar Votos (0)" />
+                     </children>
+                  </HBox>
                </children>
                <padding>
-                  <Insets bottom="18.0" left="18.0" right="18.0" top="18.0" />
+                  <Insets bottom="26.0" left="38.0" right="38.0" top="18.0" />
                </padding>
             </VBox>
-            <ListView fx:id="participantList" VBox.vgrow="ALWAYS" styleClass="vote-list" />
-            <HBox alignment="CENTER">
-               <children>
-                  <Button fx:id="submitButton" defaultButton="true" mnemonicParsing="false" onAction="#submitVote" styleClass="submit-votes-button" text="Enviar Votos (0)" />
-               </children>
-            </HBox>
-         </children>
-         <padding>
-            <Insets bottom="26.0" left="38.0" right="38.0" top="18.0" />
-         </padding>
-      </VBox>
+         </content>
+      </ScrollPane>
    </center>
 </BorderPane>

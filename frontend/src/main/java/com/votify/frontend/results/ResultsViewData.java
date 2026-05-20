@@ -16,12 +16,18 @@ public record ResultsViewData(
 ) {
     // Devuelve el primer clasificado o null si no hay resultados.
     public ResultItemResponse winner() {
-        return ranking.isEmpty() ? null : ranking.getFirst();
+        return ranking.stream()
+                .filter(item -> item.getVotes() > 0)
+                .findFirst()
+                .orElse(null);
     }
 
     // Devuelve el primer clasificado del jurado o null si no hay resultados.
     public ResultItemResponse juryWinner() {
-        return juryRanking.isEmpty() ? null : juryRanking.getFirst();
+        return juryRanking.stream()
+                .filter(item -> item.getVotes() > 0)
+                .findFirst()
+                .orElse(null);
     }
 
     // Devuelve el resumen del equipo del usuario autenticado, si existe.

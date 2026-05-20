@@ -80,6 +80,9 @@ public class SecurityInterceptor implements HandlerInterceptor {
         if (!path.startsWith("/api/votes")) {
             return false;
         }
+        if ("/api/votes/settings".equals(path) && "GET".equalsIgnoreCase(method)) {
+            return false;
+        }
         return "POST".equalsIgnoreCase(method) || "GET".equalsIgnoreCase(method);
     }
 

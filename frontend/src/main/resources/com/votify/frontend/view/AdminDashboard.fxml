@@ -40,6 +40,7 @@
                 <HBox alignment="CENTER_RIGHT" spacing="14.0">
                     <children>
                         <Button mnemonicParsing="false" onAction="#showHistory" styleClass="admin-secondary-button" text="Histórico de Eventos" />
+                        <Button mnemonicParsing="false" onAction="#openCreateJury" styleClass="admin-secondary-button" text="+  Nuevo Jurado" />
                         <Button mnemonicParsing="false" onAction="#openCreateEvent" styleClass="admin-primary-button" text="+  Nuevo Evento" />
                         <Button mnemonicParsing="false" onAction="#exit" styleClass="logout-button" text="Cerrar sesión">
                             <graphic>

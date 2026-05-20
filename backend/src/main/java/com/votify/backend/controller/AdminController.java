@@ -2,13 +2,20 @@ package com.votify.backend.controller;
 
 import com.votify.backend.dto.AdminEventRequest;
 import com.votify.backend.dto.AdminEventResponse;
+import com.votify.backend.dto.AuthRequest;
+import com.votify.backend.dto.AuthResponse;
 import com.votify.backend.dto.EventSettingsDto;
+import com.votify.backend.observer.AdminDashboardSseObserver;
+import com.votify.backend.observer.VoteEventPublisher;
+import com.votify.backend.service.AuthService;
 import com.votify.backend.service.EventAdminService;
 import com.votify.backend.service.EventSettingsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.lang.NonNull;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -18,11 +25,17 @@ public class AdminController {
     private JdbcTemplate jdbcTemplate;
     private final EventSettingsService eventSettingsService;
     private final EventAdminService eventAdminService;
+    private final AuthService authService;
+    private final AdminDashboardSseObserver adminDashboardSseObserver;
+    private final VoteEventPublisher voteEventPublisher;
 
     // Inyecta el servicio de ajustes usado por el panel de administración.
-    public AdminController(EventSettingsService eventSettingsService, EventAdminService eventAdminService) {
+    public AdminController(EventSettingsService eventSettingsService, EventAdminService eventAdminService, AuthService authService, AdminDashboardSseObserver adminDashboardSseObserver, VoteEventPublisher voteEventPublisher) {
         this.eventSettingsService = eventSettingsService;
         this.eventAdminService = eventAdminService;
+        this.authService = authService;
+        this.adminDashboardSseObserver = adminDashboardSseObserver;
+        this.voteEventPublisher = voteEventPublisher;
     }
 
     // Endpoint para que el cliente compruebe sus credenciales admin
@@ -30,6 +43,20 @@ public class AdminController {
     @PostMapping("/auth")
     public ResponseEntity<Void> authenticateAdmin() {
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/jury")
+    // Crea una cuenta de jurado desde el panel de administración.
+    public ResponseEntity<AuthResponse> createJury(@RequestBody AuthRequest request) {
+        try {
+            return ResponseEntity.status(201).body(authService.register(new AuthRequest(
+                    request.email(),
+                    request.password(),
+                    "JURY"
+            )));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(new AuthResponse(null, null, null, e.getMessage()));
+        }
     }
 
     @GetMapping("/settings")
@@ -51,6 +78,12 @@ public class AdminController {
         return ResponseEntity.ok(eventAdminService.findAll());
     }
 
+    @GetMapping("/events/stream")
+    // Suscribe el dashboard admin a cambios de votación en tiempo real.
+    public SseEmitter streamEventUpdates() {
+        return adminDashboardSseObserver.subscribe();
+    }
+
     @PostMapping("/events")
     // Crea un nuevo evento y lo deja activo.
     public ResponseEntity<AdminEventResponse> createEvent(@RequestBody AdminEventRequest request) {
@@ -65,15 +98,15 @@ public class AdminController {
 
     @DeleteMapping("/events/{id}")
     // Elimina un evento existente y todos sus datos asociados.
-    public ResponseEntity<Void> deleteEvent(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteEvent(@PathVariable @NonNull Long id) {
         eventAdminService.delete(id);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/events/{id}/archive")
     // Archiva un evento existente dejándolo inactivo.
-    public ResponseEntity<Void> archiveEvent(@PathVariable Long id) {
-        jdbcTemplate.update("UPDATE events SET active = false WHERE id = ?", id);
+    public ResponseEntity<Void> archiveEvent(@PathVariable @NonNull Long id) {
+        eventAdminService.archive(id);
         return ResponseEntity.ok().build();
     }
 
@@ -87,6 +120,7 @@ public class AdminController {
                 WHERE participant_id IN (SELECT id FROM participants WHERE event_id = ?)
                 """, eventId);
         jdbcTemplate.update("DELETE FROM participants WHERE event_id = ?", eventId);
+        voteEventPublisher.notifyVotesChanged(eventId);
         
         return ResponseEntity.ok().build();
     }

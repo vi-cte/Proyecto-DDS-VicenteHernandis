@@ -47,6 +47,11 @@ public class SessionManager {
         return sessionToken != null;
     }
 
+    // Indica si hay una sesión administrativa guardada.
+    public boolean hasAdminSession() {
+        return adminPassword != null && !adminPassword.isBlank();
+    }
+
     // Devuelve el correo del usuario actualmente autenticado.
     public String getCurrentUserEmail() {
         return sessionEmail;

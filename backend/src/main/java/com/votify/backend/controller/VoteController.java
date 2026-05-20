@@ -6,6 +6,7 @@ import com.votify.backend.dto.VoteResponse;
 import com.votify.backend.dto.VoteSettingsResponse;
 import com.votify.backend.service.VoteService;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,10 +24,15 @@ import java.util.List;
 @RequestMapping("/api")
 public class VoteController {
     private final VoteService voteService;
+    private final String adminPassword;
 
     // Inyecta el servicio que gestiona votos y resultados.
-    public VoteController(VoteService voteService) {
+    public VoteController(
+            VoteService voteService,
+            @Value("${votify.admin.password:admin123}") String adminPassword
+    ) {
         this.voteService = voteService;
+        this.adminPassword = adminPassword;
     }
 
     // POST /api/votes: registra votos y devuelve 201 Created.
@@ -44,9 +50,10 @@ public class VoteController {
     @GetMapping("/results")
     public ResultsResponse getResults(
             @RequestParam(required = false) Long eventId,
-            @RequestHeader(value = "X-User-ID", required = false) Long userId
+            @RequestHeader(value = "X-User-ID", required = false) Long userId,
+            @RequestHeader(value = "X-Admin-Password", required = false) String providedAdminPassword
     ) {
-        return voteService.getResults(eventId, userId);
+        return voteService.getResults(eventId, userId, isValidAdminPassword(providedAdminPassword));
     }
 
     @GetMapping("/votes/settings")
@@ -71,5 +78,11 @@ public class VoteController {
             @RequestParam(required = false) Long eventId
     ) {
         return voteService.getEvaluatedJuryTeamNames(userId, eventId);
+    }
+
+    private boolean isValidAdminPassword(String providedAdminPassword) {
+        return providedAdminPassword != null
+                && !providedAdminPassword.isBlank()
+                && adminPassword.equals(providedAdminPassword);
     }
 }

@@ -6,14 +6,18 @@ import com.votify.frontend.dto.ResultItemResponse;
 import com.votify.frontend.exception.ApiClientException;
 import com.votify.frontend.navigation.SceneNavigator;
 import com.votify.frontend.ui.AlertHelper;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
+import javafx.geometry.Insets;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.PasswordField;
 import javafx.scene.control.ProgressBar;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -29,6 +33,8 @@ import java.util.stream.IntStream;
 // Controlador del dashboard administrativo de eventos.
 public class AdminDashboardController {
     private final ApiClient apiClient = ApiClient.getInstance();
+    private AutoCloseable dashboardUpdatesSubscription;
+    private volatile boolean refreshQueued;
 
     @FXML private Label eventsTitleLabel;
     @FXML private HBox eventsContainer;
@@ -36,6 +42,7 @@ public class AdminDashboardController {
     @FXML
     private void initialize() {
         loadEvents();
+        subscribeToDashboardUpdates();
     }
 
     // Carga eventos y renderiza tarjetas.
@@ -77,33 +84,21 @@ public class AdminDashboardController {
         body.getStyleClass().add("admin-event-body");
         HBox bodyTitle = new HBox();
         bodyTitle.setAlignment(Pos.CENTER_LEFT);
-        Label rankingTitle = new Label("Ranking en Tiempo Real");
+        Label rankingTitle = new Label("Rankings en Tiempo Real");
         rankingTitle.getStyleClass().add("admin-ranking-title");
         HBox.setHgrow(rankingTitle, Priority.ALWAYS);
         bodyTitle.getChildren().add(rankingTitle);
         body.getChildren().add(bodyTitle);
 
-        List<ResultItemResponse> ranking = event.getRanking() == null ? List.of() : event.getRanking().stream()
-                .sorted(Comparator.comparingLong(ResultItemResponse::getVotes).reversed())
-                .limit(3)
-                .toList();
-        if (ranking.isEmpty()) {
-            Label empty = new Label("Todavía no hay equipos inscritos.");
-            empty.getStyleClass().add("results-empty");
-            body.getChildren().add(empty);
-        } else {
-                boolean isMulticriteria = "MULTICRITERIA".equals(event.getJuryVotingMode());
-            long total = Math.max(1, ranking.stream().mapToLong(ResultItemResponse::getVotes).sum());
-            for (ResultItemResponse item : ranking) {
-                    body.getChildren().add(rankRow(item, total, isMulticriteria));
-            }
-        }
+        body.getChildren().add(rankingSection("Top 3 Público", event.getPublicRanking(), "votos"));
+        body.getChildren().add(rankingSection("Top 3 Jurado", event.getJuryRanking(), "pts"));
         card.getChildren().addAll(header, body);
 
         // Navegar a la vista de resultados cuando se hace clic en la tarjeta del evento
         card.setStyle("-fx-cursor: hand;");
         card.setOnMouseClicked(mouseEvent -> {
             try {
+                closeDashboardUpdatesSubscription();
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/votify/frontend/view/ResultsForm.fxml"));
                 Parent root = loader.load();
 
@@ -123,6 +118,30 @@ public class AdminDashboardController {
         });
 
         return card;
+    }
+
+    private VBox rankingSection(String titleText, List<ResultItemResponse> sourceRanking, String valueSuffix) {
+        VBox section = new VBox(10);
+        section.getStyleClass().add("admin-ranking-section");
+        Label title = new Label(titleText);
+        title.getStyleClass().add("admin-ranking-subtitle");
+        section.getChildren().add(title);
+
+        List<ResultItemResponse> ranking = sourceRanking == null ? List.of() : sourceRanking.stream()
+                .sorted(Comparator.comparingLong(ResultItemResponse::getVotes).reversed())
+                .limit(3)
+                .toList();
+        if (ranking.isEmpty()) {
+            Label empty = new Label("Todavía no hay equipos inscritos.");
+            empty.getStyleClass().add("results-empty");
+            section.getChildren().add(empty);
+        } else {
+            long total = Math.max(1, ranking.stream().mapToLong(ResultItemResponse::getVotes).sum());
+            for (ResultItemResponse item : ranking) {
+                section.getChildren().add(rankRow(item, total, valueSuffix));
+            }
+        }
+        return section;
     }
 
     // Botón de ajustes de cada evento.
@@ -173,7 +192,7 @@ public class AdminDashboardController {
         return box;
     }
 
-    private HBox rankRow(ResultItemResponse item, long totalVotes, boolean isMulticriteria) {
+    private HBox rankRow(ResultItemResponse item, long totalVotes, String valueSuffix) {
         HBox row = new HBox(16);
         row.setAlignment(Pos.CENTER_LEFT);
         row.getStyleClass().add("admin-rank-row");
@@ -184,11 +203,49 @@ public class AdminDashboardController {
         ProgressBar progress = new ProgressBar(item.getVotes() / (double) totalVotes);
         progress.getStyleClass().add("ranking-progress");
         text.getChildren().addAll(name, progress);
-        Label votes = new Label(item.getVotes() + (isMulticriteria ? " pts" : " votos"));
+        Label votes = new Label(item.getVotes() + " " + valueSuffix);
         votes.getStyleClass().add("admin-rank-votes");
         votes.setMinWidth(javafx.scene.layout.Region.USE_PREF_SIZE);
         row.getChildren().addAll(text, votes);
         return row;
+    }
+
+    private void subscribeToDashboardUpdates() {
+        dashboardUpdatesSubscription = apiClient.subscribeAdminDashboardUpdates(this::scheduleDashboardRefresh);
+        eventsContainer.sceneProperty().addListener((observable, oldScene, newScene) -> {
+            if (newScene != null) {
+                newScene.windowProperty().addListener((windowObservable, oldWindow, newWindow) -> {
+                    if (newWindow != null) {
+                        newWindow.setOnHidden(event -> closeDashboardUpdatesSubscription());
+                    }
+                });
+            }
+        });
+    }
+
+    private void scheduleDashboardRefresh() {
+        if (refreshQueued) {
+            return;
+        }
+        refreshQueued = true;
+        Platform.runLater(() -> {
+            try {
+                loadEvents();
+            } finally {
+                refreshQueued = false;
+            }
+        });
+    }
+
+    private void closeDashboardUpdatesSubscription() {
+        if (dashboardUpdatesSubscription == null) {
+            return;
+        }
+        try {
+            dashboardUpdatesSubscription.close();
+        } catch (Exception ignored) {
+        }
+        dashboardUpdatesSubscription = null;
     }
 
     @FXML
@@ -207,8 +264,71 @@ public class AdminDashboardController {
     }
 
     @FXML
+    private void openCreateJury() {
+        Stage stage = new Stage();
+        stage.initModality(Modality.APPLICATION_MODAL);
+
+        Label title = new Label("Crear cuenta de jurado");
+        title.getStyleClass().add("about-title");
+        Label subtitle = new Label("Introduce las credenciales que usará el miembro del jurado");
+        subtitle.getStyleClass().add("vote-subtitle");
+
+        TextField emailField = new TextField();
+        emailField.setPromptText("correo@ejemplo.com");
+        emailField.getStyleClass().add("input-field");
+
+        PasswordField passwordField = new PasswordField();
+        passwordField.setPromptText("Mínimo 8 caracteres");
+        passwordField.getStyleClass().add("input-field");
+
+        Button cancelButton = new Button("Cancelar");
+        cancelButton.getStyleClass().add("admin-secondary-button");
+        cancelButton.setOnAction(event -> stage.close());
+
+        Button createButton = new Button("Crear jurado");
+        createButton.getStyleClass().add("action-button");
+        createButton.setOnAction(event -> {
+            String email = emailField.getText() == null ? "" : emailField.getText().trim();
+            String password = passwordField.getText() == null ? "" : passwordField.getText();
+            if (email.isBlank() || password.isBlank()) {
+                AlertHelper.showError("Introduce correo y contraseña.");
+                return;
+            }
+            try {
+                apiClient.createJuryAccount(email, password);
+                AlertHelper.showInfo("Cuenta de jurado creada correctamente.");
+                stage.close();
+            } catch (ApiClientException e) {
+                AlertHelper.showError(e.getMessage());
+            }
+        });
+
+        VBox emailBox = fieldBox("Correo", emailField);
+        VBox passwordBox = fieldBox("Contraseña", passwordField);
+        HBox actions = new HBox(14, cancelButton, createButton);
+        actions.setAlignment(Pos.CENTER_RIGHT);
+
+        VBox root = new VBox(24, new VBox(8, title, subtitle), emailBox, passwordBox, actions);
+        root.getStyleClass().add("dialog-root");
+        root.setPadding(new Insets(40, 42, 40, 42));
+
+        Scene scene = new Scene(root, 520, 390);
+        scene.getStylesheets().add(getClass().getResource("/com/votify/frontend/view/MainMenu.css").toExternalForm());
+        stage.setScene(scene);
+        stage.setTitle("Crear jurado");
+        stage.showAndWait();
+    }
+
+    private VBox fieldBox(String label, TextField field) {
+        Label fieldLabel = new Label(label);
+        fieldLabel.getStyleClass().add("field-label");
+        return new VBox(6, fieldLabel, field);
+    }
+
+    @FXML
     private void showHistory() {
         try {
+            closeDashboardUpdatesSubscription();
             SceneNavigator.showScene((Stage) eventsContainer.getScene().getWindow(), "/com/votify/frontend/view/HistoryDashboard.fxml", "/com/votify/frontend/view/MainMenu.css", "Votify - Histórico de Eventos");
         } catch (IOException e) {
             AlertHelper.showError("No se pudo abrir el histórico: " + e.getMessage());
@@ -218,6 +338,7 @@ public class AdminDashboardController {
     @FXML
     private void exit() {
         try {
+            closeDashboardUpdatesSubscription();
             SceneNavigator.showScene((Stage) eventsContainer.getScene().getWindow(), "/com/votify/frontend/view/Access.fxml", "/com/votify/frontend/view/MainMenu.css", "Votify - Acceso");
         } catch (IOException e) {
             AlertHelper.showError(e.getMessage());
