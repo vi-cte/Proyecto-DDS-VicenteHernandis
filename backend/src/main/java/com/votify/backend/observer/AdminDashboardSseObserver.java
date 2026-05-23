@@ -2,6 +2,8 @@ package com.votify.backend.observer;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -46,6 +48,7 @@ public class AdminDashboardSseObserver implements VoteObserver {
         return emitter;
     }
 
+    @SuppressWarnings("null")
     @Override
     // Cuando hay nuevos votos, envía un evento ligero; el frontend decide recargar los datos.
     public void onVotesChanged(Long eventId) {
@@ -55,7 +58,8 @@ public class AdminDashboardSseObserver implements VoteObserver {
     }
 
     // Envía un mensaje SSE y elimina clientes que ya no aceptan datos.
-    private void send(SseEmitter emitter, String eventName, Long eventId) {
+    @SuppressWarnings("null")
+    private void send(@NonNull SseEmitter emitter, @NonNull String eventName, @Nullable Long eventId) {
         try {
             emitter.send(SseEmitter.event()
                     .name(eventName)

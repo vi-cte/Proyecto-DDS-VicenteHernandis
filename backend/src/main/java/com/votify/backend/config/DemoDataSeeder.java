@@ -12,6 +12,8 @@ import com.votify.backend.repository.EventJpaRepository;
 import com.votify.backend.repository.ParticipantJpaRepository;
 import com.votify.backend.repository.UserRepository;
 import com.votify.backend.repository.VoteJpaRepository;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
@@ -300,15 +302,15 @@ public class DemoDataSeeder implements CommandLineRunner {
     }
 
     // Factoría común para mantener consistente la creación de entidades VoteEntity.
-    private VoteEntity vote(
+    private @NonNull VoteEntity vote(
             EventEntity event,
             ParticipantEntity participant,
             User user,
             UserRole voterRole,
             VoteCategory category,
-            String criterion,
-            Integer score,
-            String comment
+            @Nullable String criterion,
+            @Nullable Integer score,
+            @Nullable String comment
     ) {
         VoteEntity vote = new VoteEntity();
         vote.setEvent(event);
