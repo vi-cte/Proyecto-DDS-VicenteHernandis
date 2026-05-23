@@ -176,7 +176,7 @@ public class EventAdminService {
             return EventPhase.RESULTS_VISIBLE;
         }
         if (request.votingOpen() && request.juryEnabled()) {
-            return EventPhase.JURY_VOTING_OPEN;
+            return EventPhase.PUBLIC_AND_JURY_VOTING_OPEN;
         }
         if (request.votingOpen()) {
             return EventPhase.PUBLIC_VOTING_OPEN;

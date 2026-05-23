@@ -908,9 +908,10 @@ public class ApiClient implements VotifyApi {
     private boolean canCurrentUserVoteInPhase(EventResponse event) {
         String phase = event.getPhase() == null ? "" : event.getPhase().trim().toUpperCase(java.util.Locale.ROOT);
         if (isCurrentUserJury()) {
-            return event.isJuryEnabled() && "JURY_VOTING_OPEN".equals(phase);
+            return event.isJuryEnabled()
+                    && ("JURY_VOTING_OPEN".equals(phase) || "PUBLIC_AND_JURY_VOTING_OPEN".equals(phase));
         }
-        return "PUBLIC_VOTING_OPEN".equals(phase);
+        return "PUBLIC_VOTING_OPEN".equals(phase) || "PUBLIC_AND_JURY_VOTING_OPEN".equals(phase);
     }
 
     // Mantiene viva la conexión SSE y traduce eventos del backend en callbacks JavaFX.

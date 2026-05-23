@@ -45,6 +45,7 @@ public class CreateEventDialogController {
             new PhaseOption("REGISTRATION_CLOSED", "Registro cerrado"),
             new PhaseOption("PUBLIC_VOTING_OPEN", "Votación pública abierta"),
             new PhaseOption("JURY_VOTING_OPEN", "Votación del jurado abierta"),
+            new PhaseOption("PUBLIC_AND_JURY_VOTING_OPEN", "Votación pública y jurado abierta"),
             new PhaseOption("VOTING_CLOSED", "Votaciones cerradas"),
             new PhaseOption("RESULTS_VISIBLE", "Resultados visibles"),
             new PhaseOption("ARCHIVED", "Archivado")
@@ -235,8 +236,10 @@ public class CreateEventDialogController {
     private void applyPhaseToLegacyToggles() {
         String phase = selectedPhase();
         registrationsToggle.setSelected("REGISTRATION_OPEN".equals(phase));
-        votingToggle.setSelected("PUBLIC_VOTING_OPEN".equals(phase) || "JURY_VOTING_OPEN".equals(phase));
-        if ("JURY_VOTING_OPEN".equals(phase)) {
+        votingToggle.setSelected("PUBLIC_VOTING_OPEN".equals(phase)
+                || "JURY_VOTING_OPEN".equals(phase)
+                || "PUBLIC_AND_JURY_VOTING_OPEN".equals(phase));
+        if ("JURY_VOTING_OPEN".equals(phase) || "PUBLIC_AND_JURY_VOTING_OPEN".equals(phase)) {
             juryToggle.setSelected(true);
         }
         if (resultsToggle != null) {

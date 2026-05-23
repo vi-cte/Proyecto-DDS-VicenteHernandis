@@ -654,9 +654,10 @@ public class VotingFormController {
     private boolean canVoteInSelectedRole(EventResponse event) {
         String phase = event.getPhase() == null ? "" : event.getPhase().trim().toUpperCase(Locale.ROOT);
         if (juryMode) {
-            return event.isJuryEnabled() && "JURY_VOTING_OPEN".equals(phase);
+            return event.isJuryEnabled()
+                    && ("JURY_VOTING_OPEN".equals(phase) || "PUBLIC_AND_JURY_VOTING_OPEN".equals(phase));
         }
-        return "PUBLIC_VOTING_OPEN".equals(phase);
+        return "PUBLIC_VOTING_OPEN".equals(phase) || "PUBLIC_AND_JURY_VOTING_OPEN".equals(phase);
     }
 
     // Limpia un comentario y devuelve null cuando queda vacío.

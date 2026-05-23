@@ -13,6 +13,7 @@ public final class EventStateFactory {
             case REGISTRATION_CLOSED -> new RegistrationClosedState();
             case PUBLIC_VOTING_OPEN -> new PublicVotingOpenState();
             case JURY_VOTING_OPEN -> new JuryVotingOpenState();
+            case PUBLIC_AND_JURY_VOTING_OPEN -> new PublicAndJuryVotingOpenState();
             case VOTING_CLOSED -> new VotingClosedState();
             case RESULTS_VISIBLE -> new ResultsVisibleState();
             case ARCHIVED -> new ArchivedState();

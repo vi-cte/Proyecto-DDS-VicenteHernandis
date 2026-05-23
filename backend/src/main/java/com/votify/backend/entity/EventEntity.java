@@ -97,7 +97,7 @@ public class EventEntity {
             return EventPhase.RESULTS_VISIBLE;
         }
         if (votingOpen && juryEnabled) {
-            return EventPhase.JURY_VOTING_OPEN;
+            return EventPhase.PUBLIC_AND_JURY_VOTING_OPEN;
         }
         if (votingOpen) {
             return EventPhase.PUBLIC_VOTING_OPEN;

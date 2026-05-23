@@ -70,7 +70,7 @@ public class DemoDataSeeder implements CommandLineRunner {
                 MARKER_EVENT_NAME,
                 LocalDate.of(2026, 5, 22),
                 "Evento activo con votación de jurado abierta, votos públicos acumulados y rankings en tiempo real.",
-                EventPhase.JURY_VOTING_OPEN,
+                EventPhase.PUBLIC_AND_JURY_VOTING_OPEN,
                 3,
                 true,
                 JuryVotingMode.MULTICRITERIA
