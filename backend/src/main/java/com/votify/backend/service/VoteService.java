@@ -105,14 +105,14 @@ public class VoteService {
             }
             if (event.getJuryVotingMode() == JuryVotingMode.MULTICRITERIA) {
                 VoteResponse response = createJuryMulticriteriaVotes(request, userId, event);
-                voteEventPublisher.notifyVotesChanged(event.getId());
+                voteEventPublisher.notifyVotesChangedAfterCommit(event.getId());
                 return response;
             }
             if (voteRepository.existsByEventAndUserId(event, userId)) {
                 throw new ApiException(HttpStatus.CONFLICT, "Ya has votado. No puedes votar de nuevo.");
             }
             VoteResponse response = createJuryVotes(request, userId, event);
-            voteEventPublisher.notifyVotesChanged(event.getId());
+            voteEventPublisher.notifyVotesChangedAfterCommit(event.getId());
             return response;
         }
         if (!event.isPublicVotingOpen()) {
@@ -122,7 +122,7 @@ public class VoteService {
             throw new ApiException(HttpStatus.CONFLICT, "Ya has votado. No puedes votar de nuevo.");
         }
         VoteResponse response = createPublicVotes(request, userId, event);
-        voteEventPublisher.notifyVotesChanged(event.getId());
+        voteEventPublisher.notifyVotesChangedAfterCommit(event.getId());
         return response;
     }
 

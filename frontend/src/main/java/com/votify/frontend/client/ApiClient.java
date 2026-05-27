@@ -947,12 +947,19 @@ public class ApiClient implements VotifyApi {
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
                 String line;
                 while (!closed && (line = reader.readLine()) != null) {
-                    if (line.startsWith("event: dashboard-updated")) {
+                    if (isDashboardUpdateEvent(line)) {
                         onDashboardUpdate.run();
                     }
                 }
             } catch (IOException ignored) {
             }
+        }
+
+        private boolean isDashboardUpdateEvent(String line) {
+            if (!line.startsWith("event:")) {
+                return false;
+            }
+            return "dashboard-updated".equals(line.substring("event:".length()).trim());
         }
 
         @Override

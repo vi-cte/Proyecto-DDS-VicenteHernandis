@@ -8,6 +8,7 @@ import com.votify.backend.entity.EventPhase;
 import com.votify.backend.entity.JuryVotingMode;
 import com.votify.backend.entity.UserRole;
 import com.votify.backend.exception.ApiException;
+import com.votify.backend.observer.VoteEventPublisher;
 import com.votify.backend.repository.EventJpaRepository;
 import com.votify.backend.repository.ParticipantJpaRepository;
 import com.votify.backend.repository.VoteJpaRepository;
@@ -28,12 +29,14 @@ public class EventAdminService {
     private final ParticipantJpaRepository participantRepository;
     private final VoteJpaRepository voteRepository;
     private final JdbcTemplate jdbcTemplate;
+    private final VoteEventPublisher voteEventPublisher;
 
-    public EventAdminService(EventJpaRepository eventRepository, ParticipantJpaRepository participantRepository, VoteJpaRepository voteRepository, JdbcTemplate jdbcTemplate) {
+    public EventAdminService(EventJpaRepository eventRepository, ParticipantJpaRepository participantRepository, VoteJpaRepository voteRepository, JdbcTemplate jdbcTemplate, VoteEventPublisher voteEventPublisher) {
         this.eventRepository = eventRepository;
         this.participantRepository = participantRepository;
         this.voteRepository = voteRepository;
         this.jdbcTemplate = jdbcTemplate;
+        this.voteEventPublisher = voteEventPublisher;
     }
 
     @Transactional(readOnly = true)
@@ -62,7 +65,9 @@ public class EventAdminService {
         event.setJuryEnabled(request.juryEnabled());
         event.setJuryVotingMode(request.juryVotingMode() == null ? JuryVotingMode.SIMPLE : request.juryVotingMode());
         event.setPhase(resolvePhase(request));
-        return toResponse(eventRepository.save(event));
+        EventEntity saved = eventRepository.save(event);
+        voteEventPublisher.notifyVotesChangedAfterCommit(saved.getId());
+        return toResponse(saved);
     }
 
     @Transactional
@@ -91,7 +96,9 @@ public class EventAdminService {
         event.setJuryEnabled(request.juryEnabled());
         event.setJuryVotingMode(requestedMode);
         event.setPhase(resolvePhase(request));
-        return toResponse(eventRepository.save(event));
+        EventEntity saved = eventRepository.save(event);
+        voteEventPublisher.notifyVotesChangedAfterCommit(saved.getId());
+        return toResponse(saved);
     }
 
     @Transactional
@@ -101,6 +108,7 @@ public class EventAdminService {
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "El evento no existe"));
         event.setPhase(EventPhase.ARCHIVED);
         eventRepository.save(event);
+        voteEventPublisher.notifyVotesChangedAfterCommit(event.getId());
     }
 
     @Transactional
@@ -112,6 +120,7 @@ public class EventAdminService {
         jdbcTemplate.update("DELETE FROM participant_members WHERE participant_id IN (SELECT id FROM participants WHERE event_id = ?)", id);
         jdbcTemplate.update("DELETE FROM participants WHERE event_id = ?", id);
         eventRepository.delete(event);
+        voteEventPublisher.notifyVotesChangedAfterCommit(id);
     }
 
     // Convierte entidad en DTO administrativo con ranking.

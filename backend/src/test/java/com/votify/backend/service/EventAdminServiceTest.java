@@ -5,6 +5,7 @@ import com.votify.backend.entity.EventEntity;
 import com.votify.backend.entity.EventPhase;
 import com.votify.backend.entity.ParticipantEntity;
 import com.votify.backend.entity.UserRole;
+import com.votify.backend.observer.VoteEventPublisher;
 import com.votify.backend.repository.EventJpaRepository;
 import com.votify.backend.repository.ParticipantJpaRepository;
 import com.votify.backend.repository.VoteJpaRepository;
@@ -37,12 +38,15 @@ class EventAdminServiceTest {
     @Mock
     private JdbcTemplate jdbcTemplate;
 
+    @Mock
+    private VoteEventPublisher voteEventPublisher;
+
     private EventAdminService eventAdminService;
     private EventEntity event;
 
     @BeforeEach
     void setUp() {
-        eventAdminService = new EventAdminService(eventRepository, participantRepository, voteRepository, jdbcTemplate);
+        eventAdminService = new EventAdminService(eventRepository, participantRepository, voteRepository, jdbcTemplate, voteEventPublisher);
         event = new EventEntity();
         event.setName("Evento dashboard");
         event.setMaxTeamsToVote(3);

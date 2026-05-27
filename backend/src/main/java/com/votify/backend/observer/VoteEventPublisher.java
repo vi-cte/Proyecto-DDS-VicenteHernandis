@@ -1,6 +1,8 @@
 package com.votify.backend.observer;
 
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -24,5 +26,19 @@ public class VoteEventPublisher {
     // Avisa a todos los observadores de que los resultados de un evento han cambiado.
     public void notifyVotesChanged(Long eventId) {
         observers.forEach(observer -> observer.onVotesChanged(eventId));
+    }
+
+    // Avisa solo cuando la transaccion ya se ha confirmado, para que el dashboard recargue datos frescos.
+    public void notifyVotesChangedAfterCommit(Long eventId) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            notifyVotesChanged(eventId);
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                notifyVotesChanged(eventId);
+            }
+        });
     }
 }

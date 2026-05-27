@@ -110,7 +110,7 @@ class VoteServiceTest {
         assertEquals(1, response.recordedVotes());
         assertTrue(response.selections().contains(teamName));
         verify(voteRepository, times(1)).save(any(VoteEntity.class));
-        verify(voteEventPublisher).notifyVotesChanged(activeEvent.getId());
+        verify(voteEventPublisher).notifyVotesChangedAfterCommit(activeEvent.getId());
     }
 
     @Test
@@ -122,7 +122,7 @@ class VoteServiceTest {
         ApiException exception = assertThrows(ApiException.class, () -> voteService.createVotes(validRequest, validUserId));
         assertEquals(HttpStatus.FORBIDDEN, exception.getStatus());
         verify(voteRepository, never()).save(any());
-        verify(voteEventPublisher, never()).notifyVotesChanged(any());
+        verify(voteEventPublisher, never()).notifyVotesChangedAfterCommit(any());
     }
 
     @Test
@@ -196,7 +196,7 @@ class VoteServiceTest {
             return count == 8;
         }));
         verify(voteRepository, never()).save(any());
-        verify(voteEventPublisher).notifyVotesChanged(activeEvent.getId());
+        verify(voteEventPublisher).notifyVotesChangedAfterCommit(activeEvent.getId());
     }
 
     @Test
@@ -219,7 +219,7 @@ class VoteServiceTest {
         assertTrue(exception.getMessage().contains("todos los equipos"));
         verify(voteRepository, never()).save(any());
         verify(voteRepository, never()).saveAll(any());
-        verify(voteEventPublisher, never()).notifyVotesChanged(any());
+        verify(voteEventPublisher, never()).notifyVotesChangedAfterCommit(any());
     }
 
     private VoteRequest multicriteriaRequest(List<String> teamNames) {

@@ -8,6 +8,7 @@ import com.votify.backend.entity.ParticipantEntity;
 import com.votify.backend.entity.User;
 import com.votify.backend.entity.EventEntity;
 import com.votify.backend.exception.ApiException;
+import com.votify.backend.observer.VoteEventPublisher;
 import com.votify.backend.repository.ParticipantJpaRepository;
 import com.votify.backend.repository.UserRepository;
 import org.springframework.http.HttpStatus;
@@ -23,12 +24,14 @@ public class ParticipantService {
     private final ParticipantJpaRepository participantRepository;
     private final UserRepository userRepository;
     private final EventSettingsService eventSettingsService;
+    private final VoteEventPublisher voteEventPublisher;
 
     // Inyecta los repositorios de participantes y usuarios.
-    public ParticipantService(ParticipantJpaRepository participantRepository, UserRepository userRepository, EventSettingsService eventSettingsService) {
+    public ParticipantService(ParticipantJpaRepository participantRepository, UserRepository userRepository, EventSettingsService eventSettingsService, VoteEventPublisher voteEventPublisher) {
         this.participantRepository = participantRepository;
         this.userRepository = userRepository;
         this.eventSettingsService = eventSettingsService;
+        this.voteEventPublisher = voteEventPublisher;
     }
 
     @Transactional
@@ -67,6 +70,7 @@ public class ParticipantService {
         entity.setEvent(event);
 
         ParticipantEntity saved = participantRepository.save(entity);
+        voteEventPublisher.notifyVotesChangedAfterCommit(event.getId());
         return toResponse(saved);
     }
 
@@ -109,6 +113,7 @@ public class ParticipantService {
         entity.setOwnerEmail(currentUser.getEmail());
 
         ParticipantEntity saved = participantRepository.save(entity);
+        voteEventPublisher.notifyVotesChangedAfterCommit(event.getId());
         return toResponse(saved);
     }
 

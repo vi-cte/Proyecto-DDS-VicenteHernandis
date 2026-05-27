@@ -6,6 +6,7 @@ import com.votify.backend.entity.EventEntity;
 import com.votify.backend.entity.ParticipantEntity;
 import com.votify.backend.entity.User;
 import com.votify.backend.exception.ApiException;
+import com.votify.backend.observer.VoteEventPublisher;
 import com.votify.backend.repository.ParticipantJpaRepository;
 import com.votify.backend.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,6 +36,9 @@ class ParticipantServiceTest {
 
     @Mock
     private EventSettingsService eventSettingsService;
+
+    @Mock
+    private VoteEventPublisher voteEventPublisher;
 
     @InjectMocks
     private ParticipantService participantService;
