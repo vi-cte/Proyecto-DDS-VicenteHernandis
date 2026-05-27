@@ -22,13 +22,10 @@ public class CreateEventDialogController {
     @FXML private TextField nameField;
     @FXML private DatePicker eventDatePicker;
     @FXML private TextArea descriptionArea;
-    @FXML private CheckBox registrationsToggle;
-    @FXML private CheckBox votingToggle;
     @FXML private CheckBox juryToggle;
     @FXML private ComboBox<String> juryVotingModeComboBox;
     @FXML private ComboBox<PhaseOption> phaseComboBox;
     @FXML private TextField maxVotesField;
-    @FXML private CheckBox resultsToggle;
     @FXML private Label resultsLabel;
     @FXML private Label registrationsLabel;
     @FXML private Label votingLabel;
@@ -38,8 +35,6 @@ public class CreateEventDialogController {
     @FXML private Button archiveButton;
 
     private Long editEventId = null;
-    private boolean editResultsVisible = false;
-
     private static final java.util.List<PhaseOption> PHASES = java.util.List.of(
             new PhaseOption("REGISTRATION_OPEN", "Registro de equipos abierto"),
             new PhaseOption("REGISTRATION_CLOSED", "Registro cerrado"),
@@ -52,27 +47,12 @@ public class CreateEventDialogController {
     );
 
     @FXML
-    private void onRegistrationToggle() {
-        if (registrationsToggle.isSelected()) {
-            votingToggle.setSelected(false);
-        }
-        updateLabels();
-    }
-
-    @FXML
-    private void onVotingToggle() {
-        if (votingToggle.isSelected()) {
-            registrationsToggle.setSelected(false);
-        }
-        updateLabels();
-    }
-
-    @FXML
     private void updateLabels() {
-        registrationsLabel.setText(registrationsToggle.isSelected() ? "Abiertas" : "Cerradas");
-        votingLabel.setText(votingToggle.isSelected() ? "Abiertas" : "Cerradas");
+        String phase = selectedPhase();
+        registrationsLabel.setText(registrationsOpenFor(phase) ? "Abiertas" : "Cerradas");
+        votingLabel.setText(votingOpenFor(phase) ? "Abiertas" : "Cerradas");
         if (resultsLabel != null) {
-            resultsLabel.setText(resultsToggle != null && resultsToggle.isSelected() ? "Visibles" : "Ocultos");
+            resultsLabel.setText(resultsVisibleFor(phase) ? "Visibles" : "Ocultos");
         }
         juryLabel.setText(juryToggle.isSelected() ? "Activado" : "Desactivado");
     }
@@ -84,14 +64,13 @@ public class CreateEventDialogController {
         if (phaseComboBox != null) {
             phaseComboBox.getItems().setAll(PHASES);
             phaseComboBox.setValue(findPhase("REGISTRATION_OPEN"));
-            phaseComboBox.valueProperty().addListener((observable, oldValue, newValue) -> applyPhaseToLegacyToggles());
+            phaseComboBox.valueProperty().addListener((observable, oldValue, newValue) -> applyPhaseDefaults());
         }
     }
 
     // Carga los datos de un evento existente para editarlo.
     public void loadEvent(com.votify.frontend.dto.AdminEventResponse event) {
         editEventId = event.getId();
-        editResultsVisible = event.isResultsVisible();
         
         if (dialogTitle != null) dialogTitle.setText("Ajustes del evento");
         if (dialogSubtitle != null) dialogSubtitle.setText("Modifica la configuración de este evento");
@@ -114,11 +93,6 @@ public class CreateEventDialogController {
             } catch (Exception ignored) {}
         }
         descriptionArea.setText(event.getDescription() != null ? event.getDescription() : "");
-        registrationsToggle.setSelected(event.isRegistrationsOpen());
-        votingToggle.setSelected(event.isVotingOpen());
-        if (resultsToggle != null) {
-            resultsToggle.setSelected(event.isResultsVisible());
-        }
         maxVotesField.setText(String.valueOf(event.getMaxTeamsToVote()));
         juryToggle.setSelected(event.isJuryEnabled());
         juryVotingModeComboBox.setValue(normalizeMode(event.getJuryVotingMode()));
@@ -141,9 +115,9 @@ public class CreateEventDialogController {
                         nameField.getText(),
                         date,
                         descriptionArea.getText(),
-                        registrationsToggle.isSelected(),
-                        votingToggle.isSelected(),
-                        resultsToggle != null ? resultsToggle.isSelected() : editResultsVisible,
+                        registrationsOpenFor(selectedPhase()),
+                        votingOpenFor(selectedPhase()),
+                        resultsVisibleFor(selectedPhase()),
                         maxVotes,
                         juryToggle.isSelected(),
                         normalizeMode(juryVotingModeComboBox.getValue()),
@@ -154,9 +128,9 @@ public class CreateEventDialogController {
                         nameField.getText(),
                         date,
                         descriptionArea.getText(),
-                        registrationsToggle.isSelected(),
-                        votingToggle.isSelected(),
-                        resultsToggle != null ? resultsToggle.isSelected() : false,
+                        registrationsOpenFor(selectedPhase()),
+                        votingOpenFor(selectedPhase()),
+                        resultsVisibleFor(selectedPhase()),
                         maxVotes,
                         juryToggle.isSelected(),
                         normalizeMode(juryVotingModeComboBox.getValue()),
@@ -233,19 +207,26 @@ public class CreateEventDialogController {
                 .orElse(PHASES.getFirst());
     }
 
-    private void applyPhaseToLegacyToggles() {
+    private void applyPhaseDefaults() {
         String phase = selectedPhase();
-        registrationsToggle.setSelected("REGISTRATION_OPEN".equals(phase));
-        votingToggle.setSelected("PUBLIC_VOTING_OPEN".equals(phase)
-                || "JURY_VOTING_OPEN".equals(phase)
-                || "PUBLIC_AND_JURY_VOTING_OPEN".equals(phase));
         if ("JURY_VOTING_OPEN".equals(phase) || "PUBLIC_AND_JURY_VOTING_OPEN".equals(phase)) {
             juryToggle.setSelected(true);
         }
-        if (resultsToggle != null) {
-            resultsToggle.setSelected("RESULTS_VISIBLE".equals(phase) || "ARCHIVED".equals(phase));
-        }
         updateLabels();
+    }
+
+    private boolean registrationsOpenFor(String phase) {
+        return "REGISTRATION_OPEN".equals(phase);
+    }
+
+    private boolean votingOpenFor(String phase) {
+        return "PUBLIC_VOTING_OPEN".equals(phase)
+                || "JURY_VOTING_OPEN".equals(phase)
+                || "PUBLIC_AND_JURY_VOTING_OPEN".equals(phase);
+    }
+
+    private boolean resultsVisibleFor(String phase) {
+        return "RESULTS_VISIBLE".equals(phase) || "ARCHIVED".equals(phase);
     }
 
     private record PhaseOption(String key, String label) {

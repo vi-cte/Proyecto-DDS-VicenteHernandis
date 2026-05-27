@@ -11,6 +11,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
 import javafx.geometry.Insets;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -23,6 +24,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.SVGPath;
 import javafx.stage.Modality;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 
 import java.io.IOException;
@@ -174,8 +176,7 @@ public class AdminDashboardController {
             com.votify.frontend.controller.CreateEventDialogController controller = loader.getController();
             controller.loadEvent(event);
             
-            stage.setScene(new Scene(root));
-            stage.setTitle("Ajustes del evento");
+            configureEventDialogStage(stage, root, "Ajustes del evento");
             stage.showAndWait();
             loadEvents();
         } catch (IOException e) {
@@ -261,13 +262,22 @@ public class AdminDashboardController {
             Stage stage = new Stage();
             stage.initModality(Modality.APPLICATION_MODAL);
             Parent root = FXMLLoader.load(getClass().getResource("/com/votify/frontend/view/CreateEventDialog.fxml"));
-            stage.setScene(new Scene(root));
-            stage.setTitle("Crear evento");
+            configureEventDialogStage(stage, root, "Crear evento");
             stage.showAndWait();
             loadEvents();
         } catch (IOException e) {
             AlertHelper.showError("No se pudo abrir la creación de evento: " + e.getMessage());
         }
+    }
+
+    private void configureEventDialogStage(Stage stage, Parent root, String title) {
+        Rectangle2D bounds = Screen.getPrimary().getVisualBounds();
+        double width = Math.min(700, bounds.getWidth() - 80);
+        double height = Math.min(760, bounds.getHeight() - 80);
+        stage.setScene(new Scene(root, width, height));
+        stage.setTitle(title);
+        stage.setMinWidth(Math.min(620, width));
+        stage.setMinHeight(Math.min(520, height));
     }
 
     @FXML

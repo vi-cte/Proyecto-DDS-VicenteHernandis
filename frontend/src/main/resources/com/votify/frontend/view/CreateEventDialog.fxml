@@ -6,16 +6,19 @@
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.DatePicker?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TextArea?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox alignment="TOP_CENTER" spacing="28.0" styleClass="dialog-root" stylesheets="@MainMenu.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.votify.frontend.controller.CreateEventDialogController">
-    <padding>
-        <Insets bottom="40.0" left="42.0" right="42.0" top="40.0" />
-    </padding>
-    <children>
+<ScrollPane fitToWidth="true" hbarPolicy="NEVER" prefViewportHeight="680.0" prefViewportWidth="660.0" styleClass="dialog-scroll-root" stylesheets="@MainMenu.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.votify.frontend.controller.CreateEventDialogController">
+    <content>
+        <VBox alignment="TOP_CENTER" spacing="22.0" styleClass="dialog-root">
+            <padding>
+                <Insets bottom="28.0" left="36.0" right="36.0" top="28.0" />
+            </padding>
+            <children>
         <VBox alignment="CENTER" spacing="8.0">
             <children>
                 <Label fx:id="dialogTitle" styleClass="about-title" text="Crear nuevo evento" />
@@ -50,21 +53,18 @@
          <children>
                 <HBox alignment="CENTER_LEFT" spacing="12.0">
                     <children>
-                        <CheckBox fx:id="registrationsToggle" mnemonicParsing="false" onAction="#onRegistrationToggle" styleClass="settings-toggle" />
                         <Label styleClass="field-label" text="Inscripciones" />
                         <Label fx:id="registrationsLabel" styleClass="settings-status-label" text="Cerradas" />
                     </children>
                 </HBox>
                 <HBox alignment="CENTER_LEFT" spacing="12.0">
                     <children>
-                        <CheckBox fx:id="votingToggle" mnemonicParsing="false" onAction="#onVotingToggle" styleClass="settings-toggle" />
                         <Label styleClass="field-label" text="Votaciones" />
                         <Label fx:id="votingLabel" styleClass="settings-status-label" text="Cerradas" />
                     </children>
                 </HBox>
                 <HBox alignment="CENTER_LEFT" spacing="12.0">
                     <children>
-                        <CheckBox fx:id="resultsToggle" mnemonicParsing="false" onAction="#updateLabels" styleClass="settings-toggle" />
                         <Label styleClass="field-label" text="Resultados" />
                         <Label fx:id="resultsLabel" styleClass="settings-status-label" text="Ocultos" />
                     </children>
@@ -101,5 +101,7 @@
                 <Button fx:id="actionButton" mnemonicParsing="false" onAction="#createEvent" styleClass="action-button" text="Crear evento" />
             </children>
         </HBox>
-    </children>
-</VBox>
+            </children>
+        </VBox>
+    </content>
+</ScrollPane>
